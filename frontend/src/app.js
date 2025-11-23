@@ -200,8 +200,8 @@ function App() {
                         key={item.name}
                         onClick={() => setView(item.view)}
                         variant={isActive ? 'contained' : 'text'}
-                        // Use a custom sx color for the icon/text when not active (M3 on-surface color)
-                        color={isActive ? 'primary' : 'inherit'} // Inherit allows the text color to be set by the surrounding Box/Typography
+                        // Set Button color to secondary container color when active, 
+                        // and tertiary (low emphasis) when inactive.
                         sx={{ 
                             display: 'flex', 
                             flexDirection: 'column', 
@@ -210,18 +210,23 @@ function App() {
                             height: 60,
                             borderRadius: '16px',
                             textTransform: 'none',
-                            // Custom style to ensure the icon color is primary/contained when active, 
-                            // and secondary/on-surface when inactive.
+                            // The contained button will handle the background color automatically.
+                            
+                            // *** FIX: TARGET THE ICON COLOR DIRECTLY ***
                             '& .MuiSvgIcon-root': {
-                                color: isActive ? 'inherit' : 'secondary.main', // Set icon color to secondary.main when inactive
+                                // If active (contained button), the color should be the inverse (on-primary/white).
+                                // If inactive (text button), the color should be the secondary/on-surface color.
+                                color: isActive ? 'white' : 'secondary.main', 
                             }
                         }}
+                        color="primary" // Ensure the contained variant uses primary theme color
                     >
                         {item.icon}
                         <Typography variant="caption" 
                              sx={{ 
-                                 // Override the text color to ensure inactive text is darker/secondary
-                                 color: isActive ? 'inherit' : 'text.secondary' 
+                                 // Override the text color to ensure inactive text is secondary
+                                 color: isActive ? 'inherit' : 'text.secondary',
+                                 fontSize: '0.7rem', // Make caption text smaller
                              }}>
                             {item.name}
                         </Typography>
