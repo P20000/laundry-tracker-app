@@ -10,14 +10,14 @@
       "buildCommand": "npm install && npm run build:ts",
       "startCommand": "npx prisma migrate deploy && node dist/index.js", 
       "healthcheckPath": "/health",
-      "type": "container"
+      "port": 3000
     },
     {
       "name": "frontend",
       "rootDir": "frontend",
       "buildCommand": "npm install && npm run build",
       "startCommand": "nginx -g 'daemon off;'", 
-      "type": "container"
+      "port": 80
     }
   ],
   "dependencies": [
@@ -25,9 +25,5 @@
       "name": "postgres-db",
       "type": "postgresql"
     }
-  ],
-  
-  // NOTE: This array is empty because service definitions are handled above.
-  // We do not want Railway to try to build the root directory.
-  "build": [] 
+  ]
 }
