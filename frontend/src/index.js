@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './app'; // Imports the main Material Design 3 App component
+import App from './App'; // Imports the main Material Design 3 App component
 
 // Find the root element where the application will be mounted
 // This element must be defined in the HTML file (e.g., in public/index.html)

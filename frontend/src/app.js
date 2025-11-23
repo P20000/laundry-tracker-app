@@ -20,8 +20,10 @@ import WarningIcon from '@mui/icons-material/Warning';
 import EventIcon from '@mui/icons-material/Event';
 import ArchiveIcon from '@mui/icons-material/Archive'; 
 
+// NOTE: For optimal performance and sleek styling, ensure you link the Roboto font 
+// from Google Fonts (weights 300, 400, 500, 700) in your public/index.html file.
+
 // --- M3 Theme Definition (Matching previous color palette) ---
-// This ensures consistent application of the Material You aesthetic
 const M3Theme = createTheme({
     palette: {
         mode: 'light',
@@ -39,15 +41,23 @@ const M3Theme = createTheme({
         }
     },
     typography: {
-        fontFamily: ['Roboto', 'sans-serif'].join(','),
+        // Use Roboto as the primary font, ensuring the sleek look
+        fontFamily: ['Roboto', 'Inter', 'sans-serif'].join(','),
+        // Large, clean headline style for the main page title
         displayMedium: {
-            fontSize: '2rem',
-            fontWeight: 400,
+            fontSize: '2.5rem', // Slightly larger font size
+            fontWeight: 400,    // Sleek, lighter weight
+            letterSpacing: '-0.01em', // Subtle negative spacing for a modern look
         },
+        // Title style for navigation and cards
         titleLarge: {
             fontSize: '1.25rem',
             fontWeight: 500,
         },
+        // Body text maintains readability
+        body1: {
+            fontWeight: 400,
+        }
     },
     components: {
         MuiCard: {
@@ -67,6 +77,17 @@ const M3Theme = createTheme({
                     borderRadius: 20, // Fully rounded corners for M3 buttons
                 }
             }
+        },
+        // Ensure Empty State message is slightly bolder for hierarchy
+        MuiTypography: {
+            variants: [
+                {
+                    props: { variant: 'h5' },
+                    style: {
+                        fontWeight: 500,
+                    }
+                }
+            ]
         }
     },
 });
