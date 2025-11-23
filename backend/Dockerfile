@@ -28,7 +28,7 @@ WORKDIR /app/backend
 COPY --from=builder /app/backend/node_modules ./node_modules
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/prisma/generated ./prisma/generated
-COPY backend/prisma/migrations ./prisma/migrations # Necessary for migrate deploy
+COPY backend/prisma/migrations ./prisma/migrations
 COPY backend/package.json ./
 
 # Set the port
