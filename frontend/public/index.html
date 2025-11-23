@@ -3,359 +3,452 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>laundrain</title>
-    <!-- Load Tailwind CSS -->
+    <title>Smart Wardrobe Tracker</title>
+    
+    <!-- 1. Fonts: Roboto for M3 Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 2. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons for M3 Visuals -->
+    
+    <!-- 3. Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
     <style>
-        /* Define M3 Color Tokens */
+        /* --- M3 Design Tokens --- */
         :root {
-            /* Primary Palette (Deep Purple) */
+            /* Core Colors (Deep Purple Theme) */
             --md-sys-color-primary: #6750A4;
             --md-sys-color-on-primary: #FFFFFF;
-            /* Surface Tones */
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            
+            --md-sys-color-secondary: #625B71;
+            --md-sys-color-secondary-container: #E8DEF8;
+            --md-sys-color-on-secondary-container: #1D192B;
+            
+            --md-sys-color-tertiary: #7D5260;
+            --md-sys-color-tertiary-container: #FFD8E4;
+            --md-sys-color-on-tertiary-container: #31111D;
+
+            --md-sys-color-background: #FFFBFE;
+            --md-sys-color-on-background: #1C1B1F;
+            
             --md-sys-color-surface: #FFFBFE;
-            --md-sys-color-surface-container-low: #F7F2FA;
-            --md-sys-color-surface-container: #ECE6F0;
-            /* Accent Tones (e.g., Secondary for FAB) */
-            --md-sys-color-secondary-container: #E8DEF8; 
-            --md-sys-color-on-secondary-container: #4A4458;
-            /* Error/Warning */
-            --md-sys-color-error: #B3261E;
+            --md-sys-color-on-surface: #1C1B1F;
+            --md-sys-color-surface-variant: #E7E0EC;
+            --md-sys-color-on-surface-variant: #49454F;
+            
+            --md-sys-color-outline: #79747E;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--md-sys-color-surface);
-            color: #1C1B1F; /* On Surface */
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            margin: 0;
+            overflow: hidden; /* Prevent body scroll, main content handles it */
         }
 
-        /* Custom Styles for M3 Components */
-        .nav-rail-item {
-            transition: all 0.2s ease-in-out;
+        /* --- Navigation Rail Styles (Desktop) --- */
+        .nav-rail-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            padding: 12px 0;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: all 0.2s ease;
         }
 
-        .nav-rail-item:hover {
-            background-color: rgba(var(--md-sys-color-primary), 0.08); /* Hover state */
+        /* Icon Container */
+        .nav-icon-container {
+            width: 56px;
+            height: 32px;
+            border-radius: 16px; /* Pill shape */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            color: var(--md-sys-color-on-surface-variant); /* Default text color */
         }
 
-        .nav-rail-item.active {
+        /* Text Label */
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+            transition: color 0.2s ease;
+        }
+
+        /* Active State */
+        .nav-rail-btn.active .nav-icon-container {
             background-color: var(--md-sys-color-secondary-container);
             color: var(--md-sys-color-on-secondary-container);
         }
+        
+        .nav-rail-btn.active .nav-label {
+            color: var(--md-sys-color-on-surface);
+            font-weight: 700;
+        }
 
-        .nav-rail-item.active .icon {
-            background-color: var(--md-sys-color-primary);
-            color: var(--md-sys-color-on-primary);
+        /* Hover State (Ripple-like) */
+        .nav-rail-btn:hover .nav-icon-container {
+            background-color: rgba(29, 25, 43, 0.08); /* on-surface with opacity */
+        }
+        .nav-rail-btn.active:hover .nav-icon-container {
+            background-color: #D8CDE8; /* slightly darker secondary container */
+        }
+
+        /* --- FAB Styles --- */
+        .fab {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            box-shadow: 0 4px 8px 3px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.2s ease, transform 0.1s ease;
+        }
+        .fab:hover {
+            box-shadow: 0 6px 10px 4px rgba(0, 0, 0, 0.15);
+            background-color: #D9C7FB; /* slightly darker container */
+        }
+        .fab:active {
+            transform: scale(0.98);
+        }
+
+        /* --- Dialog / Modal Overlay --- */
+        .dialog-backdrop {
+            background-color: rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(2px);
+        }
+
+        /* --- Utilities --- */
+        .m3-card {
+            background-color: var(--md-sys-color-surface);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 12px;
         }
         
-        /* Utility to hide horizontal scroll on small devices */
-        @media (max-width: 640px) {
-            .hide-on-mobile {
-                display: none;
-            }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        
-        /* Utility to show only on mobile */
-        @media (min-width: 641px) {
-            .show-on-mobile {
-                display: none;
-            }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
     </style>
 </head>
-<body class="min-h-screen flex">
-    
-    <!-- 1. Navigation Rail (Desktop/Tablet Layout) -->
-    <aside id="nav-rail" class="hide-on-mobile sticky top-0 h-screen w-20 p-2 bg-white flex flex-col items-center shadow-lg border-r" 
-           style="background-color: var(--md-sys-color-surface-container-low);">
-        
-        <!-- App Logo/Header -->
-        <div class="h-14 flex items-center justify-center">
-            <span class="text-xl font-bold" style="color: var(--md-sys-color-primary);">Lr</span>
-        </div>
-        
-        <!-- FAB (Extended Floating Action Button Placeholder) -->
-        <button id="fab-add" class="mt-4 p-4 rounded-full shadow-lg transition-all hover:shadow-xl" 
-                style="background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);" 
-                onclick="showMessage('FAB clicked: Opening Add Item modal...');">
+<body class="flex h-screen w-screen">
+
+    <!-- ==================== NAVIGATION RAIL (Desktop) ==================== -->
+    <nav class="hidden sm:flex w-20 flex-col items-center py-4 h-full border-r border-gray-200 bg-white z-20">
+        <!-- Menu Icon (Placeholder) -->
+        <button class="mb-8 p-3 rounded-full hover:bg-gray-100 text-gray-700">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+
+        <!-- FAB (Add Item) -->
+        <button onclick="openAddModal()" class="fab w-14 h-14 rounded-2xl flex items-center justify-center mb-8">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
 
-        <!-- Navigation Items -->
-        <div class="space-y-4 mt-8 w-full flex flex-col items-center">
-            <div class="nav-rail-item active p-2 rounded-2xl cursor-pointer w-16 text-center" data-view="catalog">
-                <div class="icon w-8 h-8 mx-auto flex items-center justify-center rounded-full" style="background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">
-                    <i data-lucide="shirt" class="w-5 h-5"></i>
+        <!-- Destinations -->
+        <div class="flex flex-col gap-2 w-full">
+            <button class="nav-rail-btn active" onclick="switchView('catalog', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="shirt" class="w-6 h-6"></i>
                 </div>
-                <span class="text-xs mt-1 block">Catalog</span>
-            </div>
-            
-            <div class="nav-rail-item p-2 rounded-2xl cursor-pointer w-16 text-center" data-view="laundry">
-                <div class="icon w-8 h-8 mx-auto flex items-center justify-center rounded-full" style="color: var(--md-sys-color-on-surface);">
-                    <i data-lucide="washing-machine" class="w-5 h-5"></i>
-                </div>
-                <span class="text-xs mt-1 block">Laundry</span>
-            </div>
-            
-            <div class="nav-rail-item p-2 rounded-2xl cursor-pointer w-16 text-center" data-view="damaged">
-                <div class="icon w-8 h-8 mx-auto flex items-center justify-center rounded-full" style="color: var(--md-sys-color-on-surface);">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                </div>
-                <span class="text-xs mt-1 block">Damaged</span>
-            </div>
-        </div>
-    </aside>
-
-    <!-- 2. Main Content Area -->
-    <main id="main-content" class="flex-1 p-4 sm:p-8 overflow-y-auto">
-        
-        <!-- App Header -->
-        <header class="mb-8 flex items-center justify-between show-on-mobile">
-             <span class="text-xl font-bold" style="color: var(--md-sys-color-primary);">Smart Wardrobe</span>
-             <button id="fab-add-mobile" class="p-3 rounded-full shadow-lg" 
-                     style="background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);"
-                     onclick="showMessage('FAB clicked: Opening Add Item modal...');">
-                <i data-lucide="plus" class="w-5 h-5"></i>
+                <span class="nav-label">Catalog</span>
             </button>
-        </header>
 
-        <!-- Dynamic Page Title (M3 Display/Headline) -->
-        <h1 id="page-title" class="text-4xl sm:text-5xl font-normal mb-8" style="color: var(--md-sys-color-on-surface);">
-            Clothing Catalog
-        </h1>
+            <button class="nav-rail-btn" onclick="switchView('laundry', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="washing-machine" class="w-6 h-6"></i>
+                </div>
+                <span class="nav-label">Laundry</span>
+            </button>
 
-        <!-- Content Area: Item Grid -->
-        <div id="content-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Items loaded by JavaScript -->
-        </div>
-
-        <!-- Message Box for Alerts (M3 Snackbar/Toast style) -->
-        <div id="message-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 p-3 px-6 rounded-full text-white shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none" style="background-color: var(--md-sys-color-primary);">
-            Message
-        </div>
-        
-    </main>
-
-    <!-- 3. Bottom Navigation Bar (Mobile Layout) -->
-    <nav id="bottom-nav" class="show-on-mobile fixed bottom-0 left-0 right-0 h-16 bg-white shadow-2xl flex justify-around items-center border-t z-10" 
-         style="background-color: var(--md-sys-color-surface-container-low);">
-        
-        <!-- Navigation Items -->
-        <div class="nav-mobile-item active flex flex-col items-center p-2 cursor-pointer" data-view="catalog">
-             <div class="icon w-10 h-10 flex items-center justify-center rounded-2xl" style="background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);">
-                <i data-lucide="shirt" class="w-6 h-6"></i>
-            </div>
-        </div>
-        
-        <div class="nav-mobile-item flex flex-col items-center p-2 cursor-pointer" data-view="laundry">
-             <div class="icon w-10 h-10 flex items-center justify-center rounded-2xl" style="color: var(--md-sys-color-on-surface);">
-                <i data-lucide="washing-machine" class="w-6 h-6"></i>
-            </div>
-        </div>
-        
-        <div class="nav-mobile-item flex flex-col items-center p-2 cursor-pointer" data-view="damaged">
-             <div class="icon w-10 h-10 flex items-center justify-center rounded-2xl" style="color: var(--md-sys-color-on-surface);">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-            </div>
+            <button class="nav-rail-btn" onclick="switchView('damaged', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <span class="nav-label">Damaged</span>
+            </button>
         </div>
     </nav>
 
+    <!-- ==================== MAIN CONTENT AREA ==================== -->
+    <main class="flex-1 flex flex-col h-full relative">
+        
+        <!-- Top Bar (Mobile Only Header) -->
+        <header class="sm:hidden h-16 flex items-center justify-between px-4 bg-white sticky top-0 z-10">
+            <span class="text-xl font-normal text-[var(--md-sys-color-on-surface)]">Wardrobe</span>
+            <button class="w-10 h-10 rounded-full overflow-hidden">
+               <div class="w-full h-full bg-purple-200 flex items-center justify-center text-purple-800 font-bold">U</div>
+            </button>
+        </header>
 
+        <!-- Scrollable Content -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar pb-24 sm:pb-8">
+            
+            <!-- Dynamic Title -->
+            <h1 id="view-title" class="text-4xl sm:text-5xl text-[var(--md-sys-color-on-surface)] mb-8 font-normal">
+                Clothing Catalog
+            </h1>
+
+            <!-- Item Grid -->
+            <div id="item-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- JS will populate this -->
+            </div>
+
+            <!-- Empty State (Shown if no items) -->
+            <div id="empty-state" class="hidden flex-col items-center justify-center h-64 text-center mt-10 p-8 rounded-3xl bg-[var(--md-sys-color-surface-variant)]">
+                <i data-lucide="layers" class="w-16 h-16 mb-4 text-[var(--md-sys-color-primary)] opacity-50"></i>
+                <h3 class="text-xl font-medium mb-2">Nothing here yet</h3>
+                <p class="text-sm text-gray-600 max-w-xs">Your collection is empty. Tap the + button to add your first clothing item.</p>
+            </div>
+
+        </div>
+
+        <!-- Mobile FAB (Bottom Right) -->
+        <button onclick="openAddModal()" class="sm:hidden absolute bottom-20 right-4 fab w-14 h-14 rounded-2xl flex items-center justify-center z-20">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Bottom Navigation (Mobile Only) -->
+        <nav class="sm:hidden h-20 bg-[var(--md-sys-color-surface)] border-t border-gray-200 flex justify-around items-center fixed bottom-0 w-full z-30 pb-2">
+            <button class="nav-rail-btn active" onclick="switchView('catalog', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="shirt" class="w-6 h-6"></i>
+                </div>
+                <span class="nav-label">Catalog</span>
+            </button>
+            <button class="nav-rail-btn" onclick="switchView('laundry', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="washing-machine" class="w-6 h-6"></i>
+                </div>
+                <span class="nav-label">Laundry</span>
+            </button>
+            <button class="nav-rail-btn" onclick="switchView('damaged', this)">
+                <div class="nav-icon-container">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <span class="nav-label">Damaged</span>
+            </button>
+        </nav>
+    </main>
+
+    <!-- ==================== ADD ITEM DIALOG (Modal) ==================== -->
+    <div id="add-modal" class="fixed inset-0 dialog-backdrop z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--md-sys-color-surface)] w-full max-w-sm rounded-[28px] p-6 shadow-2xl flex flex-col gap-4 scale-95 opacity-0 transition-all duration-200" id="modal-content">
+            
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-normal text-[var(--md-sys-color-on-surface)]">New Item</h2>
+                <button onclick="closeAddModal()" class="p-2 hover:bg-gray-100 rounded-full">
+                    <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-4 mt-2">
+                <!-- Input: Name -->
+                <div class="relative">
+                    <input type="text" id="input-name" placeholder="Item Name (e.g. Blue Shirt)" 
+                           class="w-full h-14 px-4 rounded-t-lg border-b border-gray-400 bg-[var(--md-sys-color-surface-variant)] focus:border-[var(--md-sys-color-primary)] focus:outline-none text-[var(--md-sys-color-on-surface-variant)] placeholder-gray-500">
+                </div>
+
+                <!-- Input: Type -->
+                <div class="flex gap-2">
+                    <select id="input-type" class="flex-1 h-12 px-4 rounded-lg border border-gray-300 bg-transparent text-sm">
+                        <option value="Shirt">Shirt</option>
+                        <option value="Pants">Pants</option>
+                        <option value="Dress">Dress</option>
+                        <option value="Outerwear">Outerwear</option>
+                    </select>
+                    <!-- Input: Color (Visual) -->
+                    <input type="color" id="input-color" value="#6750A4" class="h-12 w-12 p-1 rounded-lg border border-gray-300 bg-transparent cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="closeAddModal()" class="px-6 py-2.5 rounded-full text-[var(--md-sys-color-primary)] font-medium hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">
+                    Cancel
+                </button>
+                <button onclick="saveNewItem()" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-medium hover:opacity-90 transition-opacity">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
-        // Initialize Lucide icons
+        // Initialize Icons
         lucide.createIcons();
 
-        // --- M3 Utility Functions ---
-        function showMessage(text) {
-            const msgBox = document.getElementById('message-box');
-            msgBox.textContent = text;
-            msgBox.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                msgBox.classList.add('opacity-0', 'pointer-events-none');
-            }, 3000);
+        // --- APP STATE ---
+        // Application starts completely blank as requested
+        let inventory = []; 
+        let currentView = 'catalog';
+
+        // --- VIEW LOGIC ---
+        function switchView(viewName, btnElement) {
+            currentView = viewName;
+            
+            // Update Navigation UI
+            // Remove 'active' from all buttons in both mobile and desktop navs
+            document.querySelectorAll('.nav-rail-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Add 'active' to the clicked button AND its counterpart (if any)
+            // We find buttons by the onclick attribute text to keep it simple without extra IDs
+            const buttons = document.querySelectorAll(`.nav-rail-btn[onclick*="${viewName}"]`);
+            buttons.forEach(btn => btn.classList.add('active'));
+
+            // Update Title
+            const titleMap = {
+                'catalog': 'Clothing Catalog',
+                'laundry': 'Laundry List',
+                'damaged': 'Damage Log'
+            };
+            document.getElementById('view-title').innerText = titleMap[viewName];
+
+            renderItems();
         }
 
-        // --- Mock Data (Empty for a fresh start) ---
-        const MOCK_ITEMS = [];
-
-        // --- UI Rendering Logic ---
-        function getStatusChip(status, isDamaged) {
-            let label, bgColor, textColor, icon;
+        // --- RENDERING ---
+        function renderItems() {
+            const grid = document.getElementById('item-grid');
+            const emptyState = document.getElementById('empty-state');
             
-            if (isDamaged) {
-                label = 'Damaged';
-                bgColor = 'bg-red-200';
-                textColor = 'text-red-800';
-                icon = '<i data-lucide="alert-circle" class="w-4 h-4 mr-1"></i>';
-            } else if (status === 'CLEAN') {
-                label = 'Clean';
-                bgColor = 'bg-green-200';
-                textColor = 'text-green-800';
-                icon = '<i data-lucide="check" class="w-4 h-4 mr-1"></i>';
-            } else if (status === 'READY_FOR_WASH') {
-                label = 'Needs Wash';
-                bgColor = 'bg-yellow-200';
-                textColor = 'text-yellow-800';
-                icon = '<i data-lucide="washing-machine" class="w-4 h-4 mr-1"></i>';
-            } else if (status === 'OVERDUE') {
-                label = 'Overdue';
-                bgColor = 'bg-pink-200';
-                textColor = 'text-pink-800';
-                icon = '<i data-lucide="clock" class="w-4 h-4 mr-1"></i>';
+            // Filter items based on view
+            let displayItems = [];
+            if (currentView === 'catalog') {
+                displayItems = inventory;
+            } else if (currentView === 'laundry') {
+                displayItems = inventory.filter(i => i.status === 'Dirty' || i.status === 'Washing');
+            } else if (currentView === 'damaged') {
+                displayItems = inventory.filter(i => i.status === 'Damaged');
             }
-            
-            return `
-                <div class="${bgColor} ${textColor} text-xs font-medium px-3 py-1 rounded-full flex items-center" style="font-size: 0.75rem;">
-                    ${icon} ${label}
-                </div>
-            `;
-        }
 
-        function createItemCard(item) {
-            const lastWashed = new Date(item.lastWashed).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-            
-            return `
-                <div class="bg-white rounded-3xl shadow-md overflow-hidden transition-all hover:shadow-xl cursor-pointer" 
-                     style="background-color: var(--md-sys-color-surface-container);">
-                    
-                    <!-- Item Image Placeholder -->
-                    <div class="h-32 w-full bg-cover bg-center" style="background-image: url('${item.img}');"></div>
-                    
-                    <div class="p-4">
-                        <h2 class="text-lg font-medium mb-1" style="color: var(--md-sys-color-on-surface);">${item.name}</h2>
-                        
-                        <div class="flex items-center justify-between mb-3">
-                            ${getStatusChip(item.status, item.damaged)}
-                        </div>
-                        
-                        <p class="text-xs text-gray-500 mb-4">Last Washed: ${lastWashed}</p>
+            // Clear grid
+            grid.innerHTML = '';
 
-                        <!-- M3 Tonal Button Actions -->
-                        <div class="flex space-x-2">
-                            <button class="flex-1 py-2 rounded-full font-medium shadow-md"
-                                style="background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);"
-                                onclick="showMessage('Marking ${item.name} as washed...'); event.stopPropagation();">
-                                Washed
-                            </button>
-                            <button class="flex-1 py-2 rounded-full font-medium border"
-                                style="border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary);"
-                                onclick="showMessage('Viewing details for ${item.name}...'); event.stopPropagation();">
-                                Details
-                            </button>
+            // Toggle Empty State
+            if (displayItems.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex'); // Ensure flex display for centering
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            // Render Cards
+            displayItems.forEach(item => {
+                const card = document.createElement('div');
+                // Card Styling (M3 Elevated Card)
+                card.className = `bg-[var(--md-sys-color-surface)] border border-gray-200 rounded-[12px] overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-64`;
+                
+                // Dynamic Status Chip Color
+                let statusColor = 'bg-green-100 text-green-800';
+                if (item.status === 'Dirty') statusColor = 'bg-yellow-100 text-yellow-800';
+                if (item.status === 'Damaged') statusColor = 'bg-red-100 text-red-800';
+
+                card.innerHTML = `
+                    <div class="h-32 w-full" style="background-color: ${item.color}20;">
+                        <!-- Placeholder Image simulation using SVG pattern -->
+                        <div class="w-full h-full flex items-center justify-center" style="color: ${item.color}">
+                            <i data-lucide="shirt" class="w-12 h-12 opacity-50"></i>
                         </div>
                     </div>
-                </div>
-            `;
-        }
-        
-        function getEmptyState(view) {
-            let message = "";
-            let description = "";
+                    <div class="p-4 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-medium text-lg text-gray-900 truncate w-3/4">${item.name}</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColor}">${item.status}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-auto">Type: ${item.type}</p>
+                        
+                        <!-- Actions -->
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                            <button onclick="updateStatus(${item.id}, 'Dirty', event)" class="text-xs font-medium text-[var(--md-sys-color-primary)] hover:bg-purple-50 px-2 py-1 rounded">Wash</button>
+                            <button onclick="updateStatus(${item.id}, 'Damaged', event)" class="text-xs font-medium text-red-600 hover:bg-red-50 px-2 py-1 rounded">Report</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
             
-            if (view === 'catalog') {
-                message = "Your Wardrobe is Empty!";
-                description = "Click the '+' button to catalogue your first piece of clothing.";
-            } else if (view === 'laundry') {
-                message = "No Clothes Ready for Wash";
-                description = "Mark an item as 'Ready for Wash' in the catalog, or wait for an item to become overdue.";
-            } else if (view === 'damaged') {
-                message = "No Damaged Items Logged";
-                description = "Keep your inventory maintained by tagging items that need repair.";
-            } else {
-                message = "Nothing to show here.";
-                description = "Start adding items to build your history.";
-            }
-
-            return `
-                <div class="flex flex-col items-center justify-center p-12 text-center rounded-3xl" style="background-color: var(--md-sys-color-surface-container-low);">
-                    <i data-lucide="archive" class="w-12 h-12 mb-4" style="color: var(--md-sys-color-secondary-container);"></i>
-                    <h2 class="text-xl font-medium mb-2">${message}</h2>
-                    <p class="text-sm text-gray-600">${description}</p>
-                </div>
-            `;
+            lucide.createIcons(); // Re-init icons for new elements
         }
 
-        function renderView(view) {
-            const titleElement = document.getElementById('page-title');
-            const gridElement = document.getElementById('content-grid');
-            let itemsToRender = MOCK_ITEMS;
-            let title = "Clothing Catalog";
-            
-            // Logic to filter items based on the selected view
-            if (view === 'laundry') {
-                itemsToRender = MOCK_ITEMS.filter(item => item.status === 'READY_FOR_WASH' || item.status === 'OVERDUE');
-                title = "Ready for Wash";
-            } else if (view === 'damaged') {
-                itemsToRender = MOCK_ITEMS.filter(item => item.damaged);
-                title = "Damage Log";
-            } else if (view === 'catalog') {
-                itemsToRender = MOCK_ITEMS;
-                title = "Clothing Catalog";
-            } else {
-                title = "View Not Found";
-                itemsToRender = [];
-            }
-            
-            titleElement.textContent = title;
-
-            if (itemsToRender.length === 0) {
-                gridElement.innerHTML = getEmptyState(view);
-            } else {
-                gridElement.innerHTML = itemsToRender.map(createItemCard).join('');
-            }
-            
-            // Re-render Lucide icons inside the dynamically created cards
-            lucide.createIcons();
-            updateActiveNav(view);
+        // --- MODAL LOGIC ---
+        function openAddModal() {
+            const modal = document.getElementById('add-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            // Small delay to allow display:block to apply before opacity transition
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
         }
-        
-        function updateActiveNav(view) {
-            // Update Navigation Rail
-            document.querySelectorAll('.nav-rail-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.getAttribute('data-view') === view) {
-                    item.classList.add('active');
+
+        function closeAddModal() {
+            const modal = document.getElementById('add-modal');
+            const content = document.getElementById('modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Reset form
+                document.getElementById('input-name').value = '';
+            }, 200);
+        }
+
+        function saveNewItem() {
+            const name = document.getElementById('input-name').value;
+            const type = document.getElementById('input-type').value;
+            const color = document.getElementById('input-color').value;
+
+            if (!name) return alert("Please enter a name");
+
+            const newItem = {
+                id: Date.now(),
+                name: name,
+                type: type,
+                color: color,
+                status: 'Clean'
+            };
+
+            inventory.unshift(newItem); // Add to top
+            closeAddModal();
+            renderItems();
+        }
+
+        // --- ACTION LOGIC ---
+        function updateStatus(id, newStatus, event) {
+            event.stopPropagation(); // Prevent card click
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                // Simple toggle logic for demo purposes
+                if (item.status === newStatus) {
+                    item.status = 'Clean'; // Toggle back
+                } else {
+                    item.status = newStatus;
                 }
-            });
-            
-            // Update Bottom Nav
-            document.querySelectorAll('.nav-mobile-item').forEach(item => {
-                const iconDiv = item.querySelector('.icon');
-                item.classList.remove('active');
-                iconDiv.style.backgroundColor = 'transparent';
-                iconDiv.style.color = 'var(--md-sys-color-on-surface)';
-
-                if (item.getAttribute('data-view') === view) {
-                    item.classList.add('active');
-                    iconDiv.style.backgroundColor = 'var(--md-sys-color-secondary-container)';
-                    iconDiv.style.color = 'var(--md-sys-color-on-secondary-container)';
-                }
-            });
+                renderItems();
+            }
         }
 
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Setup listeners for Navigation Rail (Desktop)
-            document.querySelectorAll('.nav-rail-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const view = item.getAttribute('data-view');
-                    renderView(view);
-                });
-            });
-            
-            // Setup listeners for Bottom Navigation (Mobile)
-            document.querySelectorAll('.nav-mobile-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const view = item.getAttribute('data-view');
-                    renderView(view);
-                });
-            });
-
-            // Initial render
-            renderView('catalog');
-        });
+        // --- INIT ---
+        // Ensure icon colors are correct on load
+        renderItems();
 
     </script>
 </body>
