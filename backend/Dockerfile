@@ -1,35 +1,47 @@
 # --- STAGE 1: Build the Application and Generate Client ---
 FROM node:20-alpine AS builder
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy ALL project root files needed for dependency installation
+# Copy the backend's package files
+# NOTE: Because Render's Docker context is the 'backend' folder, 
+# paths MUST be relative to the 'backend' folder (i.e., NO 'backend/' prefix).
 COPY package.json ./
 COPY package-lock.json ./
-COPY backend/package.json ./
-COPY backend/package-lock.json ./
-COPY backend/tsconfig.json ./
+COPY tsconfig.json ./
 
-# Install dependencies (must be done in the backend context)
-RUN npm install --prefix backend
+# Install dependencies
+RUN npm install
 
 # Build and generate Prisma client
-COPY backend/prisma ./backend/prisma
-COPY backend/src ./backend/src
-RUN npm run build:ts --prefix backend
-RUN npx prisma generate --schema=backend/prisma/schema.prisma
+COPY prisma ./prisma
+COPY src ./src
+
+# Generate the Prisma client based on the copied schema
+RUN npx prisma generate --schema=prisma/schema.prisma
+
+# Compile TypeScript to JavaScript
+RUN npm run build:ts
 
 # --- STAGE 2: Final Production Runtime ---
 FROM node:20-alpine AS final
 
-WORKDIR /app/backend
+# Set the working directory in the final image
+WORKDIR /app
 
-# Copy only runtime essentials from the builder stage and source folders
-COPY --from=builder /app/backend/node_modules ./node_modules
-COPY --from=builder /app/backend/dist ./dist
-COPY --from=builder /app/backend/prisma/generated ./prisma/generated
-COPY backend/prisma/migrations ./prisma/migrations
-COPY backend/package.json ./
+# Copy only runtime essentials:
+# 1. Production dependencies (node_modules)
+COPY --from=builder /app/node_modules ./node_modules
+# 2. Compiled JavaScript code (dist)
+COPY --from=builder /app/dist ./dist
+# 3. The generated Prisma client 
+COPY --from=builder /app/prisma/generated ./prisma/generated
+# 4. Migration files (required for migrate deploy)
+COPY prisma/migrations ./prisma/migrations
+# 5. Runtime configs
+COPY package.json ./
+COPY package-lock.json ./
 
 # Set the port
 EXPOSE 3000
