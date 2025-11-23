@@ -285,22 +285,40 @@ function App() {
                         <Box sx={{ width: '100%', position: 'fixed', bottom: 0, left: 0, bgcolor: 'background.default', boxShadow: 3, p: 1, borderTop: 1, borderColor: 'divider', zIndex: 10 }}>
                             <Grid container justifyContent="space-around">
                                 {navItems.map(item => (
-                                    <Button 
-                                        key={item.name} 
-                                        onClick={() => setView(item.view)} 
-                                        color={view === item.view ? 'primary' : 'secondary'} 
-                                        sx={{ 
-                                            textTransform: 'none', 
-                                            borderRadius: '16px', 
-                                            py: 1,
-                                            minWidth: '20%',
+                                    <Button
+                                        key={item.name}
+                                        onClick={() => setView(item.view)}
+                                        variant={isActive ? 'contained' : 'text'}
+                                        sx={{
                                             display: 'flex',
-                                            flexDirection: 'column'
+                                            flexDirection: 'column',
+                                            mb: 2,
+                                            width: 60,
+                                            height: 60,
+                                            borderRadius: '16px',
+                                            textTransform: 'none',
+                                            bgcolor: isActive ? 'primary.main' : 'background.default',
+                                            boxShadow: isActive ? 4 : 0,
+                                            '& .MuiSvgIcon-root': {
+                                            // Selected tab: white icon, unselected: dark purple or secondary
+                                            color: isActive ? '#FFF' : '#6750A4', // Use your palette's primary.main as inactive color
+                                            transition: 'color 0.2s'
+                                            }
                                         }}
-                                    >
+                                        color="primary"
+                                        >
                                         {item.icon}
-                                        <Typography variant="caption">{item.name}</Typography>
+                                        <Typography
+                                            variant="caption"
+                                            sx={{
+                                            color: isActive ? '#FFF' : 'text.secondary',
+                                            fontSize: '0.7rem',
+                                            }}
+                                        >
+                                            {item.name}
+                                        </Typography>
                                     </Button>
+
                                 ))}
                             </Grid>
                         </Box>
