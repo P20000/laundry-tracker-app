@@ -1,4 +1,4 @@
-# Render Blueprint for the Smart Wardrobe App Monorepo (Final attempt at fixing build context)
+# Render Blueprint for the Smart Wardrobe App Monorepo (Dockerized Services Only)
 
 services:
 
@@ -14,23 +14,16 @@ services:
   env: mysql
 
 # -------------------------------------------------
-# 2. Backend API (Node.js/Express) - REQUIRES ABSOLUTE PATHS TO FILES
+# 2. Backend API (Node.js/Express) - Uses backend/Dockerfile
 # -------------------------------------------------
 - type: web
   name: api
-  rootDir: backend 
-  env: node
+  env: docker # FORCED DOCKER BUILD
   plan: free 
+  dockerfilePath: backend/Dockerfile # Explicitly point to Dockerfile
   
-  # CRITICAL FIX: Run commands inside the backend folder where package.json lives
-  # This fixes the initial 'npm install' failure.
-  buildCommand: "npm install --prefix backend && npm run build:ts --prefix backend"
-  
-  # CRITICAL FIX: The start command must be aware of the new location of 'dist/' and 'prisma'
-  startCommand: "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && node backend/dist/index.js"
-  
-  healthCheckPath: "/health"
-  
+  # The START command is now handled inside backend/Dockerfile.
+  # We just set the necessary environment variables here.
   envVars:
     - key: DATABASE_URL
       fromDatabase:
@@ -43,15 +36,15 @@ services:
   port: 3000
 
 # -------------------------------------------------
-# 3. Frontend (React/Nginx) - Docker is better for static assets/Nginx
+# 3. Frontend (React/Nginx) - Uses frontend/Dockerfile
 # -------------------------------------------------
 - type: web
   name: frontend
-  # Render automatically detects the Dockerfile in the rootDir.
-  rootDir: frontend
-  env: docker # CRITICAL: Force using the Dockerfile
+  env: docker # FORCED DOCKER BUILD
   plan: free
+  dockerfilePath: frontend/Dockerfile # Explicitly point to Dockerfile
   
+  # The START command is now handled inside frontend/Dockerfile.
   envVars:
     - key: VITE_APP_API_URL
       value: "https://${{RENDER_EXTERNAL_HOSTNAME}}/api"
