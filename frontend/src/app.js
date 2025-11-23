@@ -21,7 +21,9 @@ import {
     InputLabel,
     useMediaQuery,
     useTheme,
-    IconButton
+    IconButton,
+    InputAdornment,
+    OutlinedInput
 } from '@mui/material';
 
 // Icons
@@ -33,6 +35,8 @@ import EventIcon from '@mui/icons-material/Event'; // History
 import ArchiveIcon from '@mui/icons-material/Archive'; // Empty State
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 // --- M3 Theme Definition ---
 const M3Theme = createTheme({
@@ -169,41 +173,56 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                 borderRadius: 3, 
                 overflow: 'hidden', 
                 transition: '0.2s',
-                '&:hover': { boxShadow: 2 }
+                '&:hover': { boxShadow: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%'
             }}
         >
-            {/* Color/Image Placeholder */}
+            {/* Image / Color Placeholder */}
             <Box 
                 sx={{ 
-                    height: 128, 
+                    height: 160, 
                     width: '100%', 
-                    bgcolor: item.color + '20', // 20% opacity of the hex color
+                    bgcolor: item.image ? 'transparent' : item.color + '20', // Transparent if image exists
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: item.color
+                    color: item.color,
+                    backgroundImage: item.image ? `url(${item.image})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
                 }}
             >
-                <CheckroomIcon sx={{ fontSize: 48, opacity: 0.5 }} />
+                {!item.image && <CheckroomIcon sx={{ fontSize: 48, opacity: 0.5 }} />}
             </Box>
 
-            <Box sx={{ p: 2 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="h6" noWrap sx={{ fontSize: '1.1rem' }}>
+            <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2, fontWeight: 500 }}>
                         {item.name}
                     </Typography>
-                    <Chip label={statusLabel} color={statusColor} size="small" />
+                    <Chip label={statusLabel} color={statusColor} size="small" sx={{ height: 24, fontSize: '0.7rem' }} />
                 </Box>
-                <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-                    Type: {item.type}
-                </Typography>
+                
+                {/* Metadata Badges */}
+                <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
+                    <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>
+                        {item.category}
+                    </Typography>
+                    <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>
+                        Size: {item.size}
+                    </Typography>
+                </Box>
 
-                <Box display="flex" gap={1} mt={1}>
+                <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
                     <Button 
                         size="small" 
-                        variant="text" 
+                        variant="outlined" 
                         color="primary"
+                        fullWidth
                         onClick={() => onUpdateStatus(item.id, 'Dirty')}
+                        startIcon={<LocalLaundryServiceIcon />}
                     >
                         Wash
                     </Button>
@@ -212,8 +231,9 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                         variant="text" 
                         color="error"
                         onClick={() => onUpdateStatus(item.id, 'Damaged')}
+                        sx={{ minWidth: 40, px: 1 }}
                     >
-                        Report
+                        <WarningIcon />
                     </Button>
                 </Box>
             </Box>
@@ -230,13 +250,25 @@ function App() {
     
     // Form State
     const [newItemName, setNewItemName] = useState('');
+    const [newItemCategory, setNewItemCategory] = useState('Casuals'); // Default category
     const [newItemType, setNewItemType] = useState('Shirt');
+    const [newItemSize, setNewItemSize] = useState('M');
     const [newItemColor, setNewItemColor] = useState('#6750A4');
+    const [newItemImage, setNewItemImage] = useState(null); // Stores the file object or URL
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // --- Handlers ---
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            // Create a local URL for previewing the image immediately
+            const imageUrl = URL.createObjectURL(file);
+            setNewItemImage(imageUrl);
+        }
+    };
 
     const handleAddItem = () => {
         if (!newItemName) return;
@@ -244,8 +276,11 @@ function App() {
         const newItem = {
             id: Date.now(),
             name: newItemName,
+            category: newItemCategory,
             type: newItemType,
+            size: newItemSize,
             color: newItemColor,
+            image: newItemImage,
             status: 'Clean'
         };
 
@@ -253,6 +288,10 @@ function App() {
         
         // Reset and Close
         setNewItemName('');
+        setNewItemCategory('Casuals');
+        setNewItemType('Shirt');
+        setNewItemSize('M');
+        setNewItemImage(null);
         setIsModalOpen(false);
     };
 
@@ -419,22 +458,101 @@ function App() {
 
             {/* Add Item Dialog */}
             <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
-                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     New Item
                     <IconButton onClick={() => setIsModalOpen(false)} size="small">
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-                <DialogContent>
+                
+                <DialogContent sx={{ pt: 0 }}>
                     <Box display="flex" flexDirection="column" gap={3} mt={1}>
+                        
+                        {/* Image Upload Area */}
+                        <Box 
+                            sx={{ 
+                                height: 160, 
+                                width: '100%', 
+                                borderRadius: 3, 
+                                bgcolor: 'action.hover', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                border: '1px dashed',
+                                borderColor: 'text.secondary',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                backgroundImage: newItemImage ? `url(${newItemImage})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                            }}
+                        >
+                            <input
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                id="raised-button-file"
+                                type="file"
+                                onChange={handleImageUpload}
+                            />
+                            <label htmlFor="raised-button-file" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                {!newItemImage && (
+                                    <Box textAlign="center" color="text.secondary">
+                                        <PhotoCamera sx={{ fontSize: 40, mb: 1 }} />
+                                        <Typography variant="caption" display="block">Upload Photo</Typography>
+                                    </Box>
+                                )}
+                            </label>
+                            {newItemImage && (
+                                <IconButton 
+                                    size="small" 
+                                    sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}
+                                    onClick={() => setNewItemImage(null)}
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            )}
+                        </Box>
+
                         <TextField 
                             label="Item Name" 
                             variant="filled" 
                             fullWidth 
                             value={newItemName}
                             onChange={(e) => setNewItemName(e.target.value)}
-                            placeholder="e.g. Blue Denim Shirt"
+                            placeholder="e.g. Navy Blazer"
                         />
+
+                        <Box display="flex" gap={2}>
+                            <FormControl fullWidth variant="filled">
+                                <InputLabel>Category</InputLabel>
+                                <Select
+                                    value={newItemCategory}
+                                    onChange={(e) => setNewItemCategory(e.target.value)}
+                                >
+                                    <MenuItem value="Formals">Formals</MenuItem>
+                                    <MenuItem value="Casuals">Casuals</MenuItem>
+                                    <MenuItem value="Activewear">Activewear</MenuItem>
+                                    <MenuItem value="Party">Party</MenuItem>
+                                    <MenuItem value="Home">Home</MenuItem>
+                                </Select>
+                            </FormControl>
+                            
+                            <FormControl fullWidth variant="filled">
+                                <InputLabel>Size</InputLabel>
+                                <Select
+                                    value={newItemSize}
+                                    onChange={(e) => setNewItemSize(e.target.value)}
+                                >
+                                    <MenuItem value="XS">XS</MenuItem>
+                                    <MenuItem value="S">S</MenuItem>
+                                    <MenuItem value="M">M</MenuItem>
+                                    <MenuItem value="L">L</MenuItem>
+                                    <MenuItem value="XL">XL</MenuItem>
+                                    <MenuItem value="XXL">XXL</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+
                         <Box display="flex" gap={2}>
                             <FormControl fullWidth variant="filled">
                                 <InputLabel>Type</InputLabel>
@@ -446,20 +564,27 @@ function App() {
                                     <MenuItem value="Pants">Pants</MenuItem>
                                     <MenuItem value="Dress">Dress</MenuItem>
                                     <MenuItem value="Outerwear">Outerwear</MenuItem>
+                                    <MenuItem value="Shoes">Shoes</MenuItem>
+                                    <MenuItem value="Accessory">Accessory</MenuItem>
                                 </Select>
                             </FormControl>
-                            <input 
-                                type="color" 
-                                value={newItemColor} 
-                                onChange={(e) => setNewItemColor(e.target.value)}
-                                style={{ height: 56, width: 56, border: 'none', background: 'transparent', cursor: 'pointer' }} 
-                            />
+                            
+                            {/* Color Picker Visual */}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography>
+                                <input 
+                                    type="color" 
+                                    value={newItemColor} 
+                                    onChange={(e) => setNewItemColor(e.target.value)}
+                                    style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} 
+                                />
+                            </Box>
                         </Box>
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
                     <Button onClick={() => setIsModalOpen(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleAddItem} variant="contained" color="primary">Save</Button>
+                    <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                 </DialogActions>
             </Dialog>
 

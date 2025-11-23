@@ -186,10 +186,10 @@
     <main class="flex-1 flex flex-col h-full relative">
         
         <!-- Top Bar (Mobile Only Header) -->
-        <header class="sm:hidden h-16 flex items-center justify-between px-4 bg-white sticky top-0 z-10">
+        <header class="sm:hidden h-16 flex items-center justify-between px-4 bg-white sticky top-0 z-10 shadow-sm">
             <span class="text-xl font-normal text-[var(--md-sys-color-on-surface)]">Wardrobe</span>
-            <button class="w-10 h-10 rounded-full overflow-hidden">
-               <div class="w-full h-full bg-purple-200 flex items-center justify-center text-purple-800 font-bold">U</div>
+            <button class="w-10 h-10 rounded-full overflow-hidden bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
+               U
             </button>
         </header>
 
@@ -197,7 +197,7 @@
         <div id="content-area" class="flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar pb-24 sm:pb-8">
             
             <!-- Dynamic Title -->
-            <h1 id="view-title" class="text-4xl sm:text-5xl text-[var(--md-sys-color-on-surface)] mb-8 font-normal">
+            <h1 id="view-title" class="text-4xl sm:text-5xl text-[var(--md-sys-color-on-surface)] mb-8 font-normal tracking-tight">
                 Clothing Catalog
             </h1>
 
@@ -216,7 +216,7 @@
         </div>
 
         <!-- Mobile FAB (Bottom Right) -->
-        <button onclick="openAddModal()" class="sm:hidden absolute bottom-20 right-4 fab w-14 h-14 rounded-2xl flex items-center justify-center z-20">
+        <button onclick="openAddModal()" class="sm:hidden absolute bottom-24 right-4 fab w-14 h-14 rounded-2xl flex items-center justify-center z-20">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
 
@@ -245,7 +245,7 @@
 
     <!-- ==================== ADD ITEM DIALOG (Modal) ==================== -->
     <div id="add-modal" class="fixed inset-0 dialog-backdrop z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[var(--md-sys-color-surface)] w-full max-w-sm rounded-[28px] p-6 shadow-2xl flex flex-col gap-4 scale-95 opacity-0 transition-all duration-200" id="modal-content">
+        <div class="bg-[var(--md-sys-color-surface)] w-full max-w-sm rounded-[28px] p-6 shadow-2xl flex flex-col gap-4 scale-95 opacity-0 transition-all duration-200 overflow-y-auto max-h-[90vh]" id="modal-content">
             
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-normal text-[var(--md-sys-color-on-surface)]">New Item</h2>
@@ -255,22 +255,75 @@
             </div>
 
             <div class="flex flex-col gap-4 mt-2">
-                <!-- Input: Name -->
-                <div class="relative">
-                    <input type="text" id="input-name" placeholder="Item Name (e.g. Blue Shirt)" 
-                           class="w-full h-14 px-4 rounded-t-lg border-b border-gray-400 bg-[var(--md-sys-color-surface-variant)] focus:border-[var(--md-sys-color-primary)] focus:outline-none text-[var(--md-sys-color-on-surface-variant)] placeholder-gray-500">
+                
+                <!-- 1. Image Upload Area -->
+                <div class="relative group cursor-pointer" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleImagePreview(event)">
+                    <div id="image-preview-container" class="h-40 w-full bg-[var(--md-sys-color-surface-variant)] rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-[var(--md-sys-color-primary)] transition-colors overflow-hidden">
+                        <!-- Default State -->
+                        <div id="upload-placeholder" class="flex flex-col items-center text-gray-500">
+                            <i data-lucide="camera" class="w-8 h-8 mb-2"></i>
+                            <span class="text-xs font-medium">Tap to upload image</span>
+                        </div>
+                        <!-- Image Preview State -->
+                        <img id="image-preview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                    </div>
                 </div>
 
-                <!-- Input: Type -->
+                <!-- 2. Name Input -->
+                <div class="relative bg-[var(--md-sys-color-surface-variant)] rounded-t-lg border-b border-gray-400 hover:bg-[#e0dce4]">
+                    <label class="absolute top-2 left-4 text-[10px] text-gray-600">Item Name</label>
+                    <input type="text" id="input-name" placeholder="e.g. Navy Blazer" 
+                           class="w-full h-14 px-4 pt-4 pb-1 bg-transparent border-none focus:outline-none text-[var(--md-sys-color-on-surface-variant)] placeholder-gray-500">
+                </div>
+
+                <!-- 3. Row: Category & Size -->
                 <div class="flex gap-2">
-                    <select id="input-type" class="flex-1 h-12 px-4 rounded-lg border border-gray-300 bg-transparent text-sm">
-                        <option value="Shirt">Shirt</option>
-                        <option value="Pants">Pants</option>
-                        <option value="Dress">Dress</option>
-                        <option value="Outerwear">Outerwear</option>
-                    </select>
-                    <!-- Input: Color (Visual) -->
-                    <input type="color" id="input-color" value="#6750A4" class="h-12 w-12 p-1 rounded-lg border border-gray-300 bg-transparent cursor-pointer">
+                    <!-- Category Select -->
+                    <div class="flex-1 bg-[var(--md-sys-color-surface-variant)] rounded-lg px-3 py-2">
+                        <label class="block text-[10px] text-gray-600 mb-1">Category</label>
+                        <select id="input-category" class="w-full bg-transparent border-none text-sm focus:outline-none">
+                            <option value="Casuals">Casuals</option>
+                            <option value="Formals">Formals</option>
+                            <option value="Activewear">Activewear</option>
+                            <option value="Party">Party</option>
+                            <option value="Home">Home</option>
+                        </select>
+                    </div>
+
+                    <!-- Size Select -->
+                    <div class="w-1/3 bg-[var(--md-sys-color-surface-variant)] rounded-lg px-3 py-2">
+                        <label class="block text-[10px] text-gray-600 mb-1">Size</label>
+                        <select id="input-size" class="w-full bg-transparent border-none text-sm focus:outline-none">
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M" selected>M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 4. Row: Type & Color -->
+                <div class="flex gap-2">
+                    <div class="flex-1 bg-[var(--md-sys-color-surface-variant)] rounded-lg px-3 py-2">
+                        <label class="block text-[10px] text-gray-600 mb-1">Type</label>
+                        <select id="input-type" class="w-full bg-transparent border-none text-sm focus:outline-none">
+                            <option value="Shirt">Shirt</option>
+                            <option value="Pants">Pants</option>
+                            <option value="Dress">Dress</option>
+                            <option value="Outerwear">Outerwear</option>
+                            <option value="Shoes">Shoes</option>
+                            <option value="Accessory">Accessory</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Color Picker -->
+                    <div class="w-1/3 flex flex-col items-center bg-[var(--md-sys-color-surface-variant)] rounded-lg p-1">
+                        <label class="text-[10px] text-gray-600 w-full text-left pl-2">Color</label>
+                        <input type="color" id="input-color" value="#6750A4" class="w-full h-8 bg-transparent border-none cursor-pointer">
+                    </div>
                 </div>
             </div>
 
@@ -278,7 +331,7 @@
                 <button onclick="closeAddModal()" class="px-6 py-2.5 rounded-full text-[var(--md-sys-color-primary)] font-medium hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">
                     Cancel
                 </button>
-                <button onclick="saveNewItem()" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-medium hover:opacity-90 transition-opacity">
+                <button onclick="saveNewItem()" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-medium hover:opacity-90 transition-opacity shadow-sm">
                     Save
                 </button>
             </div>
@@ -291,20 +344,18 @@
         lucide.createIcons();
 
         // --- APP STATE ---
-        // Application starts completely blank as requested
         let inventory = []; 
         let currentView = 'catalog';
+        let currentImageBlob = null; // Store the image URL
 
         // --- VIEW LOGIC ---
         function switchView(viewName, btnElement) {
             currentView = viewName;
             
-            // Update Navigation UI
-            // Remove 'active' from all buttons in both mobile and desktop navs
+            // Reset active states
             document.querySelectorAll('.nav-rail-btn').forEach(btn => btn.classList.remove('active'));
             
-            // Add 'active' to the clicked button AND its counterpart (if any)
-            // We find buttons by the onclick attribute text to keep it simple without extra IDs
+            // Set active state based on data-view attribute
             const buttons = document.querySelectorAll(`.nav-rail-btn[onclick*="${viewName}"]`);
             buttons.forEach(btn => btn.classList.add('active'));
 
@@ -341,7 +392,7 @@
             if (displayItems.length === 0) {
                 grid.classList.add('hidden');
                 emptyState.classList.remove('hidden');
-                emptyState.classList.add('flex'); // Ensure flex display for centering
+                emptyState.classList.add('flex');
                 return;
             } else {
                 grid.classList.remove('hidden');
@@ -352,39 +403,73 @@
             // Render Cards
             displayItems.forEach(item => {
                 const card = document.createElement('div');
-                // Card Styling (M3 Elevated Card)
-                card.className = `bg-[var(--md-sys-color-surface)] border border-gray-200 rounded-[12px] overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-64`;
+                card.className = `bg-[var(--md-sys-color-surface)] border border-gray-200 rounded-[12px] overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-80`; // Increased height for image
                 
-                // Dynamic Status Chip Color
+                // Status Styling
                 let statusColor = 'bg-green-100 text-green-800';
                 if (item.status === 'Dirty') statusColor = 'bg-yellow-100 text-yellow-800';
                 if (item.status === 'Damaged') statusColor = 'bg-red-100 text-red-800';
 
-                card.innerHTML = `
-                    <div class="h-32 w-full" style="background-color: ${item.color}20;">
-                        <!-- Placeholder Image simulation using SVG pattern -->
+                // Determine Image Source
+                let imageContent;
+                if (item.image) {
+                    imageContent = `<img src="${item.image}" class="w-full h-full object-cover" alt="${item.name}">`;
+                } else {
+                    // Fallback to colored block
+                    imageContent = `
                         <div class="w-full h-full flex items-center justify-center" style="color: ${item.color}">
                             <i data-lucide="shirt" class="w-12 h-12 opacity-50"></i>
                         </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="h-40 w-full bg-gray-50 relative">
+                        ${imageContent}
+                        <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm shadow-sm text-gray-800">
+                            ${item.size}
+                        </div>
                     </div>
                     <div class="p-4 flex-1 flex flex-col">
-                        <div class="flex justify-between items-start mb-2">
+                        <div class="flex justify-between items-start mb-1">
                             <h3 class="font-medium text-lg text-gray-900 truncate w-3/4">${item.name}</h3>
+                        </div>
+                        
+                        <!-- Badges -->
+                        <div class="flex gap-1 mb-2 flex-wrap">
+                            <span class="px-2 py-0.5 rounded-md bg-gray-100 text-[10px] text-gray-600">${item.category}</span>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColor}">${item.status}</span>
                         </div>
+
                         <p class="text-xs text-gray-500 mt-auto">Type: ${item.type}</p>
                         
                         <!-- Actions -->
                         <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-                            <button onclick="updateStatus(${item.id}, 'Dirty', event)" class="text-xs font-medium text-[var(--md-sys-color-primary)] hover:bg-purple-50 px-2 py-1 rounded">Wash</button>
-                            <button onclick="updateStatus(${item.id}, 'Damaged', event)" class="text-xs font-medium text-red-600 hover:bg-red-50 px-2 py-1 rounded">Report</button>
+                            <button onclick="updateStatus(${item.id}, 'Dirty', event)" class="flex-1 text-xs font-medium text-[var(--md-sys-color-primary)] hover:bg-purple-50 py-2 rounded border border-purple-100">Wash</button>
+                            <button onclick="updateStatus(${item.id}, 'Damaged', event)" class="text-xs font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded border border-red-100">Report</button>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
             
-            lucide.createIcons(); // Re-init icons for new elements
+            lucide.createIcons();
+        }
+
+        // --- IMAGE HANDLING ---
+        function handleImagePreview(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentImageBlob = URL.createObjectURL(file);
+                
+                // Update UI
+                const placeholder = document.getElementById('upload-placeholder');
+                const preview = document.getElementById('image-preview');
+                
+                placeholder.classList.add('hidden');
+                preview.src = currentImageBlob;
+                preview.classList.remove('hidden');
+            }
         }
 
         // --- MODAL LOGIC ---
@@ -392,7 +477,6 @@
             const modal = document.getElementById('add-modal');
             const content = document.getElementById('modal-content');
             modal.classList.remove('hidden');
-            // Small delay to allow display:block to apply before opacity transition
             setTimeout(() => {
                 content.classList.remove('scale-95', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
@@ -406,14 +490,24 @@
             content.classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 modal.classList.add('hidden');
-                // Reset form
-                document.getElementById('input-name').value = '';
+                resetForm();
             }, 200);
+        }
+
+        function resetForm() {
+            document.getElementById('input-name').value = '';
+            document.getElementById('file-input').value = ''; // Reset file input
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-preview').src = '';
+            currentImageBlob = null;
         }
 
         function saveNewItem() {
             const name = document.getElementById('input-name').value;
             const type = document.getElementById('input-type').value;
+            const category = document.getElementById('input-category').value;
+            const size = document.getElementById('input-size').value;
             const color = document.getElementById('input-color').value;
 
             if (!name) return alert("Please enter a name");
@@ -422,7 +516,10 @@
                 id: Date.now(),
                 name: name,
                 type: type,
+                category: category,
+                size: size,
                 color: color,
+                image: currentImageBlob, // Uses local blob URL
                 status: 'Clean'
             };
 
@@ -433,12 +530,12 @@
 
         // --- ACTION LOGIC ---
         function updateStatus(id, newStatus, event) {
-            event.stopPropagation(); // Prevent card click
+            event.stopPropagation();
             const item = inventory.find(i => i.id === id);
             if (item) {
-                // Simple toggle logic for demo purposes
+                // Toggle logic
                 if (item.status === newStatus) {
-                    item.status = 'Clean'; // Toggle back
+                    item.status = 'Clean';
                 } else {
                     item.status = newStatus;
                 }
@@ -447,7 +544,6 @@
         }
 
         // --- INIT ---
-        // Ensure icon colors are correct on load
         renderItems();
 
     </script>
