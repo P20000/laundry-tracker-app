@@ -1,0 +1,39 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "name": "Smart Wardrobe App",
+  "description": "Full-stack application for tracking clothing inventory and wash history, deployed via Railway.",
+  
+  "services": [
+    {
+      "name": "api",
+      "project": "backend",
+      "repo": "backend",
+      "buildCommand": "npm install",
+      "startCommand": "node src/index.js",
+      "healthcheckPath": "/health",
+      "rootDir": "backend",
+      "environment": {
+        "NODE_ENV": "production",
+        "PORT": "3000",
+        "LOG_LEVEL": "info"
+      }
+    },
+    {
+      "name": "frontend",
+      "project": "frontend",
+      "repo": "frontend",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "nginx -g 'daemon off;'", 
+      "rootDir": "frontend",
+      "environment": {
+        "VITE_API_URL": "http://api.up.railway.app"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "postgres-db",
+      "type": "postgresql"
+    }
+  ]
+}

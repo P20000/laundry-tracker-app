@@ -1,0 +1,64 @@
+// This file will be generated automatically after running 'npm run db:init'
+// You will need to create the 'prisma' directory first: mkdir backend/prisma
+
+datasource db {
+  provider = "postgresql"
+  // Railway automatically sets the DATABASE_URL environment variable
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+// ----------------------------------------------------
+// 1. CLOTHING ITEM (The main catalog entry)
+// ----------------------------------------------------
+model ClothingItem {
+  id       String @id @default(uuid())
+  userId   String // User who owns the item (for multi-tenancy)
+  name     String // e.g., "Blue Denim Shirt"
+  itemType String // e.g., "Shirt", "Pants", "Dress"
+  imageUrl String // URL to the image hosted externally (Cloudinary/S3)
+
+  // Status fields for tracking
+  currentStatus ItemStatus @default(CLEAN)
+  damageLog     String? // Text field for damage notes or repair status
+
+  // Relationship to Wash History
+  washEvents WashEvent[]
+
+  // Calculated field (for easy querying, updated via API logic)
+  lastWashed DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 2. WASH HISTORY (The timeline of activity)
+// ----------------------------------------------------
+model WashEvent {
+  id String @id @default(uuid())
+
+  // Link back to the parent item
+  clothingItem   ClothingItem @relation(fields: [clothingItemId], references: [id])
+  clothingItemId String
+
+  washDate DateTime @default(now()) // When the wash was recorded
+  notes    String? // Optional note about the wash (e.g., "Delicate cycle")
+
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------
+// ENUMS (Controlled values for tracking)
+// ----------------------------------------------------
+enum ItemStatus {
+  CLEAN // Ready to wear
+  READY_FOR_WASH // Selected by user to be washed
+  WASHING // Currently being processed
+  DAMAGED // Needs repair or retired
+  OVERDUE // Has not been washed in a long time (updated by scheduled job)
+}

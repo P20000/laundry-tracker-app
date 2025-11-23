@@ -1,0 +1,74 @@
+-----------------------------------------------------------
+
+GENERAL & OPERATING SYSTEM
+
+-----------------------------------------------------------
+
+.DS_Store
+.env
+.env.*
+.vscode/
+
+-----------------------------------------------------------
+
+NODE/NPM
+
+-----------------------------------------------------------
+
+Dependency directories (both root and nested)
+
+node_modules
+**/node_modules
+npm-debug.log
+yarn-error.log
+
+Build outputs
+
+dist
+out
+build
+temp
+tmp
+
+-----------------------------------------------------------
+
+BACKEND SPECIFIC (.gitignore content from backend/ folder)
+
+-----------------------------------------------------------
+
+Compiled TypeScript (if used, usually output to 'dist' or 'build')
+
+backend/dist
+backend/build
+
+Logs
+
+backend/logs
+backend/*.log
+
+DB credentials or sensitive files
+
+backend/.env
+backend/config/local.*
+backend/secrets/
+
+-----------------------------------------------------------
+
+FRONTEND SPECIFIC (.gitignore content from frontend/ folder)
+
+-----------------------------------------------------------
+
+Build output from React/Vite
+
+frontend/build
+frontend/dist
+
+Storybook or cache files
+
+frontend/.cache
+frontend/.storybook-out
+
+VITE specific environment files
+
+frontend/.env.development
+frontend/.env.production

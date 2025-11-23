@@ -1,0 +1,35 @@
+{
+  "name": "laundry-tracker-api",
+  "version": "1.0.0",
+  "description": "Node.js/Express API for the Smart Wardrobe app, using PostgreSQL and Prisma.",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "npm run build:ts && node dist/index.js",
+    "build:ts": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "npm run build:ts",
+    
+    "db:init": "npx prisma init --datasource-provider postgresql",
+    "db:migrate:dev": "npx prisma migrate dev",
+    "db:migrate:deploy": "npx prisma migrate deploy"
+  },
+  "keywords": [
+    "express",
+    "typescript",
+    "prisma",
+    "railway"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.14.0",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "prisma": "^5.14.0",
+    "typescript": "^5.4.5"
+  }
+}
