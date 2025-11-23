@@ -1,38 +1,38 @@
-# --- STAGE 1: Build the React Application ---
+# --- STAGE 1: Dependency and Source Copy ---
 FROM node:20-alpine AS builder
 
-# Set the working directory inside the container
-WORKDIR /app/frontend
+# Set the working directory
+WORKDIR /app/backend
 
 # Copy package.json files for dependency caching
-# This assumes the build context is the root of the repo (smart-wardrobe-repo)
-COPY package.json ./
-COPY frontend/package.json ./
+COPY package.json /app/
+COPY backend/package.json ./
 
-# Install dependencies
-RUN npm install
+# Install only production dependencies (devDeps are heavy and not needed at runtime)
+# We install in the builder stage to ensure package caching is efficient
+RUN npm install --only=production
 
-# Copy all application files (React source, public assets)
-COPY frontend/ ./
+# Copy application source code
+COPY backend/src ./src
 
-# Run the production build command (outputs to 'build' folder by default)
-RUN npm run build
+# --- STAGE 2: Final Production Runtime ---
+# Use a lightweight node image for the final runtime environment
+FROM node:20-alpine AS final
 
-# --- STAGE 2: Serve the Static Application with Nginx ---
-FROM nginx:stable-alpine AS final
+# Set the working directory in the final image
+WORKDIR /app/backend
 
-# Remove default Nginx config to replace it with one suitable for React Router
-RUN rm /etc/nginx/conf.d/default.conf
+# Copy only the necessary files and dependencies from the builder stage
+# 1. Production dependencies (node_modules)
+COPY --from=builder /app/backend/node_modules ./node_modules
+# 2. Application source code and database migrations/config
+COPY backend/src ./src
+COPY backend/database ./database
+COPY backend/package.json ./
 
-# Copy a simple Nginx config that handles React's client-side routing
-# (This file needs to be created next, e.g., in frontend/nginx.conf)
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Set the port and environment variables
+ENV PORT=3000
+EXPOSE 3000
 
-# Copy the static build output from the builder stage
-COPY --from=builder /app/frontend/build /usr/share/nginx/html
-
-# Expose the default web port
-EXPOSE 80
-
-# Command to run Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Command to start the application (update this to your actual entry point)
+CMD ["node", "./src/index.js"]

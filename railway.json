@@ -1,33 +1,23 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "name": "Smart Wardrobe App",
+  "name": "laundry-tracker-app",
   "description": "Full-stack application for tracking clothing inventory and wash history, deployed via Railway.",
   
   "services": [
     {
       "name": "api",
-      "project": "backend",
-      "repo": "backend",
-      "buildCommand": "npm install",
-      "startCommand": "node src/index.js",
-      "healthcheckPath": "/health",
       "rootDir": "backend",
-      "environment": {
-        "NODE_ENV": "production",
-        "PORT": "3000",
-        "LOG_LEVEL": "info"
-      }
+      "buildCommand": "npm install && npm run build:ts",
+      "startCommand": "npx prisma migrate deploy && node dist/index.js", 
+      "healthcheckPath": "/health",
+      "type": "container"
     },
     {
       "name": "frontend",
-      "project": "frontend",
-      "repo": "frontend",
+      "rootDir": "frontend",
       "buildCommand": "npm install && npm run build",
       "startCommand": "nginx -g 'daemon off;'", 
-      "rootDir": "frontend",
-      "environment": {
-        "VITE_API_URL": "http://api.up.railway.app"
-      }
+      "type": "container"
     }
   ],
   "dependencies": [
@@ -35,5 +25,9 @@
       "name": "postgres-db",
       "type": "postgresql"
     }
-  ]
+  ],
+  
+  // NOTE: This array is empty because service definitions are handled above.
+  // We do not want Railway to try to build the root directory.
+  "build": [] 
 }
