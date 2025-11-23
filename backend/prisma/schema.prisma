@@ -4,7 +4,7 @@
 datasource db {
   provider = "postgresql"
   // Railway automatically sets the DATABASE_URL environment variable
-  url      = env("DATABASE_URL") 
+  url = env("DATABASE_URL") 
 }
 
 generator client {
@@ -12,7 +12,7 @@ generator client {
   output   = "./generated/client"
 }
 
-// ----------------------------------------------------
+// ----------------------------------------------------[Immersive content redacted for brevity.]
 // 1. CLOTHING ITEM (The main catalog entry)
 // ----------------------------------------------------
 model ClothingItem {

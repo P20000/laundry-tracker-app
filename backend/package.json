@@ -9,7 +9,6 @@
     "build:ts": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "npm run build:ts",
-    
     "db:init": "npx prisma init --datasource-provider postgresql",
     "db:migrate:dev": "npx prisma migrate dev",
     "db:migrate:deploy": "npx prisma migrate deploy"
@@ -24,6 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.14.0",
+    "cors": "^2.8.5",
     "express": "^4.19.2"
   },
   "devDependencies": {

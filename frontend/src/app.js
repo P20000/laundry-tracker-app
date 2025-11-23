@@ -193,26 +193,41 @@ function App() {
             <Typography variant="titleLarge" sx={{ mt: 2, mb: 4, color: 'primary.main' }}>
                 LW
             </Typography>
-            {navItems.map((item) => (
-                <Button
-                    key={item.name}
-                    onClick={() => setView(item.view)}
-                    variant={view === item.view ? 'contained' : 'text'}
-                    sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        mb: 2, 
-                        width: 60,
-                        height: 60,
-                        borderRadius: '16px',
-                        textTransform: 'none'
-                    }}
-                    color="primary"
-                >
-                    {item.icon}
-                    <Typography variant="caption">{item.name}</Typography>
-                </Button>
-            ))}
+            {navItems.map((item) => {
+                const isActive = view === item.view;
+                return (
+                    <Button
+                        key={item.name}
+                        onClick={() => setView(item.view)}
+                        variant={isActive ? 'contained' : 'text'}
+                        // Use a custom sx color for the icon/text when not active (M3 on-surface color)
+                        color={isActive ? 'primary' : 'inherit'} // Inherit allows the text color to be set by the surrounding Box/Typography
+                        sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            mb: 2, 
+                            width: 60,
+                            height: 60,
+                            borderRadius: '16px',
+                            textTransform: 'none',
+                            // Custom style to ensure the icon color is primary/contained when active, 
+                            // and secondary/on-surface when inactive.
+                            '& .MuiSvgIcon-root': {
+                                color: isActive ? 'inherit' : 'secondary.main', // Set icon color to secondary.main when inactive
+                            }
+                        }}
+                    >
+                        {item.icon}
+                        <Typography variant="caption" 
+                             sx={{ 
+                                 // Override the text color to ensure inactive text is darker/secondary
+                                 color: isActive ? 'inherit' : 'text.secondary' 
+                             }}>
+                            {item.name}
+                        </Typography>
+                    </Button>
+                );
+            })}
             
             {/* Add New Item FAB (High Emphasis Action) */}
             <Fab 
