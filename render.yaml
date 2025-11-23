@@ -14,7 +14,7 @@ services:
   env: mysql
 
 # -------------------------------------------------
-# 2. Backend API (Node.js/Express) - Requires explicit pathing for prisma/npm
+# 2. Backend API (Node.js/Express) - REQUIRES ABSOLUTE PATHS TO FILES
 # -------------------------------------------------
 - type: web
   name: api
@@ -22,9 +22,13 @@ services:
   env: node
   plan: free 
   
-  # CRITICAL FIX: Explicitly run NPM commands from the 'backend' folder
-  buildCommand: "cd backend && npm install && npm run build:ts"
-  startCommand: "cd backend && npx prisma migrate deploy && node dist/index.js"
+  # CRITICAL FIX: Run commands inside the backend folder where package.json lives
+  # This fixes the initial 'npm install' failure.
+  buildCommand: "npm install --prefix backend && npm run build:ts --prefix backend"
+  
+  # CRITICAL FIX: The start command must be aware of the new location of 'dist/' and 'prisma'
+  startCommand: "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && node backend/dist/index.js"
+  
   healthCheckPath: "/health"
   
   envVars:
@@ -44,7 +48,6 @@ services:
 - type: web
   name: frontend
   # Render automatically detects the Dockerfile in the rootDir.
-  # We should NOT define buildCommand/startCommand here as that enables the failing Node buildpack.
   rootDir: frontend
   env: docker # CRITICAL: Force using the Dockerfile
   plan: free
