@@ -17,10 +17,10 @@ RUN npm install
 # Build and generate Prisma client
 COPY prisma ./prisma
 COPY src ./src
-COPY shared/ ./shared/
+COPY shared ./shared
 
 # Generate the Prisma client based on the copied schema
-RUN npx prisma generate --schema=backend/prisma/schema.prisma
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 # Compile TypeScript to JavaScript
 RUN npm run build:ts
@@ -37,12 +37,12 @@ COPY --from=builder /app/node_modules ./node_modules
 # 2. Compiled JavaScript code (dist)
 COPY --from=builder /app/dist ./dist
 # 3. The generated Prisma client 
-COPY --from=builder /app/backend/prisma/generated ./prisma/generated
+COPY --from=builder /app/prisma/generated ./prisma/generated
 # 4. Migration files (required for migrate deploy)
-COPY backend/prisma/migrations ./prisma/migrations
+COPY prisma/migrations ./prisma/migrations
 # 5. Runtime configs
-COPY backend/package.json ./
-COPY backend/package-lock.json ./
+COPY package.json ./
+COPY package-lock.json ./
 
 # Set the port
 EXPOSE 3000
