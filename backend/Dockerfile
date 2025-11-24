@@ -17,7 +17,7 @@ RUN npm install
 # Build and generate Prisma client
 COPY prisma ./prisma
 COPY src ./src
-COPY ../shared ./shared
+COPY shared ./../shared
 
 # Generate the Prisma client based on the copied schema
 RUN npx prisma generate --schema=prisma/schema.prisma
