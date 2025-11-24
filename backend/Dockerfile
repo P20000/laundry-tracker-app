@@ -1,51 +1,53 @@
-# --- STAGE 1: Build the Application and Generate Client ---
+# --- STAGE 1: Build ---
 FROM node:20-alpine AS builder
 
-# Set the working directory inside the container
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy the backend's package files
-# NOTE: Because Render's Docker context is the 'backend' folder, 
-# paths MUST be relative to the 'backend' folder (i.e., NO 'backend/' prefix).
-COPY package.json ./
-COPY package-lock.json ./
-COPY tsconfig.json ./
+# 1. Copy backend dependency files
+# We copy them from the 'backend/' directory in the repo to 'backend/' in the container
+COPY backend/package.json ./backend/
+# Only copy package-lock if it exists (multi-stage builds make conditional copies tricky, 
+# but we assume you have one in backend/. If not, npm install will generate one.)
+COPY backend/package-lock.json ./backend/
 
-# Install dependencies
+# 2. Install dependencies
+WORKDIR /usr/src/app/backend
 RUN npm install
 
-# Build and generate Prisma client
-COPY prisma ./prisma
-COPY src ./src
-COPY shared ./../shared
+# 3. Copy source code (Backend + Shared)
+WORKDIR /usr/src/app
+COPY shared/ ./shared/
+COPY backend/ ./backend/
 
-# Generate the Prisma client based on the copied schema
-RUN npx prisma generate --schema=prisma/schema.prisma
+# 4. Generate Prisma Client
+WORKDIR /usr/src/app/backend
+RUN npx prisma generate
 
-# Compile TypeScript to JavaScript
+# 5. Build TypeScript
+# (rootDir is set to "../" in tsconfig, so this compiles backend and shared)
 RUN npm run build:ts
 
-# --- STAGE 2: Final Production Runtime ---
-FROM node:20-alpine AS final
+# --- STAGE 2: Production Runner ---
+FROM node:20-alpine AS runner
 
-# Set the working directory in the final image
-WORKDIR /app
+# Set working directory to backend
+WORKDIR /usr/src/app/backend
 
-# Copy only runtime essentials:
-# 1. Production dependencies (node_modules)
-COPY --from=builder /app/node_modules ./node_modules
-# 2. Compiled JavaScript code (dist)
-COPY --from=builder /app/dist ./dist
-# 3. The generated Prisma client 
-COPY --from=builder /app/prisma/generated ./prisma/generated
-# 4. Migration files (required for migrate deploy)
-COPY prisma/migrations ./prisma/migrations
-# 5. Runtime configs
-COPY package.json ./
-COPY package-lock.json ./
+# Copy necessary runtime files from builder stage
+# We pull the fully built artifacts from the builder
+COPY --from=builder /usr/src/app/backend/node_modules ./node_modules
+COPY --from=builder /usr/src/app/backend/dist ./dist
+COPY --from=builder /usr/src/app/backend/prisma ./prisma
+COPY --from=builder /usr/src/app/backend/package.json ./
 
-# Set the port
+# Note: We REMOVED the 'COPY package.json ./' lines that were causing the error.
+# The backend/package.json copied above is all we need.
+
+# Set environment
+ENV PORT=3000
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
-# FINAL START COMMAND (Run migrations, then start server)
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=prisma/schema.prisma && node dist/index.js"]
+# Start the app
+CMD ["npm", "start"]
