@@ -127,6 +127,9 @@ exports.Prisma.ClothingItemScalarFieldEnum = {
   userId: 'userId',
   name: 'name',
   itemType: 'itemType',
+  category: 'category',
+  size: 'size',
+  color: 'color',
   imageUrl: 'imageUrl',
   currentStatus: 'currentStatus',
   damageLog: 'damageLog',
@@ -146,11 +149,6 @@ exports.Prisma.WashEventScalarFieldEnum = {
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
-};
-
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {

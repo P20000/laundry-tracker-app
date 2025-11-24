@@ -1,10 +1,8 @@
-// This file will be generated automatically after running 'npm run db:init'
-// You will need to create the 'prisma' directory first: mkdir backend/prisma
+// This file is adapted for use with MySQL on Render or Local
 
 datasource db {
-  provider = "postgresql"
-  // Railway automatically sets the DATABASE_URL environment variable
-  url = env("DATABASE_URL") 
+  provider = "mysql"
+  url      = env("DATABASE_URL") 
 }
 
 generator client {
@@ -12,53 +10,55 @@ generator client {
   output   = "./generated/client"
 }
 
-// ----------------------------------------------------[Immersive content redacted for brevity.]
-// 1. CLOTHING ITEM (The main catalog entry)
+// ----------------------------------------------------
+// 1. CLOTHING ITEM
 // ----------------------------------------------------
 model ClothingItem {
-  id              String         @id @default(uuid())
-  userId          String         // User who owns the item (for multi-tenancy)
-  name            String         // e.g., "Blue Denim Shirt"
-  itemType        String         // e.g., "Shirt", "Pants", "Dress"
-  imageUrl        String         // URL to the image hosted externally (Cloudinary/S3)
+  id              String         @id @default(uuid()) @db.VarChar(36)
+  userId          String         @default("demo-user") @db.VarChar(36) // Default for MVP
+  name            String         @db.VarChar(255)
   
-  // Status fields for tracking
+  // New fields from Frontend
+  itemType        String         @db.VarChar(50)
+  category        String         @default("Casuals") @db.VarChar(50)
+  size            String         @default("M") @db.VarChar(10)
+  color           String         @default("#000000") @db.VarChar(20)
+  
+  // Use LongText for Base64 Image strings
+  imageUrl        String         @db.LongText 
+  
   currentStatus   ItemStatus     @default(CLEAN)
-  damageLog       String?        // Text field for damage notes or repair status
+  damageLog       String?        @db.Text
   
-  // Relationship to Wash History
   washEvents      WashEvent[]
+  lastWashed      DateTime?      @db.DateTime(3)
   
-  // Calculated field (for easy querying, updated via API logic)
-  lastWashed      DateTime?      
+  createdAt       DateTime       @default(now()) @db.DateTime(3)
+  updatedAt       DateTime       @updatedAt @db.DateTime(3)
   
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  @@map("clothing_items")
 }
 
 // ----------------------------------------------------
-// 2. WASH HISTORY (The timeline of activity)
+// 2. WASH HISTORY
 // ----------------------------------------------------
 model WashEvent {
-  id              String          @id @default(uuid())
-  
-  // Link back to the parent item
+  id              String          @id @default(uuid()) @db.VarChar(36)
   clothingItem    ClothingItem    @relation(fields: [clothingItemId], references: [id])
-  clothingItemId  String
+  clothingItemId  String          @db.VarChar(36)
+  washDate        DateTime        @default(now()) @db.DateTime(3)
+  notes           String?         @db.Text
+  createdAt       DateTime        @default(now()) @db.DateTime(3)
   
-  washDate        DateTime        @default(now()) // When the wash was recorded
-  notes           String?         // Optional note about the wash (e.g., "Delicate cycle")
-  
-  createdAt       DateTime        @default(now())
+  @@map("wash_events")
 }
 
-// ----------------------------------------------------
-// ENUMS (Controlled values for tracking)
-// ----------------------------------------------------
 enum ItemStatus {
-  CLEAN            // Ready to wear
-  READY_FOR_WASH   // Selected by user to be washed
-  WASHING          // Currently being processed
-  DAMAGED          // Needs repair or retired
-  OVERDUE          // Has not been washed in a long time (updated by scheduled job)
+  CLEAN            
+  READY_FOR_WASH   
+  WASHING          
+  DAMAGED          
+  OVERDUE          
+  
+  @@map("item_status")
 }

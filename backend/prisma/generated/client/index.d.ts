@@ -680,10 +680,6 @@ export namespace Prisma {
             args: Prisma.ClothingItemCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.ClothingItemCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ClothingItemPayload>[]
-          }
           delete: {
             args: Prisma.ClothingItemDeleteArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$ClothingItemPayload>
@@ -749,10 +745,6 @@ export namespace Prisma {
           createMany: {
             args: Prisma.WashEventCreateManyArgs<ExtArgs>
             result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.WashEventCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WashEventPayload>[]
           }
           delete: {
             args: Prisma.WashEventDeleteArgs<ExtArgs>
@@ -994,6 +986,9 @@ export namespace Prisma {
     userId: string | null
     name: string | null
     itemType: string | null
+    category: string | null
+    size: string | null
+    color: string | null
     imageUrl: string | null
     currentStatus: $Enums.ItemStatus | null
     damageLog: string | null
@@ -1007,6 +1002,9 @@ export namespace Prisma {
     userId: string | null
     name: string | null
     itemType: string | null
+    category: string | null
+    size: string | null
+    color: string | null
     imageUrl: string | null
     currentStatus: $Enums.ItemStatus | null
     damageLog: string | null
@@ -1020,6 +1018,9 @@ export namespace Prisma {
     userId: number
     name: number
     itemType: number
+    category: number
+    size: number
+    color: number
     imageUrl: number
     currentStatus: number
     damageLog: number
@@ -1035,6 +1036,9 @@ export namespace Prisma {
     userId?: true
     name?: true
     itemType?: true
+    category?: true
+    size?: true
+    color?: true
     imageUrl?: true
     currentStatus?: true
     damageLog?: true
@@ -1048,6 +1052,9 @@ export namespace Prisma {
     userId?: true
     name?: true
     itemType?: true
+    category?: true
+    size?: true
+    color?: true
     imageUrl?: true
     currentStatus?: true
     damageLog?: true
@@ -1061,6 +1068,9 @@ export namespace Prisma {
     userId?: true
     name?: true
     itemType?: true
+    category?: true
+    size?: true
+    color?: true
     imageUrl?: true
     currentStatus?: true
     damageLog?: true
@@ -1147,6 +1157,9 @@ export namespace Prisma {
     userId: string
     name: string
     itemType: string
+    category: string
+    size: string
+    color: string
     imageUrl: string
     currentStatus: $Enums.ItemStatus
     damageLog: string | null
@@ -1177,6 +1190,9 @@ export namespace Prisma {
     userId?: boolean
     name?: boolean
     itemType?: boolean
+    category?: boolean
+    size?: boolean
+    color?: boolean
     imageUrl?: boolean
     currentStatus?: boolean
     damageLog?: boolean
@@ -1187,24 +1203,15 @@ export namespace Prisma {
     _count?: boolean | ClothingItemCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["clothingItem"]>
 
-  export type ClothingItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    name?: boolean
-    itemType?: boolean
-    imageUrl?: boolean
-    currentStatus?: boolean
-    damageLog?: boolean
-    lastWashed?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["clothingItem"]>
 
   export type ClothingItemSelectScalar = {
     id?: boolean
     userId?: boolean
     name?: boolean
     itemType?: boolean
+    category?: boolean
+    size?: boolean
+    color?: boolean
     imageUrl?: boolean
     currentStatus?: boolean
     damageLog?: boolean
@@ -1217,7 +1224,6 @@ export namespace Prisma {
     washEvents?: boolean | ClothingItem$washEventsArgs<ExtArgs>
     _count?: boolean | ClothingItemCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type ClothingItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $ClothingItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ClothingItem"
@@ -1229,6 +1235,9 @@ export namespace Prisma {
       userId: string
       name: string
       itemType: string
+      category: string
+      size: string
+      color: string
       imageUrl: string
       currentStatus: $Enums.ItemStatus
       damageLog: string | null
@@ -1351,30 +1360,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends ClothingItemCreateManyArgs>(args?: SelectSubset<T, ClothingItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many ClothingItems and returns the data saved in the database.
-     * @param {ClothingItemCreateManyAndReturnArgs} args - Arguments to create many ClothingItems.
-     * @example
-     * // Create many ClothingItems
-     * const clothingItem = await prisma.clothingItem.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many ClothingItems and only return the `id`
-     * const clothingItemWithIdOnly = await prisma.clothingItem.createManyAndReturn({ 
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends ClothingItemCreateManyAndReturnArgs>(args?: SelectSubset<T, ClothingItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClothingItemPayload<ExtArgs>, T, "createManyAndReturn">>
 
     /**
      * Delete a ClothingItem.
@@ -1633,6 +1618,9 @@ export namespace Prisma {
     readonly userId: FieldRef<"ClothingItem", 'String'>
     readonly name: FieldRef<"ClothingItem", 'String'>
     readonly itemType: FieldRef<"ClothingItem", 'String'>
+    readonly category: FieldRef<"ClothingItem", 'String'>
+    readonly size: FieldRef<"ClothingItem", 'String'>
+    readonly color: FieldRef<"ClothingItem", 'String'>
     readonly imageUrl: FieldRef<"ClothingItem", 'String'>
     readonly currentStatus: FieldRef<"ClothingItem", 'ItemStatus'>
     readonly damageLog: FieldRef<"ClothingItem", 'String'>
@@ -1840,21 +1828,6 @@ export namespace Prisma {
    * ClothingItem createMany
    */
   export type ClothingItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many ClothingItems.
-     */
-    data: ClothingItemCreateManyInput | ClothingItemCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * ClothingItem createManyAndReturn
-   */
-  export type ClothingItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ClothingItem
-     */
-    select?: ClothingItemSelectCreateManyAndReturn<ExtArgs> | null
     /**
      * The data used to create many ClothingItems.
      */
@@ -2154,14 +2127,6 @@ export namespace Prisma {
     clothingItem?: boolean | ClothingItemDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["washEvent"]>
 
-  export type WashEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    clothingItemId?: boolean
-    washDate?: boolean
-    notes?: boolean
-    createdAt?: boolean
-    clothingItem?: boolean | ClothingItemDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["washEvent"]>
 
   export type WashEventSelectScalar = {
     id?: boolean
@@ -2172,9 +2137,6 @@ export namespace Prisma {
   }
 
   export type WashEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    clothingItem?: boolean | ClothingItemDefaultArgs<ExtArgs>
-  }
-  export type WashEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     clothingItem?: boolean | ClothingItemDefaultArgs<ExtArgs>
   }
 
@@ -2305,30 +2267,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends WashEventCreateManyArgs>(args?: SelectSubset<T, WashEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many WashEvents and returns the data saved in the database.
-     * @param {WashEventCreateManyAndReturnArgs} args - Arguments to create many WashEvents.
-     * @example
-     * // Create many WashEvents
-     * const washEvent = await prisma.washEvent.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many WashEvents and only return the `id`
-     * const washEventWithIdOnly = await prisma.washEvent.createManyAndReturn({ 
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends WashEventCreateManyAndReturnArgs>(args?: SelectSubset<T, WashEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WashEventPayload<ExtArgs>, T, "createManyAndReturn">>
 
     /**
      * Delete a WashEvent.
@@ -2797,25 +2735,6 @@ export namespace Prisma {
   }
 
   /**
-   * WashEvent createManyAndReturn
-   */
-  export type WashEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the WashEvent
-     */
-    select?: WashEventSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * The data used to create many WashEvents.
-     */
-    data: WashEventCreateManyInput | WashEventCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: WashEventIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
    * WashEvent update
    */
   export type WashEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2939,6 +2858,9 @@ export namespace Prisma {
     userId: 'userId',
     name: 'name',
     itemType: 'itemType',
+    category: 'category',
+    size: 'size',
+    color: 'color',
     imageUrl: 'imageUrl',
     currentStatus: 'currentStatus',
     damageLog: 'damageLog',
@@ -2969,14 +2891,6 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const QueryMode: {
-    default: 'default',
-    insensitive: 'insensitive'
-  };
-
-  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
   export const NullsOrder: {
     first: 'first',
     last: 'last'
@@ -2998,23 +2912,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'String[]'
-   */
-  export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
-    
-
-
-  /**
    * Reference to a field of type 'ItemStatus'
    */
   export type EnumItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ItemStatus'>
-    
-
-
-  /**
-   * Reference to a field of type 'ItemStatus[]'
-   */
-  export type ListEnumItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ItemStatus[]'>
     
 
 
@@ -3026,23 +2926,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int[]'
-   */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
   /**
    * Deep Input Types
@@ -3057,6 +2943,9 @@ export namespace Prisma {
     userId?: StringFilter<"ClothingItem"> | string
     name?: StringFilter<"ClothingItem"> | string
     itemType?: StringFilter<"ClothingItem"> | string
+    category?: StringFilter<"ClothingItem"> | string
+    size?: StringFilter<"ClothingItem"> | string
+    color?: StringFilter<"ClothingItem"> | string
     imageUrl?: StringFilter<"ClothingItem"> | string
     currentStatus?: EnumItemStatusFilter<"ClothingItem"> | $Enums.ItemStatus
     damageLog?: StringNullableFilter<"ClothingItem"> | string | null
@@ -3071,6 +2960,9 @@ export namespace Prisma {
     userId?: SortOrder
     name?: SortOrder
     itemType?: SortOrder
+    category?: SortOrder
+    size?: SortOrder
+    color?: SortOrder
     imageUrl?: SortOrder
     currentStatus?: SortOrder
     damageLog?: SortOrderInput | SortOrder
@@ -3088,6 +2980,9 @@ export namespace Prisma {
     userId?: StringFilter<"ClothingItem"> | string
     name?: StringFilter<"ClothingItem"> | string
     itemType?: StringFilter<"ClothingItem"> | string
+    category?: StringFilter<"ClothingItem"> | string
+    size?: StringFilter<"ClothingItem"> | string
+    color?: StringFilter<"ClothingItem"> | string
     imageUrl?: StringFilter<"ClothingItem"> | string
     currentStatus?: EnumItemStatusFilter<"ClothingItem"> | $Enums.ItemStatus
     damageLog?: StringNullableFilter<"ClothingItem"> | string | null
@@ -3102,6 +2997,9 @@ export namespace Prisma {
     userId?: SortOrder
     name?: SortOrder
     itemType?: SortOrder
+    category?: SortOrder
+    size?: SortOrder
+    color?: SortOrder
     imageUrl?: SortOrder
     currentStatus?: SortOrder
     damageLog?: SortOrderInput | SortOrder
@@ -3121,6 +3019,9 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"ClothingItem"> | string
     name?: StringWithAggregatesFilter<"ClothingItem"> | string
     itemType?: StringWithAggregatesFilter<"ClothingItem"> | string
+    category?: StringWithAggregatesFilter<"ClothingItem"> | string
+    size?: StringWithAggregatesFilter<"ClothingItem"> | string
+    color?: StringWithAggregatesFilter<"ClothingItem"> | string
     imageUrl?: StringWithAggregatesFilter<"ClothingItem"> | string
     currentStatus?: EnumItemStatusWithAggregatesFilter<"ClothingItem"> | $Enums.ItemStatus
     damageLog?: StringNullableWithAggregatesFilter<"ClothingItem"> | string | null
@@ -3186,9 +3087,12 @@ export namespace Prisma {
 
   export type ClothingItemCreateInput = {
     id?: string
-    userId: string
+    userId?: string
     name: string
     itemType: string
+    category?: string
+    size?: string
+    color?: string
     imageUrl: string
     currentStatus?: $Enums.ItemStatus
     damageLog?: string | null
@@ -3200,9 +3104,12 @@ export namespace Prisma {
 
   export type ClothingItemUncheckedCreateInput = {
     id?: string
-    userId: string
+    userId?: string
     name: string
     itemType: string
+    category?: string
+    size?: string
+    color?: string
     imageUrl: string
     currentStatus?: $Enums.ItemStatus
     damageLog?: string | null
@@ -3217,6 +3124,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null
@@ -3231,6 +3141,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null
@@ -3242,9 +3155,12 @@ export namespace Prisma {
 
   export type ClothingItemCreateManyInput = {
     id?: string
-    userId: string
+    userId?: string
     name: string
     itemType: string
+    category?: string
+    size?: string
+    color?: string
     imageUrl: string
     currentStatus?: $Enums.ItemStatus
     damageLog?: string | null
@@ -3258,6 +3174,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null
@@ -3271,6 +3190,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null
@@ -3336,8 +3258,8 @@ export namespace Prisma {
 
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    in?: string[]
+    notIn?: string[]
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3345,21 +3267,20 @@ export namespace Prisma {
     contains?: string | StringFieldRefInput<$PrismaModel>
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
   export type EnumItemStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ItemStatus | EnumItemStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ItemStatus[]
+    notIn?: $Enums.ItemStatus[]
     not?: NestedEnumItemStatusFilter<$PrismaModel> | $Enums.ItemStatus
   }
 
   export type StringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3367,14 +3288,13 @@ export namespace Prisma {
     contains?: string | StringFieldRefInput<$PrismaModel>
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3384,8 +3304,8 @@ export namespace Prisma {
 
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3413,6 +3333,9 @@ export namespace Prisma {
     userId?: SortOrder
     name?: SortOrder
     itemType?: SortOrder
+    category?: SortOrder
+    size?: SortOrder
+    color?: SortOrder
     imageUrl?: SortOrder
     currentStatus?: SortOrder
     damageLog?: SortOrder
@@ -3426,6 +3349,9 @@ export namespace Prisma {
     userId?: SortOrder
     name?: SortOrder
     itemType?: SortOrder
+    category?: SortOrder
+    size?: SortOrder
+    color?: SortOrder
     imageUrl?: SortOrder
     currentStatus?: SortOrder
     damageLog?: SortOrder
@@ -3439,6 +3365,9 @@ export namespace Prisma {
     userId?: SortOrder
     name?: SortOrder
     itemType?: SortOrder
+    category?: SortOrder
+    size?: SortOrder
+    color?: SortOrder
     imageUrl?: SortOrder
     currentStatus?: SortOrder
     damageLog?: SortOrder
@@ -3449,8 +3378,8 @@ export namespace Prisma {
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    in?: string[]
+    notIn?: string[]
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3458,7 +3387,6 @@ export namespace Prisma {
     contains?: string | StringFieldRefInput<$PrismaModel>
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
     not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
@@ -3467,8 +3395,8 @@ export namespace Prisma {
 
   export type EnumItemStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ItemStatus | EnumItemStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ItemStatus[]
+    notIn?: $Enums.ItemStatus[]
     not?: NestedEnumItemStatusWithAggregatesFilter<$PrismaModel> | $Enums.ItemStatus
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumItemStatusFilter<$PrismaModel>
@@ -3477,8 +3405,8 @@ export namespace Prisma {
 
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3486,7 +3414,6 @@ export namespace Prisma {
     contains?: string | StringFieldRefInput<$PrismaModel>
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
     not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
@@ -3495,8 +3422,8 @@ export namespace Prisma {
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3509,8 +3436,8 @@ export namespace Prisma {
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3628,8 +3555,8 @@ export namespace Prisma {
 
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    in?: string[]
+    notIn?: string[]
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3642,15 +3569,15 @@ export namespace Prisma {
 
   export type NestedEnumItemStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ItemStatus | EnumItemStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ItemStatus[]
+    notIn?: $Enums.ItemStatus[]
     not?: NestedEnumItemStatusFilter<$PrismaModel> | $Enums.ItemStatus
   }
 
   export type NestedStringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3663,8 +3590,8 @@ export namespace Prisma {
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3674,8 +3601,8 @@ export namespace Prisma {
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3685,8 +3612,8 @@ export namespace Prisma {
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    in?: string[]
+    notIn?: string[]
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3702,8 +3629,8 @@ export namespace Prisma {
 
   export type NestedIntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
     lt?: number | IntFieldRefInput<$PrismaModel>
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
@@ -3713,8 +3640,8 @@ export namespace Prisma {
 
   export type NestedEnumItemStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ItemStatus | EnumItemStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ItemStatus[] | ListEnumItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ItemStatus[]
+    notIn?: $Enums.ItemStatus[]
     not?: NestedEnumItemStatusWithAggregatesFilter<$PrismaModel> | $Enums.ItemStatus
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumItemStatusFilter<$PrismaModel>
@@ -3723,8 +3650,8 @@ export namespace Prisma {
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
@@ -3740,8 +3667,8 @@ export namespace Prisma {
 
   export type NestedIntNullableFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
     lt?: number | IntFieldRefInput<$PrismaModel>
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
@@ -3751,8 +3678,8 @@ export namespace Prisma {
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3765,8 +3692,8 @@ export namespace Prisma {
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
     lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -3830,9 +3757,12 @@ export namespace Prisma {
 
   export type ClothingItemCreateWithoutWashEventsInput = {
     id?: string
-    userId: string
+    userId?: string
     name: string
     itemType: string
+    category?: string
+    size?: string
+    color?: string
     imageUrl: string
     currentStatus?: $Enums.ItemStatus
     damageLog?: string | null
@@ -3843,9 +3773,12 @@ export namespace Prisma {
 
   export type ClothingItemUncheckedCreateWithoutWashEventsInput = {
     id?: string
-    userId: string
+    userId?: string
     name: string
     itemType: string
+    category?: string
+    size?: string
+    color?: string
     imageUrl: string
     currentStatus?: $Enums.ItemStatus
     damageLog?: string | null
@@ -3875,6 +3808,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null
@@ -3888,6 +3824,9 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     itemType?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
     imageUrl?: StringFieldUpdateOperationsInput | string
     currentStatus?: EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
     damageLog?: NullableStringFieldUpdateOperationsInput | string | null

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
-    "rootDir": "./",             // Changed from "./src" to "./" to include shared/types
+    "rootDir": "./", // Start in the backend folder!
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -11,6 +11,10 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "prisma/**/*", "shared/**/*"], // Expanded includes to catch prisma and shared files
+  "include": [
+    "src/**/*",
+    "prisma/**/*",
+    "../shared/**/*" // Keep if importing types from shared
+  ],
   "exclude": ["node_modules", "dist"]
 }

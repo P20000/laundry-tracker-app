@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-// Note: ItemStatus is exported directly from the Prisma client package
-import { PrismaClient, ItemStatus } from '@prisma/client'; 
-// Path fix: Use simplified path from the new rootDir (backend/)
+import { PrismaClient, ItemStatus } from '@prisma/client';
+// FIX: Go up 3 levels to reach the root, then into shared/types
 import { INewItemPayload } from './../../shared/types'; 
 
 const prisma = new PrismaClient();
 
-// Helper function to safely extract error messages
 const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) return error.message;
     return String(error);
@@ -14,27 +12,24 @@ const getErrorMessage = (error: unknown): string => {
 
 // --- CRUD Operations ---
 
-/**
- * @route POST /api/v1/items
- * @description Creates a new clothing item in the catalog.
- */
 export const createItem = async (req: Request, res: Response) => {
-    // We assume the user ID would be pulled from an authentication token (req.user.id)
-    // For MVP, we extract all fields directly from the body.
-    const { name, itemType, imageUrl, userId } = req.body as INewItemPayload;
+    const { name, itemType, category, size, color, imageUrl } = req.body as INewItemPayload;
 
-    if (!name || !itemType || !imageUrl || !userId) {
-        return res.status(400).json({ error: 'Missing required fields: name, itemType, imageUrl, userId.' });
+    if (!name || !itemType) {
+        return res.status(400).json({ error: 'Missing required fields.' });
     }
 
     try {
         const newItem = await prisma.clothingItem.create({
             data: {
-                userId: userId,
-                name: name,
-                itemType: itemType,
-                imageUrl: imageUrl,
-                currentStatus: ItemStatus.CLEAN, // New items are always clean
+                userId: 'demo-user', // Hardcoded for MVP
+                name,
+                itemType,
+                category: category || 'Casuals',
+                size: size || 'M',
+                color: color || '#000000',
+                imageUrl: imageUrl || '',
+                currentStatus: ItemStatus.CLEAN,
             },
         });
         return res.status(201).json(newItem);
@@ -44,95 +39,66 @@ export const createItem = async (req: Request, res: Response) => {
     }
 };
 
-// --- Query Operations ---
-
-/**
- * @route GET /api/v1/items
- * @description Retrieves all clothing items in the catalog.
- */
 export const getAllItems = async (req: Request, res: Response) => {
     try {
-        const items = await prisma.clothingItem.findMany({
-            orderBy: { createdAt: 'desc' }
-        });
+        const items = await prisma.clothingItem.findMany({ orderBy: { createdAt: 'desc' } });
         return res.status(200).json(items);
     } catch (error: unknown) {
-        console.error('Error fetching all items:', error);
-        return res.status(500).json({ error: 'Failed to fetch catalog.', details: getErrorMessage(error) });
+        return res.status(500).json({ error: 'Failed to fetch catalog.' });
     }
 };
 
-/**
- * @route GET /api/v1/laundry
- * @description Retrieves items marked as READY_FOR_WASH or OVERDUE.
- */
 export const getLaundryItems = async (req: Request, res: Response) => {
     try {
         const items = await prisma.clothingItem.findMany({
-            where: {
-                currentStatus: {
-                    in: [ItemStatus.READY_FOR_WASH, ItemStatus.OVERDUE],
-                }
-            },
-            orderBy: { lastWashed: 'asc' } // Show items needing wash most urgently
+            where: { currentStatus: { in: [ItemStatus.READY_FOR_WASH, ItemStatus.OVERDUE] } },
+            orderBy: { lastWashed: 'asc' }
         });
         return res.status(200).json(items);
     } catch (error: unknown) {
-        console.error('Error fetching laundry items:', error);
-        return res.status(500).json({ error: 'Failed to fetch laundry list.', details: getErrorMessage(error) });
+        return res.status(500).json({ error: 'Failed to fetch laundry list.' });
     }
 };
 
-/**
- * @route GET /api/v1/damaged
- * @description Retrieves items marked as DAMAGED.
- */
 export const getDamagedItems = async (req: Request, res: Response) => {
     try {
         const items = await prisma.clothingItem.findMany({
-            where: {
-                currentStatus: ItemStatus.DAMAGED,
-            },
+            where: { currentStatus: ItemStatus.DAMAGED },
             orderBy: { updatedAt: 'desc' }
         });
         return res.status(200).json(items);
     } catch (error: unknown) {
-        console.error('Error fetching damaged items:', error);
-        return res.status(500).json({ error: 'Failed to fetch damaged log.', details: getErrorMessage(error) });
+        return res.status(500).json({ error: 'Failed to fetch damaged log.' });
     }
 };
 
-
-// --- Action/Update Operations ---
-
-/**
- * @route POST /api/v1/items/:id/wash
- * @description Marks an item as washed and records a new wash event.
- */
 export const markAsWashed = async (req: Request, res: Response) => {
     const { id } = req.params;
-
     try {
-        // 1. Create a new wash history event
-        await prisma.washEvent.create({
-            data: {
-                clothingItemId: id,
-                notes: req.body.notes || null,
-            },
-        });
-
-        // 2. Update the ClothingItem status and lastWashed timestamp
+        await prisma.washEvent.create({ data: { clothingItemId: id, notes: req.body.notes || null } });
         const updatedItem = await prisma.clothingItem.update({
             where: { id: id },
-            data: {
-                currentStatus: ItemStatus.CLEAN,
-                lastWashed: new Date(),
-            },
+            data: { currentStatus: ItemStatus.CLEAN, lastWashed: new Date() },
         });
-
-        return res.status(200).json({ message: 'Item marked as washed and timeline updated.', item: updatedItem });
+        return res.status(200).json(updatedItem);
     } catch (error: unknown) {
-        console.error(`Error marking item ${id} as washed:`, error);
-        return res.status(500).json({ error: 'Failed to process wash event.', details: getErrorMessage(error) });
+        return res.status(500).json({ error: 'Failed to process wash event.' });
+    }
+};
+
+// New: Generic status update (e.g. reporting damage or marking ready for wash)
+export const updateItemStatus = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body; // Expects "DAMAGED", "READY_FOR_WASH", etc.
+
+    try {
+        // Map frontend status strings to Prisma Enums if needed, or assume direct match
+        const updatedItem = await prisma.clothingItem.update({
+            where: { id: id },
+            data: { currentStatus: status },
+        });
+        return res.status(200).json(updatedItem);
+    } catch (error: unknown) {
+        return res.status(500).json({ error: 'Failed to update status.' });
     }
 };
