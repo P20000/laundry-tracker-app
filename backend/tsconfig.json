@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
-    "rootDir": "./", // Start in the backend folder!
+    
+    // FIX: Removed "rootDir" entirely. 
+    // TypeScript will auto-infer the root as the common parent of 'backend' and 'shared'.
+    
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -11,10 +14,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "include": [
-    "src/**/*",
-    "prisma/**/*",
-    "../shared/**/*" // Keep if importing types from shared
-  ],
+  "include": ["src/**/*", "prisma/**/*", "../shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

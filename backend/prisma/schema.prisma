@@ -7,7 +7,8 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/client"
+  // FIX: Removed 'output' line so it generates into node_modules/@prisma/client
+  // This fixes the "Module has no exported member ItemStatus" error.
 }
 
 // ----------------------------------------------------
@@ -15,16 +16,15 @@ generator client {
 // ----------------------------------------------------
 model ClothingItem {
   id              String         @id @default(uuid()) @db.VarChar(36)
-  userId          String         @default("demo-user") @db.VarChar(36) // Default for MVP
+  userId          String         @default("demo-user") @db.VarChar(36) 
   name            String         @db.VarChar(255)
   
-  // New fields from Frontend
+  // New fields
   itemType        String         @db.VarChar(50)
   category        String         @default("Casuals") @db.VarChar(50)
   size            String         @default("M") @db.VarChar(10)
   color           String         @default("#000000") @db.VarChar(20)
   
-  // Use LongText for Base64 Image strings
   imageUrl        String         @db.LongText 
   
   currentStatus   ItemStatus     @default(CLEAN)
