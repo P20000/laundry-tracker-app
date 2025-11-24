@@ -8,7 +8,6 @@
     "dev": "npm run build:ts && node dist/backend/src/index.js",
     "build:ts": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "npm run build:ts",
     "db:init": "npx prisma init --datasource-provider mysql",
     "db:migrate:dev": "npx prisma migrate dev --schema=prisma/schema.prisma",
     "db:migrate:deploy": "npx prisma migrate deploy --schema=prisma/schema.prisma",
