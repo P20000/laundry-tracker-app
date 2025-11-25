@@ -58,18 +58,51 @@ const getAuthHeaders = (token) => ({
 
 // --- Sub-Components (EmptyState, ItemCard) ---
 
-const EmptyState = ({ view }) => {
+// Updated EmptyState to include an Action Button
+const EmptyState = ({ view, onAddClick }) => {
     let message = "Your Wardrobe is Empty";
-    let description = "Click the '+' button to catalogue your first item.";
+    let description = "Click the button below to catalogue your first item.";
+    let showAddButton = false;
     
-    if (view === 'laundry') { message = "No Clothes Ready for Wash"; description = "Mark items for washing."; }
-    if (view === 'damaged') { message = "No Items Needing Repair"; description = "Log damaged items here."; }
+    if (view === 'catalog') { 
+        showAddButton = true;
+    } else if (view === 'laundry') { 
+        message = "No Clothes Ready for Wash"; 
+        description = "Mark items for washing or wait for them to become overdue."; 
+    } else if (view === 'damaged') { 
+        message = "No Items Needing Repair"; 
+        description = "Log damaged items here to keep track of repairs."; 
+    }
 
     return (
-        <Box sx={{ p: 6, mt: 5, borderRadius: 4, bgcolor: 'surfaceVariant.main', textAlign: 'center' }}>
-            <ArchiveIcon sx={{ fontSize: 60, color: 'secondary.main', mb: 2, opacity: 0.5 }} />
-            <Typography variant="h5" sx={{ color: 'text.primary', mb: 1 }}>{message}</Typography>
-            <Typography variant="body1" color="text.secondary">{description}</Typography>
+        <Box sx={{ 
+            p: 8, 
+            mt: 5, 
+            borderRadius: 4, 
+            bgcolor: 'surfaceVariant.main', 
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2
+        }}>
+            <ArchiveIcon sx={{ fontSize: 64, color: 'secondary.main', opacity: 0.5 }} />
+            <Box>
+                <Typography variant="h5" sx={{ color: 'text.primary', mb: 1 }}>{message}</Typography>
+                <Typography variant="body1" color="text.secondary">{description}</Typography>
+            </Box>
+            
+            {showAddButton && (
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    startIcon={<AddIcon />}
+                    onClick={onAddClick}
+                    sx={{ mt: 2, px: 4, py: 1.5 }}
+                >
+                    Add First Item
+                </Button>
+            )}
         </Box>
     );
 };
@@ -160,7 +193,6 @@ const AuthCard = ({ setLoggedIn }) => {
         event.preventDefault();
         setMessage('');
 
-        // Match backend routes: /signup or /login
         const endpoint = isSignup ? '/signup' : '/login';
         
         try {
@@ -517,16 +549,19 @@ function App() {
                 {/* Main Content */}
                 <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                     
+                    {/* Content Header (Mobile/Desktop) */}
                     <Box sx={{ p: { xs: 2, md: 4 }, pb: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="displayMedium" color="text.primary">
                             {currentPageTitle}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={1}>
+                             {/* Mobile Logout Button */}
                              {isMobile && (
                                 <IconButton onClick={handleLogout} color="error" title="Logout">
                                     <CloseIcon />
                                 </IconButton>
                             )}
+                            {/* Mobile Add Button */}
                             {isMobile && (
                                 <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
@@ -535,9 +570,11 @@ function App() {
                         </Box>
                     </Box>
 
+                    {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {items.length === 0 ? (
-                            <EmptyState view={view} />
+                            // Pass setIsModalOpen to EmptyState to trigger modal
+                            <EmptyState view={view} onAddClick={() => setIsModalOpen(true)} />
                         ) : (
                             <Grid container spacing={2}>
                                 {items.map(item => (
@@ -549,6 +586,7 @@ function App() {
                         )}
                     </Box>
 
+                    {/* Mobile Bottom Nav */}
                     {isMobile && (
                          <Box sx={{ 
                             position: 'fixed', bottom: 0, left: 0, right: 0, 
@@ -581,6 +619,7 @@ function App() {
                 </Box>
             </Box>
 
+            {/* Add Item Dialog */}
             <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     New Item
