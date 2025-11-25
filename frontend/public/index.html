@@ -3,253 +3,657 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wardrobe | Login</title>
+    <title>Smart Wardrobe</title>
     
-    <!-- Fonts & Icons -->
+    <!-- Fonts: Roboto for M3 Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <style>
-        /* --- M3 Design Tokens (Teal Theme) --- */
+        /* --- M3 Design Tokens --- */
         :root {
-            --md-sys-color-primary: #006A60;
+            --md-sys-color-primary: #6750A4;
             --md-sys-color-on-primary: #FFFFFF;
-            --md-sys-color-primary-container: #74F8E5;
-            --md-sys-color-on-primary-container: #00201C;
-            --md-sys-color-secondary-container: #CCE8E3;
-            --md-sys-color-on-secondary-container: #05201C;
-            --md-sys-color-surface: #F7FAF9;
-            --md-sys-color-on-surface: #191C1C;
-            --md-sys-color-surface-variant: #DAE5E1;
-            --md-sys-color-outline: #6F7977;
+            --md-sys-color-primary-container: #EADDFF;
+            --md-sys-color-on-primary-container: #21005D;
+            
+            --md-sys-color-secondary: #625B71;
+            --md-sys-color-secondary-container: #E8DEF8;
+            --md-sys-color-on-secondary-container: #1D192B;
+            
+            --md-sys-color-error: #B3261E;
+            --md-sys-color-on-error: #FFFFFF;
+            
+            --md-sys-color-background: #FFFBFE;
+            --md-sys-color-on-background: #1C1B1F;
+            --md-sys-color-surface: #FFFBFE;
+            --md-sys-color-on-surface: #1C1B1F;
+            --md-sys-color-surface-variant: #E7E0EC;
+            --md-sys-color-on-surface-variant: #49454F;
+            --md-sys-color-outline: #79747E;
         }
 
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: var(--md-sys-color-surface);
-            color: var(--md-sys-color-on-surface);
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* Prevent body scroll, content area handles scrolling */
         }
 
-        /* Auth Screen Overlay */
-        #auth-screen {
-            position: fixed;
-            inset: 0;
-            background-color: var(--md-sys-color-surface);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s ease;
-        }
+        /* --- Animations --- */
+        .fade-enter { opacity: 0; transform: scale(0.98); }
+        .fade-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
+        .fade-exit { opacity: 1; }
+        .fade-exit-active { opacity: 0; transition: opacity 200ms; pointer-events: none; }
 
-        /* Utilities */
-        .hidden { display: none !important; }
-        .opacity-0 { opacity: 0; pointer-events: none; }
-        
-        /* M3 Button */
+        /* --- M3 Components --- */
         .m3-btn {
             height: 40px;
             border-radius: 20px;
             padding: 0 24px;
             font-weight: 500;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
         }
         .btn-filled {
             background: var(--md-sys-color-primary);
             color: var(--md-sys-color-on-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .btn-filled:hover { opacity: 0.9; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-filled:hover { background: #5F4899; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
         
-        .m3-input {
-            width: 100%;
-            height: 56px;
+        .btn-text {
+            background: transparent;
+            color: var(--md-sys-color-primary);
+        }
+        .btn-text:hover { background: rgba(103, 80, 164, 0.08); }
+
+        /* Input Fields */
+        .m3-input-container {
+            position: relative;
             background: var(--md-sys-color-surface-variant);
             border-radius: 4px 4px 0 0;
             border-bottom: 1px solid var(--md-sys-color-outline);
+            height: 56px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             padding: 0 16px;
+            transition: background 0.2s;
+        }
+        .m3-input-container:hover { background: #E1DDE4; }
+        .m3-input-container:focus-within { border-bottom: 2px solid var(--md-sys-color-primary); }
+        
+        .m3-input {
+            background: transparent;
+            border: none;
+            outline: none;
             font-size: 16px;
             color: var(--md-sys-color-on-surface);
-            outline: none;
+            width: 100%;
+            height: 100%;
+            padding-top: 16px;
         }
-        .m3-input:focus { border-bottom: 2px solid var(--md-sys-color-primary); }
+        
+        .m3-label {
+            position: absolute;
+            top: 8px;
+            left: 16px;
+            font-size: 12px;
+            color: var(--md-sys-color-on-surface-variant);
+            pointer-events: none;
+        }
 
-        /* Main App Blur when locked */
-        #main-app { transition: filter 0.3s; }
-        .blur-app { filter: blur(8px); pointer-events: none; }
+        /* --- Navigation Rail Buttons --- */
+        .nav-rail-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            padding: 12px 0;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: 0.2s;
+        }
+        .nav-icon-container {
+            width: 56px;
+            height: 32px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--md-sys-color-on-surface-variant);
+            transition: 0.2s;
+        }
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+        .nav-rail-btn.active .nav-icon-container {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+        .nav-rail-btn.active .nav-label {
+            color: var(--md-sys-color-on-surface);
+            font-weight: 700;
+        }
+
+        /* Scrollbar hiding */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="relative">
 
-    <!-- ==================== AUTH SCREEN (Login/Signup) ==================== -->
-    <div id="auth-screen">
-        <div class="w-full max-w-sm p-6 flex flex-col gap-6 bg-white rounded-[28px] shadow-xl m-4">
+    <!-- ==================== 1. AUTHENTICATION SCREEN ==================== -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--md-sys-color-background)] transition-all duration-300">
+        <div class="w-full max-w-sm p-8 rounded-[28px] bg-[var(--md-sys-color-surface)] shadow-xl border border-[var(--md-sys-color-outline)]/10">
             
-            <div class="text-center">
-                <div class="w-12 h-12 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--md-sys-color-secondary-container)] flex items-center justify-center text-[var(--md-sys-color-on-secondary-container)]">
                     <i data-lucide="lock" class="w-6 h-6"></i>
                 </div>
                 <h1 id="auth-title" class="text-2xl font-normal text-[var(--md-sys-color-on-surface)]">Sign In</h1>
-                <p id="auth-subtitle" class="text-sm text-gray-500 mt-1">Welcome back to your wardrobe.</p>
+                <p class="text-sm text-[var(--md-sys-color-on-surface-variant)] mt-2">Manage your digital wardrobe</p>
             </div>
 
-            <form id="auth-form" class="flex flex-col gap-4" onsubmit="handleAuth(event)">
-                <div>
-                    <input type="email" id="email" placeholder="Email" class="m3-input" required>
+            <!-- Form -->
+            <form id="auth-form" onsubmit="handleAuth(event)" class="flex flex-col gap-4">
+                <div class="m3-input-container">
+                    <label class="m3-label">Email</label>
+                    <input type="email" id="email" class="m3-input" placeholder=" " required>
                 </div>
-                <div>
-                    <input type="password" id="password" placeholder="Password" class="m3-input" required>
+                <div class="m3-input-container">
+                    <label class="m3-label">Password</label>
+                    <input type="password" id="password" class="m3-input" placeholder=" " required>
                 </div>
                 
-                <div id="error-msg" class="text-[var(--md-sys-color-error)] text-sm text-center hidden"></div>
+                <div id="auth-error" class="hidden text-[var(--md-sys-color-error)] text-sm text-center bg-red-50 p-2 rounded"></div>
 
-                <button type="submit" class="m3-btn btn-filled w-full mt-2">
-                    <span id="btn-text">Log In</span>
+                <button type="submit" class="m3-btn btn-filled w-full mt-4">
+                    <span id="auth-btn-text">Log In</span>
                 </button>
             </form>
 
-            <div class="text-center">
-                <button onclick="toggleAuthMode()" class="text-[var(--md-sys-color-primary)] text-sm font-medium hover:underline">
-                    <span id="toggle-text">Don't have an account? Sign Up</span>
+            <!-- Toggle -->
+            <div class="mt-6 text-center">
+                <button onclick="toggleAuthMode()" class="text-sm font-medium text-[var(--md-sys-color-primary)] hover:underline">
+                    <span id="auth-toggle-text">Don't have an account? Sign Up</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ==================== MAIN APP (Initially Hidden/Blurred) ==================== -->
-    <div id="main-app" class="flex h-screen w-screen overflow-hidden blur-app">
+    <!-- ==================== 2. MAIN APP LAYOUT ==================== -->
+    <div id="main-app" class="flex h-screen w-screen opacity-0 pointer-events-none transition-opacity duration-500">
         
-        <!-- Navigation Rail -->
-        <nav class="hidden md:flex w-20 flex-col items-center py-4 border-r border-gray-200 bg-white z-20">
-            <button class="mb-8 p-3 rounded-full text-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-secondary-container)]">
-                <i data-lucide="checkroom" class="w-6 h-6"></i>
+        <!-- Navigation Rail (Desktop) -->
+        <nav class="hidden md:flex w-20 flex-col items-center py-4 bg-[var(--md-sys-color-surface)] border-r border-[var(--md-sys-color-outline)]/20 z-20">
+            <!-- Menu Icon (Logout) -->
+            <button onclick="logout()" class="mb-8 p-3 rounded-full hover:bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]" title="Logout">
+                <i data-lucide="log-out" class="w-6 h-6"></i>
             </button>
-            
-            <div class="flex flex-col gap-4 w-full items-center">
-                <button class="p-3 rounded-2xl bg-[var(--md-sys-color-secondary-container)]">
-                    <i data-lucide="layout-grid" class="w-6 h-6 text-[var(--md-sys-color-on-secondary-container)]"></i>
+
+            <!-- FAB (Add Item) -->
+            <button onclick="openModal()" class="w-14 h-14 mb-8 rounded-[16px] bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Nav Items -->
+            <div class="flex flex-col gap-2 w-full">
+                <button class="nav-rail-btn active" onclick="switchView('catalog', this)">
+                    <div class="nav-icon-container"><i data-lucide="shirt" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Catalog</span>
                 </button>
-                <!-- Logout -->
-                <button onclick="logout()" class="mt-auto mb-4 p-3 text-red-600 hover:bg-red-50 rounded-full" title="Logout">
-                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                <button class="nav-rail-btn" onclick="switchView('laundry', this)">
+                    <div class="nav-icon-container"><i data-lucide="washing-machine" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Laundry</span>
+                </button>
+                <button class="nav-rail-btn" onclick="switchView('damaged', this)">
+                    <div class="nav-icon-container"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Damaged</span>
                 </button>
             </div>
         </nav>
 
-        <!-- Main Content -->
+        <!-- Content Area -->
         <main class="flex-1 flex flex-col relative bg-[var(--md-sys-color-surface)]">
-            <header class="h-16 flex items-center justify-between px-6 border-b border-gray-200 bg-white">
-                <span class="text-xl text-[var(--md-sys-color-on-surface)]">Catalog</span>
-                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold">U</div>
+            
+            <!-- Mobile Header -->
+            <header class="md:hidden h-16 flex items-center justify-between px-4 bg-[var(--md-sys-color-surface)] sticky top-0 z-10">
+                <span class="text-xl text-[var(--md-sys-color-on-surface)]">Wardrobe</span>
+                <button onclick="logout()" class="p-2 rounded-full text-[var(--md-sys-color-error)]">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
             </header>
 
-            <div class="flex-1 flex items-center justify-center p-8">
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-[var(--md-sys-color-surface-variant)] rounded-[24px] mx-auto mb-4 flex items-center justify-center">
-                        <i data-lucide="inbox" class="w-12 h-12 opacity-40"></i>
-                    </div>
-                    <h2 class="text-xl mb-2">Welcome!</h2>
-                    <p class="text-gray-500">You are logged in. This is the dashboard.</p>
+            <!-- Scrollable View -->
+            <div id="content-scroll" class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 no-scrollbar">
+                
+                <div class="flex items-center justify-between mb-6">
+                    <h1 id="page-title" class="text-4xl font-normal text-[var(--md-sys-color-on-surface)]">Clothing Catalog</h1>
                 </div>
+
+                <!-- Loading Indicator -->
+                <div id="loading" class="hidden justify-center py-10">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--md-sys-color-primary)]"></div>
+                </div>
+
+                <!-- Item Grid -->
+                <div id="item-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Items injected here -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden flex-col items-center justify-center h-64 text-center mt-8 p-8 rounded-[24px] bg-[var(--md-sys-color-surface-variant)]/30">
+                    <i data-lucide="archive" class="w-12 h-12 mb-4 text-[var(--md-sys-color-secondary)] opacity-50"></i>
+                    <h3 class="text-lg font-medium text-[var(--md-sys-color-on-surface)]">Nothing here yet</h3>
+                    <p class="text-sm text-[var(--md-sys-color-on-surface-variant)] mt-1 mb-4">Start building your digital closet.</p>
+                    <button onclick="openModal()" class="m3-btn btn-filled text-sm h-9">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Add First Item
+                    </button>
+                </div>
+
             </div>
+
+            <!-- Mobile FAB -->
+            <button onclick="openModal()" class="md:hidden absolute bottom-24 right-4 w-14 h-14 rounded-[16px] bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] flex items-center justify-center shadow-lg z-20">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Mobile Bottom Nav -->
+            <nav class="md:hidden fixed bottom-0 w-full h-20 bg-[var(--md-sys-color-surface)] border-t border-[var(--md-sys-color-outline)]/20 flex justify-around items-center z-30 pb-2">
+                <div onclick="switchView('catalog', this)" class="nav-rail-btn active w-16">
+                    <div class="nav-icon-container"><i data-lucide="shirt" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Catalog</span>
+                </div>
+                <div onclick="switchView('laundry', this)" class="nav-rail-btn w-16">
+                    <div class="nav-icon-container"><i data-lucide="washing-machine" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Laundry</span>
+                </div>
+                <div onclick="switchView('damaged', this)" class="nav-rail-btn w-16">
+                    <div class="nav-icon-container"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                    <span class="nav-label">Damaged</span>
+                </div>
+            </nav>
+
         </main>
     </div>
 
+    <!-- ==================== 3. ADD ITEM MODAL ==================== -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-50 hidden transition-opacity opacity-0 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="modal-card" class="bg-[var(--md-sys-color-surface)] w-full max-w-md rounded-[28px] p-6 shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col max-h-[90vh]">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-normal text-[var(--md-sys-color-on-surface)]">New Item</h2>
+                <button onclick="closeModal()" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-variant)]">
+                    <i data-lucide="x" class="w-6 h-6 text-[var(--md-sys-color-on-surface-variant)]"></i>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto space-y-5 pr-1">
+                
+                <!-- Image Upload -->
+                <div onclick="document.getElementById('file-input').click()" class="w-full h-48 rounded-[16px] bg-[var(--md-sys-color-surface-variant)] border border-dashed border-[var(--md-sys-color-outline)] flex flex-col items-center justify-center cursor-pointer hover:opacity-80 relative overflow-hidden">
+                    <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleImage(event)">
+                    <div id="upload-ui" class="flex flex-col items-center text-[var(--md-sys-color-on-surface-variant)]">
+                        <i data-lucide="camera" class="w-8 h-8 mb-2"></i>
+                        <span class="text-sm">Tap to add photo</span>
+                    </div>
+                    <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+                </div>
+
+                <!-- Inputs -->
+                <div class="m3-input-container">
+                    <label class="m3-label">Item Name</label>
+                    <input type="text" id="inp-name" class="m3-input" placeholder=" ">
+                </div>
+
+                <div class="flex gap-3">
+                    <div class="m3-input-container flex-1">
+                        <label class="m3-label">Category</label>
+                        <select id="inp-cat" class="m3-input bg-transparent">
+                            <option value="Casuals">Casuals</option>
+                            <option value="Formals">Formals</option>
+                            <option value="Activewear">Activewear</option>
+                        </select>
+                    </div>
+                    <div class="m3-input-container w-1/3">
+                        <label class="m3-label">Size</label>
+                        <select id="inp-size" class="m3-input bg-transparent">
+                            <option>S</option>
+                            <option selected>M</option>
+                            <option>L</option>
+                            <option>XL</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 items-center">
+                    <div class="m3-input-container flex-1">
+                        <label class="m3-label">Type</label>
+                        <select id="inp-type" class="m3-input bg-transparent">
+                            <option value="Shirt">Shirt</option>
+                            <option value="Pants">Pants</option>
+                            <option value="Dress">Dress</option>
+                        </select>
+                    </div>
+                    <input type="color" id="inp-color" value="#6750A4" class="w-14 h-14 rounded-full border-none cursor-pointer bg-transparent p-0 overflow-hidden">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-2 mt-6 pt-2">
+                <button onclick="closeModal()" class="m3-btn btn-text text-[var(--md-sys-color-primary)]">Cancel</button>
+                <button onclick="saveItem()" class="m3-btn btn-filled">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JS LOGIC ==================== -->
     <script>
         lucide.createIcons();
-        
-        const API_URL = 'http://localhost:3000'; // Adjust if deployed
-        let isSignup = false;
 
-        // Check Login Status on Load
-        const token = localStorage.getItem('auth_token');
-        if (token) {
+        // --- CONFIG ---
+        const API_URL = 'http://localhost:3000';
+        let authToken = localStorage.getItem('auth_token');
+        let isSignup = false;
+        let currentView = 'catalog';
+        let tempImageBase64 = null;
+        let items = [];
+
+        // --- INIT ---
+        if (authToken) {
             showApp();
+        } else {
+            // Show Auth Screen by default (it's visible by HTML structure)
         }
 
-        // Toggle Login / Signup UI
+        // --- AUTH LOGIC ---
         function toggleAuthMode() {
             isSignup = !isSignup;
-            const title = document.getElementById('auth-title');
-            const btn = document.getElementById('btn-text');
-            const toggle = document.getElementById('toggle-text');
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (isSignup) {
-                title.innerText = 'Create Account';
-                subtitle.innerText = 'Join to start tracking.';
-                btn.innerText = 'Sign Up';
-                toggle.innerText = 'Already have an account? Log In';
-            } else {
-                title.innerText = 'Sign In';
-                subtitle.innerText = 'Welcome back to your wardrobe.';
-                btn.innerText = 'Log In';
-                toggle.innerText = "Don't have an account? Sign Up";
-            }
+            document.getElementById('auth-title').innerText = isSignup ? 'Create Account' : 'Sign In';
+            document.getElementById('auth-btn-text').innerText = isSignup ? 'Sign Up' : 'Log In';
+            document.getElementById('auth-toggle-text').innerText = isSignup ? 'Already have an account? Log In' : "Don't have an account? Sign Up";
+            document.getElementById('auth-error').classList.add('hidden');
         }
 
-        // Handle Form Submission
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorMsg = document.getElementById('error-msg');
+            const errorEl = document.getElementById('auth-error');
             
             const endpoint = isSignup ? '/signup' : '/login';
-            
+
             try {
-                // In a standalone HTML file, we might be hitting a real backend or mocking it.
-                // For this demo, let's assume a successful mock login if API fails, 
-                // BUT if you have the backend running, this fetch will work.
-                
                 const res = await fetch(API_URL + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
 
-                if (res.ok) {
-                    if (data.token) {
-                        localStorage.setItem('auth_token', data.token);
+                if (res.ok && data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    authToken = data.token;
+                    if (isSignup) {
+                        toggleAuthMode(); // Switch back to login view to be safe, or auto-login
+                        alert("Account created! Please log in.");
+                    } else {
                         showApp();
-                    } else if (isSignup) {
-                        // Switch to login after signup
-                        toggleAuthMode();
-                        alert('Account created! Please log in.');
                     }
+                } else if (res.ok && isSignup) {
+                     toggleAuthMode();
+                     alert("Account created! Please log in.");
                 } else {
-                    errorMsg.innerText = data.error || 'Authentication failed';
-                    errorMsg.classList.remove('hidden');
+                    errorEl.innerText = data.error || 'Authentication failed';
+                    errorEl.classList.remove('hidden');
                 }
             } catch (err) {
-                console.log("Backend not reachable, entering Demo Mode for UI testing");
-                // Fallback for UI testing if backend isn't running
-                localStorage.setItem('auth_token', 'demo_token');
-                showApp();
+                console.error(err);
+                // For local testing without backend:
+                // localStorage.setItem('auth_token', 'demo');
+                // showApp();
+                errorEl.innerText = 'Could not connect to server';
+                errorEl.classList.remove('hidden');
             }
         }
 
         function showApp() {
-            document.getElementById('auth-screen').classList.add('opacity-0');
-            setTimeout(() => {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('blur-app');
-            }, 300);
+            document.getElementById('auth-screen').classList.add('hidden');
+            const app = document.getElementById('main-app');
+            app.classList.remove('opacity-0', 'pointer-events-none');
+            fetchItems();
         }
 
         function logout() {
             localStorage.removeItem('auth_token');
             location.reload();
+        }
+
+        // --- DATA LOGIC ---
+        async function fetchItems() {
+            if (!authToken) return;
+            
+            const loader = document.getElementById('loading');
+            const grid = document.getElementById('item-grid');
+            const empty = document.getElementById('empty-state');
+            
+            loader.classList.remove('hidden');
+            grid.innerHTML = '';
+            empty.classList.add('hidden');
+
+            let endpoint = '/api/v1/items';
+            if (currentView === 'laundry') endpoint = '/api/v1/laundry';
+            if (currentView === 'damaged') endpoint = '/api/v1/damaged';
+
+            try {
+                const res = await fetch(API_URL + endpoint, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (res.status === 401) { logout(); return; }
+                
+                items = await res.json();
+                renderItems(items);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderItems(data) {
+            const grid = document.getElementById('item-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            empty.classList.remove('flex');
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                
+                // Status Badge Logic
+                let badgeClass = 'bg-green-100 text-green-800';
+                let badgeText = 'Clean';
+                if (item.currentStatus === 'READY_FOR_WASH' || item.currentStatus === 'OVERDUE') {
+                    badgeClass = 'bg-yellow-100 text-yellow-800';
+                    badgeText = 'Needs Wash';
+                } else if (item.currentStatus === 'DAMAGED') {
+                    badgeClass = 'bg-red-100 text-red-800';
+                    badgeText = 'Damaged';
+                }
+
+                // Image Logic
+                let imgContent = `<div class="w-full h-full flex items-center justify-center" style="background-color: ${item.color}20; color: ${item.color}"><i data-lucide="shirt" class="w-12 h-12 opacity-50"></i></div>`;
+                if (item.imageUrl && item.imageUrl.startsWith('data:image')) {
+                    imgContent = `<img src="${item.imageUrl}" class="w-full h-full object-cover">`;
+                }
+
+                card.className = "bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)]/20 rounded-[12px] overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col h-72";
+                card.innerHTML = `
+                    <div class="h-40 w-full relative">
+                        ${imgContent}
+                        <span class="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/90 shadow-sm">${item.size}</span>
+                    </div>
+                    <div class="p-4 flex flex-col flex-1">
+                        <div class="flex justify-between items-start mb-1">
+                            <h3 class="font-medium text-lg text-[var(--md-sys-color-on-surface)] truncate pr-2">${item.name}</h3>
+                        </div>
+                        <div class="flex gap-2 mb-auto">
+                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badgeClass}">${badgeText}</span>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                            <button onclick="updateStatus('${item.id}', 'WASHED')" class="flex-1 text-xs font-medium text-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-secondary-container)]/50 hover:bg-[var(--md-sys-color-secondary-container)] py-2 rounded transition-colors">
+                                Wash
+                            </button>
+                             <button onclick="updateStatus('${item.id}', 'DAMAGED')" class="p-2 rounded hover:bg-red-50 text-red-600" title="Report Damage">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // --- ACTIONS ---
+        async function updateStatus(id, status) {
+            // Special handling for toggling damage or marking washed
+            let endpoint = `/api/v1/items/${id}/status`;
+            let method = 'PATCH';
+            let body = { status: status };
+
+            if (status === 'WASHED') {
+                endpoint = `/api/v1/items/${id}/wash`;
+                method = 'POST';
+                body = { notes: 'Washed via app' };
+            }
+            
+            try {
+                await fetch(API_URL + endpoint, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+                fetchItems(); // Refresh
+            } catch (e) { console.error(e); }
+        }
+
+        // --- MODAL & UPLOAD ---
+        function openModal() {
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-overlay').classList.remove('opacity-0'), 10);
+            document.getElementById('modal-card').classList.remove('scale-95');
+        }
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('opacity-0');
+            document.getElementById('modal-card').classList.add('scale-95');
+            setTimeout(() => {
+                document.getElementById('modal-overlay').classList.add('hidden');
+                resetForm();
+            }, 200);
+        }
+
+        function handleImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    tempImageBase64 = reader.result;
+                    document.getElementById('preview-img').src = tempImageBase64;
+                    document.getElementById('preview-img').classList.remove('hidden');
+                    document.getElementById('upload-ui').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('inp-name').value = '';
+            document.getElementById('preview-img').classList.add('hidden');
+            document.getElementById('upload-ui').classList.remove('hidden');
+            tempImageBase64 = null;
+        }
+
+        async function saveItem() {
+            const name = document.getElementById('inp-name').value;
+            if (!name) return alert("Name is required");
+
+            const payload = {
+                name: name,
+                itemType: document.getElementById('inp-type').value,
+                category: document.getElementById('inp-cat').value,
+                size: document.getElementById('inp-size').value,
+                color: document.getElementById('inp-color').value,
+                imageUrl: tempImageBase64 || ""
+            };
+
+            try {
+                const res = await fetch(API_URL + '/api/v1/items', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    closeModal();
+                    fetchItems();
+                } else {
+                    alert("Failed to save item");
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function switchView(view, btn) {
+            currentView = view;
+            // Update Title
+            const titles = { 'catalog': 'Clothing Catalog', 'laundry': 'Laundry List', 'damaged': 'Repairs Needed' };
+            document.getElementById('page-title').innerText = titles[view];
+            
+            // Update Active State (Desktop & Mobile)
+            document.querySelectorAll('.nav-rail-btn').forEach(b => b.classList.remove('active'));
+            
+            // Select buttons that trigger this view
+            const buttons = document.querySelectorAll(`.nav-rail-btn[onclick*="${view}"]`);
+            buttons.forEach(b => b.classList.add('active'));
+
+            fetchItems();
         }
     </script>
 </body>
