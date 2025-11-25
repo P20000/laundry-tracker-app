@@ -1,13 +1,14 @@
 # --- STAGE 1: Build ---
 FROM node:20-alpine AS builder
 
+# Set the build context to the container's workspace root
 WORKDIR /usr/src/app
 
-# 1. Copy backend dependency files
+# 1. Copy dependency files
 COPY backend/package.json ./backend/
 COPY backend/package-lock.json ./backend/
 
-# 2. Install dependencies (Including bcrypt/jsonwebtoken)
+# 2. Install dependencies (Node dependencies are now installed before source code)
 WORKDIR /usr/src/app/backend
 RUN npm install
 
@@ -16,7 +17,7 @@ WORKDIR /usr/src/app
 COPY shared/ ./shared/
 COPY backend/ ./backend/
 
-# 4. Build TypeScript
+# 4. Build TypeScript (This step now runs *after* all source code is present)
 WORKDIR /usr/src/app/backend
 RUN npm run build:ts
 
