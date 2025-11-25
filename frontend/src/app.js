@@ -14,7 +14,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // --- Configuration ---
 // Ensure your backend is running on this port
-const API_BASE_URL = 'http://localhost:3000'; 
+const API_BASE_URL = 'https://laundry-tracker-backend.onrender.com'; 
 const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`;
 const AUTH_TOKEN_KEY = 'auth_token';
 
