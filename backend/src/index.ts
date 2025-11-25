@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { client } from './db'; // Importing the raw LibSQL client singleton
+import { client } from './db'; 
 
 // Import controllers
 import { 
@@ -12,6 +12,11 @@ import {
     updateItemStatus 
 } from './controllers/itemController';
 
+// --- MISSING IMPORTS? ---
+import { registerUser, loginUser } from './controllers/authController'; 
+import { protect } from './middleware/authMiddleware'; 
+// ------------------------
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -22,17 +27,17 @@ const getErrorMessage = (error: unknown): string => {
 
 // --- Middleware ---
 app.use(cors()); 
-// Limit increased to 10mb to handle Base64 image uploads from frontend
 app.use(express.json({ limit: '10mb' })); 
 
 // --- Routes ---
 
-/**
- * @route GET /health
- * @description Simple check to see if API and Turso DB are responsive
- */
+// Root Route
+app.get('/', (req: Request, res: Response) => {
+    res.status(200).send('Smart Wardrobe API is running!');
+});
+
+// Health Check
 app.get('/health', (req: Request, res: Response) => {
-    // Attempt a simple query to verify the connection without crashing on errors
     client.execute("SELECT 1").then(() => {
         res.status(200).json({ status: 'ok', database: 'connected' });
     }).catch((error: unknown) => { 
@@ -41,23 +46,29 @@ app.get('/health', (req: Request, res: Response) => {
     });
 });
 
-// --- API v1 Routes ---
-const router = express.Router();
+// --- MISSING ROUTES? ---
+// These lines MUST be here for login to work!
+app.post('/signup', registerUser);
+app.post('/login', loginUser);
+// -----------------------
+
+// --- PROTECTED API v1 Routes ---
+const protectedRouter = express.Router();
+protectedRouter.use(protect);
 
 // Item CRUD
-router.post('/items', createItem);
-router.get('/items', getAllItems);
+protectedRouter.post('/items', createItem);
+protectedRouter.get('/items', getAllItems);
 
-// Specific Actions
-router.post('/items/:id/wash', markAsWashed); 
-router.patch('/items/:id/status', updateItemStatus); 
+// Actions
+protectedRouter.post('/items/:id/wash', markAsWashed); 
+protectedRouter.patch('/items/:id/status', updateItemStatus); 
 
-// Filtered Views
-router.get('/laundry', getLaundryItems);
-router.get('/damaged', getDamagedItems);
+// Views
+protectedRouter.get('/laundry', getLaundryItems);
+protectedRouter.get('/damaged', getDamagedItems);
 
-// Mount routes under /api/v1
-app.use('/api/v1', router);
+app.use('/api/v1', protectedRouter);
 
 // --- Server Start ---
 app.listen(PORT, () => {
