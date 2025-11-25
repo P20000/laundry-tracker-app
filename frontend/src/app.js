@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// ... (Imports same as before)
 import { 
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
 } from '@mui/material';
@@ -10,14 +9,16 @@ import WarningIcon from '@mui/icons-material/Warning';
 import EventIcon from '@mui/icons-material/Event'; 
 import ArchiveIcon from '@mui/icons-material/Archive'; 
 import CloseIcon from '@mui/icons-material/Close';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // --- Configuration ---
-const API_URL = 'http://localhost:3000/api/v1';
+// Note: When running locally, ensure your backend server is running on port 3000
+const API_URL = 'http://localhost:3000/api/v1'; 
+const AUTH_TOKEN_KEY = 'auth_token';
 
 // --- M3 Theme Definition ---
-// (Same theme as before)
 const M3Theme = createTheme({
     palette: {
         mode: 'light',
@@ -51,7 +52,6 @@ const fileToBase64 = (file) => {
 };
 
 // --- Sub-Components (EmptyState, ItemCard) ---
-// (Same styling as before, just logic tweaks in App)
 
 const EmptyState = ({ view }) => {
     let message = "Your Wardrobe is Empty";
@@ -110,7 +110,8 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                 </Box>
 
                 <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
-                    <Button size="small" variant="outlined" color="primary" fullWidth onClick={() => onUpdateStatus(item.id, 'READY_FOR_WASH')} startIcon={<LocalLaundryServiceIcon />}>Wash</Button>
+                    {/* The 'Wash' button logic now uses WASHED status for marking clean */}
+                    <Button size="small" variant="outlined" color="primary" fullWidth onClick={() => onUpdateStatus(item.id, 'WASHED')} startIcon={<LocalLaundryServiceIcon />}>Wash</Button>
                     <Button size="small" variant="text" color="error" onClick={() => onUpdateStatus(item.id, 'DAMAGED')} sx={{ minWidth: 40, px: 1 }}><WarningIcon /></Button>
                 </Box>
             </Box>
@@ -118,34 +119,199 @@ const ItemCard = ({ item, onUpdateStatus }) => {
     );
 };
 
+// --- New Authentication Component ---
+
+const AuthCard = ({ setLoggedIn, setAuthView }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSignup, setIsSignup] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setMessage('');
+
+        const endpoint = isSignup ? 'signup' : 'login';
+        
+        try {
+            const response = await fetch(`http://localhost:3000/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            
+            const data = await response.json();
+
+            if (response.ok) {
+                if (data.token) {
+                    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+                    setLoggedIn(true);
+                } else if (isSignup) {
+                    setMessage("Registration successful. Please log in.");
+                    setIsSignup(false); // Switch to login view after success
+                }
+            } else {
+                setMessage(data.error || "Authentication failed.");
+            }
+        } catch (error) {
+            setMessage("Error connecting to the server. Check backend console.");
+        }
+    };
+
+    return (
+        <Container component="main" maxWidth="xs" sx={{ mt: 8 }}>
+            <Box 
+                component="form" 
+                onSubmit={handleSubmit} 
+                sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    p: 4, 
+                    borderRadius: 5, 
+                    bgcolor: 'background.paper',
+                    boxShadow: 3, 
+                    border: '1px solid', 
+                    borderColor: 'divider'
+                }}
+            >
+                <Box 
+                    sx={{ 
+                        p: 2, 
+                        borderRadius: '50%', 
+                        bgcolor: 'primary.main', 
+                        color: 'primary.contrastText', 
+                        mb: 2 
+                    }}
+                >
+                    {isSignup ? <PersonAddIcon fontSize="large" /> : <LockOpenIcon fontSize="large" />}
+                </Box>
+
+                <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main', fontWeight: 500 }}>
+                    {isSignup ? 'Register Account' : 'Sign In'}
+                </Typography>
+                
+                {message && (
+                    <Typography variant="body2" color="error" sx={{ my: 1 }}>
+                        {message}
+                    </Typography>
+                )}
+
+                <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    variant="filled"
+                    sx={{ borderRadius: 2 }}
+                />
+                <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    name="password"
+                    label="Password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    variant="filled"
+                    sx={{ borderRadius: 2 }}
+                />
+
+                <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 5 }}
+                >
+                    {isSignup ? 'Sign Up' : 'Log In'}
+                </Button>
+                
+                <Grid container justifyContent="center">
+                    <Grid item>
+                        <Button 
+                            onClick={() => setIsSignup(!isSignup)} 
+                            color="primary" 
+                            variant="text"
+                            sx={{ textTransform: 'none' }}
+                        >
+                            {isSignup ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Box>
+        </Container>
+    );
+};
+
 // --- Main Component ---
 
 function App() {
     const [view, setView] = useState('catalog');
-    const [items, setItems] = useState([]); 
+    const [items, setItems] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
-    // Form State
+    // Form State (Same as before)
     const [newItemName, setNewItemName] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('Casuals');
     const [newItemType, setNewItemType] = useState('Shirt');
     const [newItemSize, setNewItemSize] = useState('M');
     const [newItemColor, setNewItemColor] = useState('#6750A4');
-    const [newItemImageBlob, setNewItemImageBlob] = useState(null); // Raw file
-    const [newItemImagePreview, setNewItemImagePreview] = useState(null); // Preview URL
+    const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
+    const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    // 1. Check Auth Status on Load
+    useEffect(() => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+    // 2. Fetch data only if logged in
+    useEffect(() => {
+        if (isLoggedIn) {
+            fetchItems();
+        } else {
+            setItems([]); // Clear data if logged out
+        }
+    }, [isLoggedIn, view]);
+
     // --- API Interaction ---
 
+    const getAuthHeaders = (token) => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    });
+
     const fetchItems = async () => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return;
+
         try {
             let endpoint = '/items';
             if (view === 'laundry') endpoint = '/laundry';
             if (view === 'damaged') endpoint = '/damaged';
             
-            const res = await fetch(`${API_URL}${endpoint}`);
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.status === 401) {
+                handleLogout();
+                return;
+            }
+
             const data = await res.json();
             setItems(data);
         } catch (err) {
@@ -153,12 +319,16 @@ function App() {
         }
     };
 
-    useEffect(() => {
-        fetchItems();
-    }, [view]); // Refetch when view changes
+    const handleLogout = () => {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        setIsLoggedIn(false);
+        setItems([]);
+        setView('catalog'); 
+    };
 
-    // --- Handlers ---
 
+    // --- Handlers (AddItem, StatusChange) ---
+    
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -169,6 +339,9 @@ function App() {
 
     const handleAddItem = async () => {
         if (!newItemName) return;
+
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
 
         let base64Image = "";
         if (newItemImageBlob) {
@@ -181,19 +354,17 @@ function App() {
 
         const payload = {
             name: newItemName,
-            type: newItemType, // 'itemType' in backend
-            itemType: newItemType, // mapping for backend
+            itemType: newItemType,
             category: newItemCategory,
             size: newItemSize,
             color: newItemColor,
             imageUrl: base64Image,
-            userId: 'demo-user'
         };
 
         try {
             const res = await fetch(`${API_URL}/items`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(token),
                 body: JSON.stringify(payload)
             });
             
@@ -211,34 +382,58 @@ function App() {
     };
 
     const handleStatusChange = async (id, newStatus) => {
-        // If 'Wash' button clicked, we mark as READY_FOR_WASH. 
-        // If in 'Laundry' view, we might want to mark as CLEAN (Done Washing).
-        // For MVP: 'Wash' button -> READY_FOR_WASH. 'Report' -> DAMAGED.
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        let endpoint = `/items/${id}/status`;
+        let statusPayload = { status: newStatus };
+
+        // Special case: If action is marking clean/done washing
+        if (newStatus === 'WASHED') { 
+             endpoint = `/items/${id}/wash`; 
+             statusPayload = { notes: 'Washed via app' };
+        } 
         
-        // Special case: If marking as washed (Action performed)
-        if (view === 'laundry') {
-             // In laundry view, clicking "Wash" (or a "Done" button) should mark it Clean
-             await fetch(`${API_URL}/items/${id}/wash`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ notes: 'Washed via app' }) });
-        } else {
-             // Just changing status
-             await fetch(`${API_URL}/items/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+        try {
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                method: 'PATCH', // POST for wash, but PATCH for status update
+                headers: getAuthHeaders(token),
+                body: JSON.stringify(statusPayload)
             });
+            
+            if (res.status === 401) {
+                handleLogout();
+                return;
+            }
+
+            if (res.ok) {
+                fetchItems(); // Refresh list
+            }
+        } catch (err) {
+            console.error("Failed to update status:", err);
         }
-        fetchItems();
     };
 
     // --- Render Logic ---
-    // (Same Navigation/Layout logic as previous version, just calling fetchItems/handleAddItem)
     
+    if (!isLoggedIn) {
+        return (
+            <ThemeProvider theme={M3Theme}>
+                <CssBaseline enableColorScheme />
+                <AuthCard setLoggedIn={setIsLoggedIn} setAuthView={() => {}} />
+            </ThemeProvider>
+        );
+    }
+    
+    // --- Main App Dashboard UI ---
+
     const navItems = [
         { name: 'Catalog', icon: <CheckroomIcon />, view: 'catalog' },
         { name: 'Laundry', icon: <LocalLaundryServiceIcon />, view: 'laundry' },
         { name: 'Damaged', icon: <WarningIcon />, view: 'damaged' },
-        { name: 'History', icon: <EventIcon />, view: 'history' },
     ];
+
+    const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
 
     return (
         <ThemeProvider theme={M3Theme}>
@@ -249,10 +444,12 @@ function App() {
                 {!isMobile && (
                     <Box sx={{ width: 80, height: '100%', bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
                         <Typography variant="h6" color="primary" sx={{ mb: 4, fontWeight: 'bold' }}>SW</Typography>
+                        
                         <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
                         </Fab>
-                        <Box display="flex" flexDirection="column" gap={2}>
+                        
+                        <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 4 }}>
                             {navItems.map((item) => {
                                 const isActive = view === item.view;
                                 return (
@@ -263,18 +460,43 @@ function App() {
                                 );
                             })}
                         </Box>
+                        
+                        {/* Logout Button on Desktop */}
+                         <Button 
+                            onClick={handleLogout} 
+                            color="error" 
+                            variant="text"
+                            sx={{ mt: 'auto', minWidth: 56 }}
+                        >
+                            <CloseIcon />
+                        </Button>
+
                     </Box>
                 )}
 
                 {/* Main Content */}
                 <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    
+                    {/* Content Header (Mobile/Desktop) */}
                     <Box sx={{ p: { xs: 2, md: 4 }, pb: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="displayMedium" color="text.primary">
-                            {navItems.find(n => n.view === view)?.name || 'Wardrobe'}
+                            {currentPageTitle}
                         </Typography>
-                        {isMobile && ( <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.container', color: 'secondary.contrastText' }}> <AddIcon /> </IconButton> )}
+                        <Box display="flex" alignItems="center" gap={1}>
+                             {isMobile && (
+                                <IconButton onClick={handleLogout} color="error">
+                                    <CloseIcon />
+                                </IconButton>
+                            )}
+                            {isMobile && (
+                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.container', color: 'secondary.contrastText' }}>
+                                    <AddIcon />
+                                </IconButton>
+                            )}
+                        </Box>
                     </Box>
 
+                    {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {items.length === 0 ? (
                             <EmptyState view={view} />
@@ -291,12 +513,24 @@ function App() {
 
                     {/* Mobile Bottom Nav */}
                     {isMobile && (
-                        <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, bgcolor: 'surfaceVariant.main', height: 80, display: 'flex', justifyContent: 'space-around', alignItems: 'center', pb: 2 }}>
-                            {navItems.slice(0, 3).map((item) => {
+                         <Box sx={{ 
+                            position: 'fixed', bottom: 0, left: 0, right: 0, 
+                            bgcolor: 'surfaceVariant.main', 
+                            height: 80, 
+                            display: 'flex', 
+                            justifyContent: 'space-around', 
+                            alignItems: 'center',
+                            pb: 2
+                        }}>
+                            {navItems.map((item) => {
                                 const isActive = view === item.view;
                                 return (
                                     <Box key={item.name} onClick={() => setView(item.view)} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isActive ? 1 : 0.7, cursor: 'pointer' }}>
-                                        <Box sx={{ bgcolor: isActive ? 'secondary.container' : 'transparent', color: isActive ? 'secondary.onContainer' : 'text.primary', px: 2.5, py: 0.5, borderRadius: 4, mb: 0.5 }}>
+                                        <Box sx={{ 
+                                            bgcolor: isActive ? 'secondary.container' : 'transparent', 
+                                            color: isActive ? 'secondary.onContainer' : 'text.primary',
+                                            px: 2.5, py: 0.5, borderRadius: 4, mb: 0.5 
+                                        }}>
                                             {item.icon}
                                         </Box>
                                         <Typography variant="caption" fontWeight={isActive ? 700 : 400}>{item.name}</Typography>
@@ -308,14 +542,16 @@ function App() {
                 </Box>
             </Box>
 
-            {/* Add Item Dialog */}
+            {/* Add Item Dialog (Same as before) */}
             <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
+                {/* ... (Dialog content for adding item) ... */}
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     New Item
                     <IconButton onClick={() => setIsModalOpen(false)} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ pt: 0 }}>
                     <Box display="flex" flexDirection="column" gap={3} mt={1}>
+                        
                         {/* Image Upload */}
                         <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                             <input accept="image/*" style={{ display: 'none' }} id="raised-button-file" type="file" onChange={handleImageUpload} />
@@ -341,6 +577,7 @@ function App() {
                     <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                 </DialogActions>
             </Dialog>
+
         </ThemeProvider>
     );
 }

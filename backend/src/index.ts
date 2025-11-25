@@ -1,19 +1,18 @@
 import express, { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
+import { client } from './db'; // Importing the raw LibSQL client singleton
 
-// Import our controller functions
+// Import controllers
 import { 
     getAllItems, 
     getLaundryItems, 
     getDamagedItems, 
     createItem,
     markAsWashed,
-    updateItemStatus // New function to handle generic status updates
+    updateItemStatus 
 } from './controllers/itemController';
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 const getErrorMessage = (error: unknown): string => {
@@ -23,12 +22,18 @@ const getErrorMessage = (error: unknown): string => {
 
 // --- Middleware ---
 app.use(cors()); 
-// INCREASE LIMIT to 10mb to handle Base64 images
+// Limit increased to 10mb to handle Base64 image uploads from frontend
 app.use(express.json({ limit: '10mb' })); 
 
 // --- Routes ---
+
+/**
+ * @route GET /health
+ * @description Simple check to see if API and Turso DB are responsive
+ */
 app.get('/health', (req: Request, res: Response) => {
-    prisma.$queryRaw`SELECT 1`.then(() => {
+    // Attempt a simple query to verify the connection without crashing on errors
+    client.execute("SELECT 1").then(() => {
         res.status(200).json({ status: 'ok', database: 'connected' });
     }).catch((error: unknown) => { 
         console.error('Database connection failed:', error);
@@ -39,16 +44,22 @@ app.get('/health', (req: Request, res: Response) => {
 // --- API v1 Routes ---
 const router = express.Router();
 
+// Item CRUD
 router.post('/items', createItem);
 router.get('/items', getAllItems);
-router.post('/items/:id/wash', markAsWashed); 
-router.patch('/items/:id/status', updateItemStatus); // New generic status update
 
+// Specific Actions
+router.post('/items/:id/wash', markAsWashed); 
+router.patch('/items/:id/status', updateItemStatus); 
+
+// Filtered Views
 router.get('/laundry', getLaundryItems);
 router.get('/damaged', getDamagedItems);
 
+// Mount routes under /api/v1
 app.use('/api/v1', router);
 
+// --- Server Start ---
 app.listen(PORT, () => {
     console.log(`⚡️ [server]: API running at http://localhost:${PORT}`);
 });

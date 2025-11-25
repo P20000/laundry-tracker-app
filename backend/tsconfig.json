@@ -3,8 +3,8 @@
     "target": "es2020",
     "module": "commonjs",
     
-    // FIX: Removed "rootDir" entirely. 
-    // TypeScript will auto-infer the root as the common parent of 'backend' and 'shared'.
+    // CRITICAL FIX: Set rootDir to the parent folder so TS accepts ../shared
+    "rootDir": "..",
     
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -12,8 +12,12 @@
     "strict": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    
+    // Explicitly load types to fix the 'process' and 'express' errors
+    "types": ["node", "express", "cors"]
   },
-  "include": ["src/**/*", "prisma/**/*", "../shared/**/*"],
+  // Include the local source and the shared folder
+  "include": ["src/**/*", "../shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

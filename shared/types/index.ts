@@ -1,5 +1,12 @@
 // Interfaces shared between the React Frontend and the Node.js Backend
 
+// --- Auth Types ---
+export interface IUserCredentials {
+    email: string;
+    password: string;
+}
+
+// --- Item Types (Unchanged) ---
 export interface IClothingItem {
     id: string;
     userId: string;
@@ -8,7 +15,7 @@ export interface IClothingItem {
     category: string;
     size: string;
     color: string;
-    imageUrl: string; // Now holds Base64 string
+    imageUrl: string; 
     currentStatus: 'CLEAN' | 'READY_FOR_WASH' | 'WASHING' | 'DAMAGED' | 'OVERDUE';
     damageLog: string | null;
     lastWashed: Date | null;
@@ -23,5 +30,4 @@ export interface INewItemPayload {
     size: string;
     color: string;
     imageUrl: string;
-    userId?: string; 
 }

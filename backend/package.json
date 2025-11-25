@@ -1,36 +1,33 @@
 {
   "name": "laundry-tracker-api",
   "version": "1.0.0",
-  "description": "Node.js/Express API for the Smart Wardrobe app, using MySQL and Prisma.",
-  "main": "dist/backend/src/index.js",
+  "description": "Node.js/Express API for the Smart Wardrobe app, using Turso (LibSQL).",
+  "main": "dist/src/index.js",
   "scripts": {
-    "start": "node dist/backend/src/index.js",
-    "dev": "npm run build:ts && node dist/backend/src/index.js",
+    "start": "node dist/src/index.js",
+    "dev": "npm run build:ts && node dist/src/index.js",
     "build:ts": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:init": "npx prisma init --datasource-provider mysql",
-    "db:migrate:dev": "npx prisma migrate dev --schema=prisma/schema.prisma",
-    "db:migrate:deploy": "npx prisma migrate deploy --schema=prisma/schema.prisma",
-    "db:generate": "npx prisma generate"
+    "postinstall": "npm run build:ts"
   },
   "keywords": [
     "express",
     "typescript",
-    "prisma",
-    "mysql"
+    "turso",
+    "libsql"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.14.0",
+    "@libsql/client": "^0.6.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.12",
-    "prisma": "^5.14.0",
     "typescript": "^5.4.5"
   }
 }
