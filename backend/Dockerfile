@@ -1,14 +1,14 @@
-# --- STAGE 1: Build ---
-FROM node:20-alpine AS builder
+# --- STAGE 1: Build (Using Debian Slim for glibc compatibility) ---
+FROM node:20-slim AS builder
 
 # Set the build context to the container's workspace root
 WORKDIR /usr/src/app
 
-# 1. Copy dependency files
+# 1. Copy backend dependency files
 COPY backend/package.json ./backend/
 COPY backend/package-lock.json ./backend/
 
-# 2. Install dependencies (Node dependencies are now installed before source code)
+# 2. Install dependencies 
 WORKDIR /usr/src/app/backend
 RUN npm install
 
@@ -17,13 +17,14 @@ WORKDIR /usr/src/app
 COPY shared/ ./shared/
 COPY backend/ ./backend/
 
-# 4. Build TypeScript (This step now runs *after* all source code is present)
+# 4. Build TypeScript 
 WORKDIR /usr/src/app/backend
 RUN npm run build:ts
 
-# --- STAGE 2: Production Runner ---
-FROM node:20-alpine AS runner
+# --- STAGE 2: Production Runner (Using Debian Slim Runtime) ---
+FROM node:20-slim AS runner
 
+# Set working directory to backend
 WORKDIR /usr/src/app/backend
 
 # Copy necessary runtime files from builder stage
@@ -37,4 +38,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
+# Start the app
 CMD ["npm", "start"]
