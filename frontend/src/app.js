@@ -13,9 +13,9 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // --- Configuration ---
-// Note: When running locally, ensure your backend server is running on port 3000
-const API_BASE_URL = 'http://localhost:3000'; // Base URL for public routes (login/signup)
-const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`; // Protected routes
+// Ensure your backend is running on this port
+const API_BASE_URL = 'http://localhost:3000'; 
+const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`;
 const AUTH_TOKEN_KEY = 'auth_token';
 
 // --- M3 Theme Definition ---
@@ -122,7 +122,6 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                 </Box>
 
                 <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
-                    {/* Primary Status Update Button */}
                     <Button 
                         size="small" 
                         variant="contained" 
@@ -134,7 +133,6 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                         {washButtonText}
                     </Button>
                     
-                    {/* Damage Button */}
                     <Button 
                         size="small" 
                         variant="text" 
@@ -162,6 +160,7 @@ const AuthCard = ({ setLoggedIn }) => {
         event.preventDefault();
         setMessage('');
 
+        // Match backend routes: /signup or /login
         const endpoint = isSignup ? '/signup' : '/login';
         
         try {
@@ -179,7 +178,7 @@ const AuthCard = ({ setLoggedIn }) => {
                     setLoggedIn(true);
                 } else if (isSignup) {
                     setMessage("Registration successful. Please log in.");
-                    setIsSignup(false); // Switch to login view after success
+                    setIsSignup(false); 
                 }
             } else {
                 setMessage(data.error || "Authentication failed. Check API URL/console.");
@@ -334,13 +333,11 @@ function App() {
             });
             
             if (res.status === 401) {
-                // If API returns 401, the token is invalid/expired -> force logout
                 handleLogout();
                 return;
             }
 
             const data = await res.json();
-            // In LibSQL/raw SQL, dates might come as strings, so we convert them to Date objects if needed
             setItems(data.map(item => ({
                 ...item,
                 lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
@@ -378,7 +375,6 @@ function App() {
         let base64Image = "";
         if (newItemImageBlob) {
             try {
-                // Convert image file to Base64 string for storage
                 base64Image = await fileToBase64(newItemImageBlob);
             } catch (e) {
                 console.error("Error converting image", e);
@@ -426,17 +422,14 @@ function App() {
         let method = 'PATCH';
         let statusPayload = { status: newStatus };
 
-        // Special case: Marking clean/done washing
         if (newStatus === 'WASHED') { 
              endpoint = `/items/${id}/wash`; 
              method = 'POST';
              statusPayload = { notes: 'Washed via app' };
         } 
         
-        // Special case: Toggle DAMAGED status
         if (newStatus === 'DAMAGED') {
             const currentItem = items.find(item => item.id === id);
-            // If it's already DAMAGED, toggle it back to CLEAN
             statusPayload = { status: currentItem.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED' };
         }
         
@@ -453,7 +446,7 @@ function App() {
             }
 
             if (res.ok) {
-                fetchItems(); // Refresh list
+                fetchItems(); 
             }
         } catch (err) {
             console.error("Failed to update status:", err);
@@ -524,19 +517,16 @@ function App() {
                 {/* Main Content */}
                 <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                     
-                    {/* Content Header (Mobile/Desktop) */}
                     <Box sx={{ p: { xs: 2, md: 4 }, pb: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="displayMedium" color="text.primary">
                             {currentPageTitle}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={1}>
-                             {/* Mobile Logout Button */}
                              {isMobile && (
                                 <IconButton onClick={handleLogout} color="error" title="Logout">
                                     <CloseIcon />
                                 </IconButton>
                             )}
-                            {/* Mobile Add Button */}
                             {isMobile && (
                                 <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
@@ -545,7 +535,6 @@ function App() {
                         </Box>
                     </Box>
 
-                    {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {items.length === 0 ? (
                             <EmptyState view={view} />
@@ -560,7 +549,6 @@ function App() {
                         )}
                     </Box>
 
-                    {/* Mobile Bottom Nav */}
                     {isMobile && (
                          <Box sx={{ 
                             position: 'fixed', bottom: 0, left: 0, right: 0, 
@@ -593,7 +581,6 @@ function App() {
                 </Box>
             </Box>
 
-            {/* Add Item Dialog */}
             <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     New Item
@@ -601,8 +588,6 @@ function App() {
                 </DialogTitle>
                 <DialogContent sx={{ pt: 0 }}>
                     <Box display="flex" flexDirection="column" gap={3} mt={1}>
-                        
-                        {/* Image Upload */}
                         <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                             <input accept="image/*" style={{ display: 'none' }} id="raised-button-file" type="file" onChange={handleImageUpload} />
                             <label htmlFor="raised-button-file" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -627,7 +612,6 @@ function App() {
                     <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                 </DialogActions>
             </Dialog>
-
         </ThemeProvider>
     );
 }
