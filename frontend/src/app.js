@@ -6,7 +6,6 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService'; 
 import WarningIcon from '@mui/icons-material/Warning'; 
-import EventIcon from '@mui/icons-material/Event'; 
 import ArchiveIcon from '@mui/icons-material/Archive'; 
 import CloseIcon from '@mui/icons-material/Close';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
@@ -15,7 +14,8 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // --- Configuration ---
 // Note: When running locally, ensure your backend server is running on port 3000
-const API_URL = 'http://localhost:3000/api/v1'; 
+const API_BASE_URL = 'http://localhost:3000'; // Base URL for public routes (login/signup)
+const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`; // Protected routes
 const AUTH_TOKEN_KEY = 'auth_token';
 
 // --- M3 Theme Definition ---
@@ -41,7 +41,7 @@ const M3Theme = createTheme({
     },
 });
 
-// --- Helper: File to Base64 ---
+// --- Helper Functions ---
 const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -50,6 +50,11 @@ const fileToBase64 = (file) => {
         reader.onerror = error => reject(error);
     });
 };
+
+const getAuthHeaders = (token) => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+});
 
 // --- Sub-Components (EmptyState, ItemCard) ---
 
@@ -72,18 +77,24 @@ const EmptyState = ({ view }) => {
 const ItemCard = ({ item, onUpdateStatus }) => {
     let statusColor = 'success';
     let statusLabel = 'Clean';
+    let washButtonText = 'Mark Washed';
 
-    // Map Backend Enums to UI
+    // Map Backend Status Strings to UI
     if (item.currentStatus === 'READY_FOR_WASH' || item.currentStatus === 'OVERDUE') {
         statusColor = 'warning';
         statusLabel = 'Needs Wash';
+        washButtonText = 'Queue Wash';
     } else if (item.currentStatus === 'DAMAGED') {
         statusColor = 'error';
         statusLabel = 'Damaged';
+        washButtonText = 'Repair';
     } else if (item.currentStatus === 'WASHING') {
         statusColor = 'info';
         statusLabel = 'Washing';
+        washButtonText = 'Complete Wash';
     }
+
+    const lastWashedDate = item.lastWashed ? new Date(item.lastWashed).toLocaleDateString() : 'Never';
 
     return (
         <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
@@ -107,21 +118,41 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                 <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>{item.category}</Typography>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>Size: {item.size}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', width: '100%' }}>Last Washed: {lastWashedDate}</Typography>
                 </Box>
 
                 <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
-                    {/* The 'Wash' button logic now uses WASHED status for marking clean */}
-                    <Button size="small" variant="outlined" color="primary" fullWidth onClick={() => onUpdateStatus(item.id, 'WASHED')} startIcon={<LocalLaundryServiceIcon />}>Wash</Button>
-                    <Button size="small" variant="text" color="error" onClick={() => onUpdateStatus(item.id, 'DAMAGED')} sx={{ minWidth: 40, px: 1 }}><WarningIcon /></Button>
+                    {/* Primary Status Update Button */}
+                    <Button 
+                        size="small" 
+                        variant="contained" 
+                        color="primary" 
+                        fullWidth 
+                        onClick={() => onUpdateStatus(item.id, 'WASHED')}
+                        startIcon={<LocalLaundryServiceIcon />}
+                    >
+                        {washButtonText}
+                    </Button>
+                    
+                    {/* Damage Button */}
+                    <Button 
+                        size="small" 
+                        variant="text" 
+                        color="error" 
+                        onClick={() => onUpdateStatus(item.id, item.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED')} 
+                        sx={{ minWidth: 40, px: 1 }}
+                    >
+                        <WarningIcon />
+                    </Button>
                 </Box>
             </Box>
         </Box>
     );
 };
 
-// --- New Authentication Component ---
+// --- Authentication Component ---
 
-const AuthCard = ({ setLoggedIn, setAuthView }) => {
+const AuthCard = ({ setLoggedIn }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSignup, setIsSignup] = useState(false);
@@ -131,10 +162,10 @@ const AuthCard = ({ setLoggedIn, setAuthView }) => {
         event.preventDefault();
         setMessage('');
 
-        const endpoint = isSignup ? 'signup' : 'login';
+        const endpoint = isSignup ? '/signup' : '/login';
         
         try {
-            const response = await fetch(`http://localhost:3000/${endpoint}`, {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -151,7 +182,7 @@ const AuthCard = ({ setLoggedIn, setAuthView }) => {
                     setIsSignup(false); // Switch to login view after success
                 }
             } else {
-                setMessage(data.error || "Authentication failed.");
+                setMessage(data.error || "Authentication failed. Check API URL/console.");
             }
         } catch (error) {
             setMessage("Error connecting to the server. Check backend console.");
@@ -188,7 +219,7 @@ const AuthCard = ({ setLoggedIn, setAuthView }) => {
                 </Box>
 
                 <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main', fontWeight: 500 }}>
-                    {isSignup ? 'Register Account' : 'Sign In'}
+                    {isSignup ? 'Register' : 'Sign In'}
                 </Typography>
                 
                 {message && (
@@ -208,7 +239,7 @@ const AuthCard = ({ setLoggedIn, setAuthView }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     variant="filled"
-                    sx={{ borderRadius: 2 }}
+                    size="small"
                 />
                 <TextField
                     margin="normal"
@@ -221,7 +252,7 @@ const AuthCard = ({ setLoggedIn, setAuthView }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     variant="filled"
-                    sx={{ borderRadius: 2 }}
+                    size="small"
                 />
 
                 <Button
@@ -258,7 +289,7 @@ function App() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
-    // Form State (Same as before)
+    // Form State 
     const [newItemName, setNewItemName] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('Casuals');
     const [newItemType, setNewItemType] = useState('Shirt');
@@ -283,16 +314,11 @@ function App() {
         if (isLoggedIn) {
             fetchItems();
         } else {
-            setItems([]); // Clear data if logged out
+            setItems([]); 
         }
     }, [isLoggedIn, view]);
 
     // --- API Interaction ---
-
-    const getAuthHeaders = (token) => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    });
 
     const fetchItems = async () => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -303,17 +329,23 @@ function App() {
             if (view === 'laundry') endpoint = '/laundry';
             if (view === 'damaged') endpoint = '/damaged';
             
-            const res = await fetch(`${API_URL}${endpoint}`, {
+            const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
             if (res.status === 401) {
+                // If API returns 401, the token is invalid/expired -> force logout
                 handleLogout();
                 return;
             }
 
             const data = await res.json();
-            setItems(data);
+            // In LibSQL/raw SQL, dates might come as strings, so we convert them to Date objects if needed
+            setItems(data.map(item => ({
+                ...item,
+                lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
+                createdAt: new Date(item.createdAt),
+            })));
         } catch (err) {
             console.error("Failed to fetch items:", err);
         }
@@ -346,6 +378,7 @@ function App() {
         let base64Image = "";
         if (newItemImageBlob) {
             try {
+                // Convert image file to Base64 string for storage
                 base64Image = await fileToBase64(newItemImageBlob);
             } catch (e) {
                 console.error("Error converting image", e);
@@ -362,22 +395,26 @@ function App() {
         };
 
         try {
-            const res = await fetch(`${API_URL}/items`, {
+            const res = await fetch(`${API_PROTECTED_URL}/items`, {
                 method: 'POST',
                 headers: getAuthHeaders(token),
                 body: JSON.stringify(payload)
             });
             
             if (res.ok) {
-                fetchItems(); // Refresh list
+                fetchItems(); 
                 // Reset and Close
                 setNewItemName('');
                 setNewItemImagePreview(null);
                 setNewItemImageBlob(null);
                 setIsModalOpen(false);
+            } else if (res.status === 401) {
+                handleLogout();
+            } else {
+                 console.error("Failed to add item:", await res.json());
             }
         } catch (err) {
-            console.error("Failed to add item:", err);
+            console.error("Network error adding item:", err);
         }
     };
 
@@ -386,17 +423,26 @@ function App() {
         if (!token) return handleLogout();
 
         let endpoint = `/items/${id}/status`;
+        let method = 'PATCH';
         let statusPayload = { status: newStatus };
 
-        // Special case: If action is marking clean/done washing
+        // Special case: Marking clean/done washing
         if (newStatus === 'WASHED') { 
              endpoint = `/items/${id}/wash`; 
+             method = 'POST';
              statusPayload = { notes: 'Washed via app' };
         } 
         
+        // Special case: Toggle DAMAGED status
+        if (newStatus === 'DAMAGED') {
+            const currentItem = items.find(item => item.id === id);
+            // If it's already DAMAGED, toggle it back to CLEAN
+            statusPayload = { status: currentItem.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED' };
+        }
+        
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'PATCH', // POST for wash, but PATCH for status update
+            const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
+                method: method,
                 headers: getAuthHeaders(token),
                 body: JSON.stringify(statusPayload)
             });
@@ -420,7 +466,7 @@ function App() {
         return (
             <ThemeProvider theme={M3Theme}>
                 <CssBaseline enableColorScheme />
-                <AuthCard setLoggedIn={setIsLoggedIn} setAuthView={() => {}} />
+                <AuthCard setLoggedIn={setIsLoggedIn} />
             </ThemeProvider>
         );
     }
@@ -466,7 +512,8 @@ function App() {
                             onClick={handleLogout} 
                             color="error" 
                             variant="text"
-                            sx={{ mt: 'auto', minWidth: 56 }}
+                            sx={{ mt: 'auto', minWidth: 56, color: 'error.main' }}
+                            title="Logout"
                         >
                             <CloseIcon />
                         </Button>
@@ -483,13 +530,15 @@ function App() {
                             {currentPageTitle}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={1}>
+                             {/* Mobile Logout Button */}
                              {isMobile && (
-                                <IconButton onClick={handleLogout} color="error">
+                                <IconButton onClick={handleLogout} color="error" title="Logout">
                                     <CloseIcon />
                                 </IconButton>
                             )}
+                            {/* Mobile Add Button */}
                             {isMobile && (
-                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.container', color: 'secondary.contrastText' }}>
+                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
                                 </IconButton>
                             )}
@@ -503,7 +552,7 @@ function App() {
                         ) : (
                             <Grid container spacing={2}>
                                 {items.map(item => (
-                                    <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+                                    <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
                                         <ItemCard item={item} onUpdateStatus={handleStatusChange} />
                                     </Grid>
                                 ))}
@@ -515,11 +564,13 @@ function App() {
                     {isMobile && (
                          <Box sx={{ 
                             position: 'fixed', bottom: 0, left: 0, right: 0, 
-                            bgcolor: 'surfaceVariant.main', 
+                            bgcolor: 'background.paper', 
                             height: 80, 
                             display: 'flex', 
                             justifyContent: 'space-around', 
                             alignItems: 'center',
+                            borderTop: 1,
+                            borderColor: 'divider',
                             pb: 2
                         }}>
                             {navItems.map((item) => {
@@ -542,9 +593,8 @@ function App() {
                 </Box>
             </Box>
 
-            {/* Add Item Dialog (Same as before) */}
+            {/* Add Item Dialog */}
             <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
-                {/* ... (Dialog content for adding item) ... */}
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     New Item
                     <IconButton onClick={() => setIsModalOpen(false)} size="small"><CloseIcon /></IconButton>
@@ -560,14 +610,14 @@ function App() {
                             </label>
                         </Box>
 
-                        <TextField label="Item Name" variant="filled" fullWidth value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="e.g. Navy Blazer" />
+                        <TextField label="Item Name" variant="filled" fullWidth value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="e.g. Navy Blazer" size="small" />
 
                         <Box display="flex" gap={2}>
-                            <FormControl fullWidth variant="filled"><InputLabel>Category</InputLabel><Select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)}><MenuItem value="Formals">Formals</MenuItem><MenuItem value="Casuals">Casuals</MenuItem><MenuItem value="Activewear">Activewear</MenuItem></Select></FormControl>
-                            <FormControl fullWidth variant="filled"><InputLabel>Size</InputLabel><Select value={newItemSize} onChange={(e) => setNewItemSize(e.target.value)}><MenuItem value="S">S</MenuItem><MenuItem value="M">M</MenuItem><MenuItem value="L">L</MenuItem></Select></FormControl>
+                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Category</InputLabel><Select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)} label="Category"><MenuItem value="Formals">Formals</MenuItem><MenuItem value="Casuals">Casuals</MenuItem><MenuItem value="Activewear">Activewear</MenuItem></Select></FormControl>
+                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Size</InputLabel><Select value={newItemSize} onChange={(e) => setNewItemSize(e.target.value)} label="Size"><MenuItem value="XS">XS</MenuItem><MenuItem value="S">S</MenuItem><MenuItem value="M">M</MenuItem><MenuItem value="L">L</MenuItem><MenuItem value="XL">XL</MenuItem><MenuItem value="XXL">XXL</MenuItem></Select></FormControl>
                         </Box>
                         <Box display="flex" gap={2}>
-                            <FormControl fullWidth variant="filled"><InputLabel>Type</InputLabel><Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)}><MenuItem value="Shirt">Shirt</MenuItem><MenuItem value="Pants">Pants</MenuItem></Select></FormControl>
+                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Type</InputLabel><Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} label="Type"><MenuItem value="Shirt">Shirt</MenuItem><MenuItem value="Pants">Pants</MenuItem><MenuItem value="Dress">Dress</MenuItem><MenuItem value="Outerwear">Outerwear</MenuItem></Select></FormControl>
                             <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}><Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography><input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} /></Box>
                         </Box>
                     </Box>
