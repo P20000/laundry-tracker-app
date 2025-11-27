@@ -16,6 +16,14 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dar
 import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
 import { Dashboard } from './components/Dashboard';
 
+// --- New SVG Logo Component ---
+// Replace the contents of the 'svg' tag with the code exported from Adobe Illustrator
+const CustomLogo = (props) => (
+    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 703.73 965.85"><defs><style>.cls-1{fill:none;stroke:#231f20;stroke-linecap:round;stroke-linejoin:round;stroke-width:51px;}</style></defs><rect class="cls-1" x="25.5" y="616.47" width="652.73" height="161.94" rx="80.97"/><rect class="cls-1" x="25.5" y="778.41" width="652.73" height="161.94" rx="80.97"/><line class="cls-1" x1="351.87" y1="465.33" x2="351.87" y2="556.68"/><polyline class="cls-1" points="408.56 511.01 678.23 511.01 351.87 254.4 25.5 511.01 295.17 511.01"/><line class="cls-1" x1="351.87" y1="254.4" x2="351.87" y2="179.68"/><path class="cls-1" d="M427.66,119.68s-.19-73,73-73c33.16,0,52,15.77,62.78,33,16.51,26.54,16,60.29-.35,86.93-10.91,17.74-29.93,34.22-63,34.22" transform="translate(-147.61 -21.2)"/><path class="cls-1" d="M425.14,448.06" transform="translate(-147.61 -21.2)"/></svg>
+);
+
+
+
 // --- Configuration ---
 // Ensure your backend is running on this port
 const API_BASE_URL = 'https://laundry-tracker-backend.onrender.com'; 
@@ -183,9 +191,14 @@ const ItemCard = ({ item, onUpdateStatus }) => {
             </Box>
 
             <Box sx={{ p: 2 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                    <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2, fontWeight: 500 }}>{item.name}</Typography>
-                    <Chip label={statusLabel} color={statusColor} size="small" sx={{ height: 24, fontSize: '0.7rem' }} />
+                <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
+                    <CustomLogo 
+                        sx={{ 
+                            color: 'primary.main', // Inherits M3 primary color 
+                            width: 32, 
+                            height: 32 
+                        }} 
+                    />
                 </Box>
                 
                 <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
