@@ -109,23 +109,43 @@ const EmptyState = ({ view, onAddClick }) => {
 };
 
 const ItemCard = ({ item, onUpdateStatus }) => {
+    // --- DYNAMIC STATUS LOGIC ---
     let statusColor = 'success';
     let statusLabel = 'Clean';
-    let washButtonText = 'Mark Washed';
+    
+    // Button Config Defaults (for CLEAN items)
+    let mainBtnText = 'Queue Wash';
+    let mainBtnAction = 'READY_FOR_WASH'; // Action: Move TO laundry
+    let mainBtnVariant = 'outlined';
+    let mainBtnIcon = <LocalLaundryServiceIcon />;
 
-    // Map Backend Status Strings to UI
+    // 1. Laundry State
     if (item.currentStatus === 'READY_FOR_WASH' || item.currentStatus === 'OVERDUE') {
         statusColor = 'warning';
         statusLabel = 'Needs Wash';
-        washButtonText = 'Queue Wash';
-    } else if (item.currentStatus === 'DAMAGED') {
+        
+        mainBtnText = 'Done Washing';
+        mainBtnAction = 'WASHED'; // Action: Mark clean (finish laundry)
+        mainBtnVariant = 'contained';
+        mainBtnIcon = <CheckroomIcon />; // Icon changes to shirt
+    } 
+    // 2. Damaged State
+    else if (item.currentStatus === 'DAMAGED') {
         statusColor = 'error';
         statusLabel = 'Damaged';
-        washButtonText = 'Repair';
-    } else if (item.currentStatus === 'WASHING') {
+        
+        mainBtnText = 'Mark Repaired';
+        mainBtnAction = 'CLEAN'; // Action: Fix it, moves it back to Clean list
+        mainBtnVariant = 'outlined';
+        mainBtnIcon = <BuildIcon />;
+    } 
+    // 3. Washing State (Optional/future state if tracking in-machine)
+    else if (item.currentStatus === 'WASHING') {
         statusColor = 'info';
         statusLabel = 'Washing';
-        washButtonText = 'Complete Wash';
+        mainBtnText = 'Finish';
+        mainBtnAction = 'WASHED';
+        mainBtnVariant = 'contained';
     }
 
     const lastWashedDate = item.lastWashed ? new Date(item.lastWashed).toLocaleDateString() : 'Never';
@@ -156,25 +176,30 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                 </Box>
 
                 <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
+                    {/* Main Action Button (WASHED, CLEAN, or READY_FOR_WASH) */}
                     <Button 
                         size="small" 
-                        variant="contained" 
+                        variant={mainBtnVariant} 
                         color="primary" 
                         fullWidth 
-                        onClick={() => onUpdateStatus(item.id, 'WASHED')}
-                        startIcon={<LocalLaundryServiceIcon />}
+                        // Passes the dynamic action string (e.g., 'READY_FOR_WASH' or 'WASHED')
+                        onClick={() => onUpdateStatus(item.id, mainBtnAction)} 
+                        startIcon={mainBtnIcon}
                     >
-                        {washButtonText}
+                        {mainBtnText}
                     </Button>
                     
+                    {/* Damage Toggle Button (Toggles between DAMAGED and CLEAN) */}
                     <Button 
                         size="small" 
                         variant="text" 
-                        color="error" 
+                        color={item.currentStatus === 'DAMAGED' ? 'success' : 'error'} 
+                        // Toggles status: If currently DAMAGED -> set CLEAN. If not damaged -> set DAMAGED.
                         onClick={() => onUpdateStatus(item.id, item.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED')} 
                         sx={{ minWidth: 40, px: 1 }}
+                        title={item.currentStatus === 'DAMAGED' ? "Mark Repaired" : "Report Damage"}
                     >
-                        <WarningIcon />
+                        {item.currentStatus === 'DAMAGED' ? <CheckroomIcon /> : <WarningIcon />}
                     </Button>
                 </Box>
             </Box>
@@ -447,47 +472,40 @@ function App() {
         }
     };
 
-    // --- FIXED STATUS CHANGE LOGIC ---
-    const handleStatusChange = async (id, newStatus) => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        if (!token) return handleLogout();
+// Inside the App function, replacing the old function:
+const handleStatusChange = async (id, newStatus) => {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) return handleLogout();
 
-        let endpoint = `/items/${id}/status`;
-        let method = 'PATCH';
-        let statusPayload = { status: newStatus };
+    let endpoint = `/items/${id}/status`;
+    let method = 'PATCH';
+    let statusPayload = { status: newStatus };
 
-        // CASE 1: COMPLETING A WASH (Marking Clean)
-        // If the button sends 'WASHED', we hit the specific /wash endpoint which records history
-        if (newStatus === 'WASHED') { 
-             endpoint = `/items/${id}/wash`; 
-             method = 'POST';
-             statusPayload = { notes: 'Washed via app' };
-        } 
+    // CASE 1: COMPLETING A WASH OR MARKING REPAIRED (When status is 'WASHED' or 'CLEAN' from repair)
+    // We use the /wash endpoint to record history if WASHED is the action
+    if (newStatus === 'WASHED') { 
+         endpoint = `/items/${id}/wash`; 
+         method = 'POST';
+         statusPayload = { notes: 'Washed via app' }; // Body payload is different for /wash
+    } 
+    
+    // CASE 2: MARKING AS READY_FOR_WASH or DAMAGED (Standard PATCH)
+    // Status is already correctly formatted in statusPayload = { status: newStatus }
+
+    try {
+        const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
+            method: method,
+            headers: getAuthHeaders(token),
+            body: JSON.stringify(statusPayload)
+        });
         
-        // CASE 2: TOGGLING DAMAGE
-        // If clicking 'Damage', we check if it's already damaged to toggle it back to CLEAN
-        if (newStatus === 'DAMAGED') {
-            const currentItem = items.find(item => item.id === id);
-            statusPayload = { status: currentItem.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED' };
+        if (res.status === 401) { handleLogout(); return; }
+        
+        if (res.ok) {
+            fetchItems(); // Refresh list to show new status
         }
-        
-        // CASE 3: QUEUE FOR WASH
-        // Handled by default (PATCH /status with 'READY_FOR_WASH')
-
-        try {
-            const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
-                method: method,
-                headers: getAuthHeaders(token),
-                body: JSON.stringify(statusPayload)
-            });
-            
-            if (res.status === 401) { handleLogout(); return; }
-            
-            if (res.ok) {
-                fetchItems(); // Refresh list to show new status
-            }
-        } catch (err) { console.error("Failed to update status:", err); }
-    };
+    } catch (err) { console.error("Failed to update status:", err); }
+};
 
     // --- Render Logic ---
     
