@@ -1,4 +1,4 @@
-import { createClient } from '@libsql/client/http'; // Use specific HTTP import
+import { createClient } from '@libsql/client';
 import 'dotenv/config'; 
 
 let url = process.env.TURSO_DATABASE_URL;
@@ -6,18 +6,20 @@ const authToken = process.env.TURSO_AUTH_TOKEN;
 
 if (!url) {
     console.error("❌ TURSO_DATABASE_URL is missing!");
-    // Fallback to local if absolutely necessary, but this will fail on Render without a file volume
-    url = "file:./local.db";
+    // This will cause a crash, which is better than a silent failure
+    throw new Error("Database URL is not defined");
 }
 
-// FORCE HTTPS: If the user pasted 'libsql://', convert it to 'https://'
-// This fixes the "Unexpected status code 400" error.
+// 1. Force HTTPS Protocol
+// The HTTP client requires 'https://' or 'http://', NOT 'libsql://'
 if (url.startsWith("libsql://")) {
     url = url.replace("libsql://", "https://");
 }
 
-console.log(`🔌 Connecting to Turso at: ${url}`);
+console.log(`🔌 Connecting to Turso...`);
 
+// 2. Create Client with Explicit HTTP Configuration
+// We use the generic createClient but pass the https URL which forces HTTP mode
 const client = createClient({
   url: url,
   authToken: authToken,
