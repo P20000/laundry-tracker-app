@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import BuildIcon from '@mui/icons-material/Build';
 import { Dashboard } from './components/Dashboard';
 
 // --- Configuration ---
