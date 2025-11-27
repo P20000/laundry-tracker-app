@@ -457,26 +457,37 @@ function App() {
         let statusPayload = { status: newStatus };
 
         // CASE 1: COMPLETING A WASH (Marking Clean)
+        // If the button sends 'WASHED', we hit the specific /wash endpoint which records history
         if (newStatus === 'WASHED') { 
              endpoint = `/items/${id}/wash`; 
              method = 'POST';
              statusPayload = { notes: 'Washed via app' };
         } 
         
-        // CASE 2: MARKING AS READY FOR WASH (Queueing)
-        // This is handled by the default PATCH logic above with status='READY_FOR_WASH'
+        // CASE 2: TOGGLING DAMAGE
+        // If clicking 'Damage', we check if it's already damaged to toggle it back to CLEAN
+        if (newStatus === 'DAMAGED') {
+            const currentItem = items.find(item => item.id === id);
+            statusPayload = { status: currentItem.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED' };
+        }
         
+        // CASE 3: QUEUE FOR WASH
+        // Handled by default (PATCH /status with 'READY_FOR_WASH')
+
         try {
             const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
                 method: method,
                 headers: getAuthHeaders(token),
                 body: JSON.stringify(statusPayload)
             });
+            
             if (res.status === 401) { handleLogout(); return; }
-            if (res.ok) fetchItems();
+            
+            if (res.ok) {
+                fetchItems(); // Refresh list to show new status
+            }
         } catch (err) { console.error("Failed to update status:", err); }
     };
-
 
     // --- Render Logic ---
     
