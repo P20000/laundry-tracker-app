@@ -447,6 +447,7 @@ function App() {
         }
     };
 
+    // --- FIXED STATUS CHANGE LOGIC ---
     const handleStatusChange = async (id, newStatus) => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         if (!token) return handleLogout();
@@ -455,16 +456,15 @@ function App() {
         let method = 'PATCH';
         let statusPayload = { status: newStatus };
 
+        // CASE 1: COMPLETING A WASH (Marking Clean)
         if (newStatus === 'WASHED') { 
              endpoint = `/items/${id}/wash`; 
              method = 'POST';
              statusPayload = { notes: 'Washed via app' };
         } 
         
-        if (newStatus === 'DAMAGED') {
-            const currentItem = items.find(item => item.id === id);
-            statusPayload = { status: currentItem.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED' };
-        }
+        // CASE 2: MARKING AS READY FOR WASH (Queueing)
+        // This is handled by the default PATCH logic above with status='READY_FOR_WASH'
         
         try {
             const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
@@ -472,19 +472,11 @@ function App() {
                 headers: getAuthHeaders(token),
                 body: JSON.stringify(statusPayload)
             });
-            
-            if (res.status === 401) {
-                handleLogout();
-                return;
-            }
-
-            if (res.ok) {
-                fetchItems(); 
-            }
-        } catch (err) {
-            console.error("Failed to update status:", err);
-        }
+            if (res.status === 401) { handleLogout(); return; }
+            if (res.ok) fetchItems();
+        } catch (err) { console.error("Failed to update status:", err); }
     };
+
 
     // --- Render Logic ---
     
