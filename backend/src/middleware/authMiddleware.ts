@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-// Extend the Request interface to include the userId property
 declare global {
     namespace Express {
         interface Request {
@@ -10,35 +9,43 @@ declare global {
     }
 }
 
-// Ensure the JWT_SECRET is available
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error("JWT_SECRET environment variable is not set.");
 }
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
-    // 1. Check for Authorization header
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        // 401 Unauthorized
+        console.log('[Auth Middleware] No token provided');
         return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    // 2. Extract token
     const token = authHeader.split(' ')[1];
 
     try {
-        // 3. Verify token
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-
-        // 4. Attach userId to the request for controllers to use
-        req.userId = decoded.userId;
-
-        next(); // Proceed to the next middleware or controller
+        // Verify the token
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
         
-    } catch (error) {
-        // 5. Handle invalid/expired tokens
+        // Debug Log (Remove in production)
+        console.log('[Auth Middleware] Decoded Token:', decoded);
+
+        // Check for userId specifically
+        if (!decoded.userId) {
+             console.error('[Auth Middleware] Token missing userId field');
+             return res.status(401).json({ error: 'Invalid token structure: userId missing.' });
+        }
+
+        req.userId = decoded.userId;
+        next();
+        
+    } catch (error: any) {
+        console.error('[Auth Middleware] Verification Failed:', error.message);
         return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 };
