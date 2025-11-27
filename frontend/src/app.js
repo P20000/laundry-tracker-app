@@ -19,7 +19,25 @@ import { Dashboard } from './components/Dashboard';
 // --- New SVG Logo Component ---
 // Replace the contents of the 'svg' tag with the code exported from Adobe Illustrator
 const CustomLogo = (props) => (
-    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 703.73 965.85"><defs><style>.cls-1{fill:none;stroke:#231f20;stroke-linecap:round;stroke-linejoin:round;stroke-width:51px;}</style></defs><rect class="cls-1" x="25.5" y="616.47" width="652.73" height="161.94" rx="80.97"/><rect class="cls-1" x="25.5" y="778.41" width="652.73" height="161.94" rx="80.97"/><line class="cls-1" x1="351.87" y1="465.33" x2="351.87" y2="556.68"/><polyline class="cls-1" points="408.56 511.01 678.23 511.01 351.87 254.4 25.5 511.01 295.17 511.01"/><line class="cls-1" x1="351.87" y1="254.4" x2="351.87" y2="179.68"/><path class="cls-1" d="M427.66,119.68s-.19-73,73-73c33.16,0,52,15.77,62.78,33,16.51,26.54,16,60.29-.35,86.93-10.91,17.74-29.93,34.22-63,34.22" transform="translate(-147.61 -21.2)"/><path class="cls-1" d="M425.14,448.06" transform="translate(-147.61 -21.2)"/></svg>
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="40" 
+        height="40" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        {...props}
+        >
+                <rect class="cls-1" x="25.5" y="616.47" width="652.73" height="161.94" rx="80.97"/>
+                <rect class="cls-1" x="25.5" y="778.41" width="652.73" height="161.94" rx="80.97"/>
+                <line class="cls-1" x1="351.87" y1="465.33" x2="351.87" y2="556.68"/>
+                <polyline class="cls-1" points="408.56 511.01 678.23 511.01 351.87 254.4 25.5 511.01 295.17 511.01"/><line class="cls-1" x1="351.87" y1="254.4" x2="351.87" y2="179.68"/>
+                <path class="cls-1" d="M427.66,119.68s-.19-73,73-73c33.16,0,52,15.77,62.78,33,16.51,26.54,16,60.29-.35,86.93-10.91,17.74-29.93,34.22-63,34.22" transform="translate(-147.61 -21.2)"/>
+                <path class="cls-1" d="M425.14,448.06" transform="translate(-147.61 -21.2)"/>
+    </svg>
 );
 
 
