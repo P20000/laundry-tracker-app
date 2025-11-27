@@ -12,10 +12,11 @@ import {
     updateItemStatus 
 } from './controllers/itemController';
 
-// --- MISSING IMPORTS? ---
 import { registerUser, loginUser } from './controllers/authController'; 
 import { protect } from './middleware/authMiddleware'; 
-// ------------------------
+
+// --- NEW IMPORT FOR ADMIN DASHBOARD ---
+import { getSystemStats } from './controllers/adminController'; 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,17 +47,22 @@ app.get('/health', (req: Request, res: Response) => {
     });
 });
 
-// --- MISSING ROUTES? ---
-// These lines MUST be here for login to work!
+// --- PUBLIC Routes (Authentication) ---
 app.post('/signup', registerUser);
 app.post('/login', loginUser);
-// -----------------------
+
 
 // --- PROTECTED API v1 Routes ---
 const protectedRouter = express.Router();
+
+// Apply Auth Middleware (Everything below this line requires a valid JWT)
 protectedRouter.use(protect);
 
-// Item CRUD
+// --- ADMIN ROUTES ---
+// This endpoint returns the stats/logs for the dashboard
+protectedRouter.get('/admin/dashboard', getSystemStats); 
+
+// --- ITEM ROUTES ---
 protectedRouter.post('/items', createItem);
 protectedRouter.get('/items', getAllItems);
 
@@ -68,6 +74,7 @@ protectedRouter.patch('/items/:id/status', updateItemStatus);
 protectedRouter.get('/laundry', getLaundryItems);
 protectedRouter.get('/damaged', getDamagedItems);
 
+// Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 
 // --- Server Start ---

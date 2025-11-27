@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { client } from '../db'; // Import the raw LibSQL client
 import { IClothingItem, INewItemPayload } from '../../../shared/types'; 
+import { logEvent } from './adminController';
 
+
+// --- Helper: Error Message Formatter ---
 const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) return error.message;
     return String(error);
@@ -48,9 +51,13 @@ export const createItem = async (req: Request, res: Response) => {
         // NOTE: SQL insert returns limited data; client must fetch new list to update UI.
         return res.status(201).json({ message: "Item created successfully." });
     } catch (error: unknown) {
-        console.error('Error creating item:', error);
-        return res.status(500).json({ error: 'Failed to create new item.', details: getErrorMessage(error) });
+    const msg = getErrorMessage(error);
+    console.error('Error creating item:', error);
+    // Log to database for dashboard
+    await logEvent('ERROR', 'Failed to create item', msg); 
+    return res.status(500).json({ error: 'Failed to create new item.', details: msg });
     }
+    
 };
 
 export const getAllItems = async (req: Request, res: Response) => {

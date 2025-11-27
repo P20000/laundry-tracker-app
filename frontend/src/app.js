@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { Dashboard } from './components/Dashboard';
 
 // --- Configuration ---
 // Ensure your backend is running on this port
@@ -498,6 +499,20 @@ function App() {
     
     // --- Main App Dashboard UI ---
 
+    if (view === 'admin') {
+    return (
+        <ThemeProvider theme={M3Theme}>
+            <CssBaseline enableColorScheme />
+            <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+                {/* Reuse Navigation Rail Logic Here if you want sidebar on admin page too */}
+                <Box sx={{ p: 2 }}>
+                    <Button onClick={() => setView('catalog')} startIcon={<CheckroomIcon />}>Back to App</Button>
+                    <Dashboard apiUrl={API_BASE_URL + '/api/v1'} token={localStorage.getItem(AUTH_TOKEN_KEY)} />
+                </Box>
+            </Box>
+        </ThemeProvider>
+    )
+    }
     const navItems = [
         { name: 'Catalog', icon: <CheckroomIcon />, view: 'catalog' },
         { name: 'Laundry', icon: <LocalLaundryServiceIcon />, view: 'laundry' },
