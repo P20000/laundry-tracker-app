@@ -426,86 +426,66 @@ function App() {
 
     const handleAddItem = async () => {
         if (!newItemName) return;
-
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         if (!token) return handleLogout();
-
         let base64Image = "";
         if (newItemImageBlob) {
-            try {
-                base64Image = await fileToBase64(newItemImageBlob);
-            } catch (e) {
-                console.error("Error converting image", e);
-            }
+            try { base64Image = await fileToBase64(newItemImageBlob); } 
+            catch (e) { console.error("Error converting image", e); }
         }
 
-        const payload = {
-            name: newItemName,
-            itemType: newItemType,
-            category: newItemCategory,
-            size: newItemSize,
-            color: newItemColor,
-            imageUrl: base64Image,
+        const payload = { 
+            name: newItemName, 
+            itemType: newItemType, 
+            category: newItemCategory, 
+            size: newItemSize, 
+            color: newItemColor, 
+            imageUrl: base64Image 
         };
-
         try {
             const res = await fetch(`${API_PROTECTED_URL}/items`, {
                 method: 'POST',
                 headers: getAuthHeaders(token),
                 body: JSON.stringify(payload)
             });
-            
             if (res.ok) {
                 fetchItems(); 
                 // Reset and Close
-                setNewItemName('');
-                setNewItemImagePreview(null);
-                setNewItemImageBlob(null);
-                setIsModalOpen(false);
-            } else if (res.status === 401) {
-                handleLogout();
-            } else {
-                 console.error("Failed to add item:", await res.json());
+                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsModalOpen(false);
             }
-        } catch (err) {
-            console.error("Network error adding item:", err);
-        }
+        } catch (err) { console.error("Network error adding item:", err); }
     };
 
 // Inside the App function, replacing the old function:
 const handleStatusChange = async (id, newStatus) => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) return handleLogout();
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
 
-    let endpoint = `/items/${id}/status`;
-    let method = 'PATCH';
-    let statusPayload = { status: newStatus };
+        let endpoint = `/items/${id}/status`;
+        let method = 'PATCH';
+        let statusPayload = { status: newStatus };
 
-    // CASE 1: COMPLETING A WASH OR MARKING REPAIRED (When status is 'WASHED' or 'CLEAN' from repair)
-    // We use the /wash endpoint to record history if WASHED is the action
-    if (newStatus === 'WASHED') { 
-         endpoint = `/items/${id}/wash`; 
-         method = 'POST';
-         statusPayload = { notes: 'Washed via app' }; // Body payload is different for /wash
-    } 
-    
-    // CASE 2: MARKING AS READY_FOR_WASH or DAMAGED (Standard PATCH)
-    // Status is already correctly formatted in statusPayload = { status: newStatus }
-
-    try {
-        const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
-            method: method,
-            headers: getAuthHeaders(token),
-            body: JSON.stringify(statusPayload)
-        });
+        // CASE 1: COMPLETING A WASH (WASHED -> CLEAN)
+        // This hits the POST /wash endpoint to record history
+        if (newStatus === 'WASHED') { 
+             endpoint = `/items/${id}/wash`; 
+             method = 'POST';
+             statusPayload = { notes: 'Washed via app' };
+        } 
         
-        if (res.status === 401) { handleLogout(); return; }
+        // CASE 2: TOGGLING DAMAGE (DAMAGED -> CLEAN or vice-versa)
+        // Handled by standard PATCH /status with the new status passed by the button
         
-        if (res.ok) {
-            fetchItems(); // Refresh list to show new status
-        }
-    } catch (err) { console.error("Failed to update status:", err); }
-};
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
+                method: method,
+                headers: getAuthHeaders(token),
+                body: JSON.stringify(statusPayload)
+            });
+            if (res.status === 401) { handleLogout(); return; }
+            if (res.ok) fetchItems();
+        } catch (err) { console.error("Failed to update status:", err); }
+    };
 
     // --- Render Logic ---
     

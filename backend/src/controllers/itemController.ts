@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { client } from '../db'; // Import the raw LibSQL client
 import { IClothingItem, INewItemPayload } from '../../../shared/types'; 
 // import { logEvent } from './adminController'; // Optional: Uncomment if admin controller exists
+import { randomUUID } from 'crypto';
 
 // --- Helper: Error Message Formatter ---
 const getErrorMessage = (error: unknown): string => {
@@ -40,28 +41,30 @@ export const createItem = async (req: Request, res: Response) => {
     if (!name || !itemType) return res.status(400).json({ error: 'Missing required fields.' });
 
     try {
-        // The SQL expects 7 parameters (note the last ?)
+        const newItemId = randomUUID();
+        
+        // The SQL expects 8 total values now: (id, name, itemType, category, size, color, imageUrl, userId)
         const sql = `
             INSERT INTO clothing_items 
-            (name, itemType, category, size, color, imageUrl, currentStatus, userId)
-            VALUES (?, ?, ?, ?, ?, ?, 'CLEAN', ?)
-        `;
+            (id, name, itemType, category, size, color, imageUrl, currentStatus, userId)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?)
+            `;
         
-        // 2. Pass exactly 7 arguments
-        await client.execute({
-            sql: sql,
-            args: [
-                name, 
-                itemType, 
-                category || 'Casuals', 
-                size || 'M', 
-                color || '#000000', 
-                imageUrl || '', 
-                userId // <--- This was missing!
-            ]
-        });
+        // FIX 2: Pass exactly 8 arguments
+        const args = [
+            newItemId,              // 1. The new ID
+            name,                   // 2
+            itemType,               // 3
+            category || 'Casuals',  // 4
+            size || 'M',            // 5
+            color || '#000000',     // 6
+            imageUrl || '',         // 7
+            userId                  // 8
+        ];
 
-        return res.status(201).json({ message: "Item created successfully." });
+        await client.execute({ sql, args });
+
+        return res.status(201).json({ id: newItemId, message: "Item created successfully." });
     } catch (error: unknown) {
         const msg = getErrorMessage(error);
         console.error('Error creating item:', error);
