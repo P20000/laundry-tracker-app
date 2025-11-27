@@ -40,7 +40,7 @@ export const createItem = async (req: Request, res: Response) => {
         const sql = `
             INSERT INTO clothing_items 
             (name, itemType, category, size, color, imageUrl, currentStatus, userId)
-            VALUES (?, ?, ?, ?, ?, ?, 'CLEAN', 'demo-user')
+            VALUES (?, ?, ?, ?, ?, ?, 'CLEAN', ?)
         `;
         // Use client.execute to run raw SQL
         await client.execute({
