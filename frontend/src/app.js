@@ -542,7 +542,7 @@ const handleStatusChange = async (id, newStatus) => {
 
     if (view === 'admin') {
     return (
-        <ThemeProvider theme={M3Theme}>
+        <ThemeProvider theme={finalTheme}>
             <CssBaseline enableColorScheme />
             <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
                 {/* Reuse Navigation Rail Logic Here if you want sidebar on admin page too */}
@@ -563,7 +563,7 @@ const handleStatusChange = async (id, newStatus) => {
     const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
 
     return (
-        <ThemeProvider theme={M3Theme}>
+        <ThemeProvider theme={finalTheme}>
             <CssBaseline enableColorScheme />
             <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
                 
