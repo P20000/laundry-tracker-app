@@ -25,7 +25,7 @@ const CustomLogo = (props) => (
         height="40" 
         viewBox="0 0 24 24" 
         fill="none" 
-        stroke="currentColor" 
+        stroke="primary.main" 
         strokeWidth="2" 
         strokeLinecap="round" 
         strokeLinejoin="round" 
