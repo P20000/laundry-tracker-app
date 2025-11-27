@@ -601,7 +601,15 @@ const handleStatusChange = async (id, newStatus) => {
                 {/* Desktop Navigation Rail */}
                 {!isMobile && (
                     <Box sx={{ width: 80, height: '100%', bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-                        <Typography variant="h6" color="primary" sx={{ mb: 4, fontWeight: 'bold' }}>SW</Typography>
+                        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
+                            <CustomLogo 
+                                sx={{ 
+                                    color: 'primary.main', // Inherits M3 primary color 
+                                    width: 32, 
+                                    height: 32 
+                                }} 
+                            />
+                        </Box>
                         
                         <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
