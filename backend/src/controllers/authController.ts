@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto'; // Native Node.js ID generator
 import { client } from '../db';
 import { IUserCredentials } from '../../../shared/types';
 
@@ -14,15 +15,15 @@ const getErrorMessage = (error: unknown): string => {
     return String(error);
 };
 
-// --- Helper: Generate JWT ---
 const generateToken = (id: string) => {
-    // CRITICAL FIX: The payload key MUST be 'userId' to match authMiddleware
+    // Ensure ID is never null when signing
+    if (!id) throw new Error("Cannot sign token: User ID is missing");
+    
     return jwt.sign({ userId: id }, JWT_SECRET, {
         expiresIn: '7d',
     });
 };
 
-// --- 1. User Registration (Signup) ---
 export const registerUser = async (req: Request, res: Response) => {
     const { email, password } = req.body as IUserCredentials;
 
@@ -31,7 +32,7 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     try {
-        // Check if user exists
+        // 1. Check if user exists
         const existingUser = await client.execute({
             sql: "SELECT id FROM users WHERE email = ?",
             args: [email]
@@ -41,30 +42,21 @@ export const registerUser = async (req: Request, res: Response) => {
             return res.status(409).json({ error: 'User already exists.' });
         }
 
+        // 2. Hash Password
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // Use a UUID-like approach or let DB handle ID if auto-generated, 
-        // but here we rely on the table's default random ID.
-        // We need to fetch the user after creation to get the ID for the token, 
-        // OR generate the ID in code. 
-        // For LibSQL default (randomblob), we can't easily get the ID back in one go without RETURNING clause support.
-        // Strategy: Generate ID in code or Select back.
-        // Simpler: Select back by email.
-        
+        // 3. Generate ID explicitly (FIX for null ID)
+        const newUserId = randomUUID();
+
+        // 4. Insert with explicit ID
         await client.execute({
-            sql: "INSERT INTO users (email, password_hash) VALUES (?, ?)",
-            args: [email, passwordHash]
+            sql: "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)",
+            args: [newUserId, email, passwordHash]
         });
         
-        // Fetch the new user to get the ID for the token (Auto-login after signup)
-        const newUserQuery = await client.execute({
-             sql: "SELECT id FROM users WHERE email = ?",
-             args: [email]
-        });
-        const user = newUserQuery.rows[0];
-        
-        const token = generateToken(user.id as string);
+        // 5. Generate token using the known ID
+        const token = generateToken(newUserId);
 
         return res.status(201).json({ message: 'User registered successfully.', token });
 
@@ -74,7 +66,6 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 };
 
-// --- 2. User Login ---
 export const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body as IUserCredentials;
 
@@ -100,7 +91,11 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
 
-        // Generate Token with 'userId'
+        // Ensure ID is valid before signing
+        if (!user.id) {
+             throw new Error("Database user has no ID");
+        }
+
         const token = generateToken(user.id as string);
         
         return res.status(200).json({ token });
