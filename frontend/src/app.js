@@ -12,6 +12,8 @@ import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import BuildIcon from '@mui/icons-material/Build';
+import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dark Mode)
+import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
 import { Dashboard } from './components/Dashboard';
 
 // --- Configuration ---
@@ -21,15 +23,31 @@ const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`;
 const AUTH_TOKEN_KEY = 'auth_token';
 
 // --- M3 Theme Definition ---
-const M3Theme = createTheme({
+// --- Theme Definitions (Dark Mode Added) ---
+
+const getDesignTokens = (mode) => ({
     palette: {
-        mode: 'light',
-        primary: { main: '#6750A4', contrastText: '#FFFFFF' },
-        secondary: { main: '#625B71' },
-        error: { main: '#B3261E' },
-        surfaceVariant: { main: '#E7E0EC' },
-        background: { default: '#FFFBFE', paper: '#FFFBFE' }
+        mode,
+        ...(mode === 'light'
+            ? {
+                  // Light Palette (Your Existing Purple Theme)
+                  primary: { main: '#6750A4', contrastText: '#FFFFFF' },
+                  secondary: { main: '#625B71' },
+                  error: { main: '#B3261E' },
+                  surfaceVariant: { main: '#E7E0EC' },
+                  background: { default: '#FFFBFE', paper: '#FFFBFE' },
+              }
+            : {
+                  // Dark Palette (Dark Mode Tones)
+                  primary: { main: '#D0BCFF', contrastText: '#381E72' },
+                  secondary: { main: '#CCC2DC', contrastText: '#332D41' },
+                  error: { main: '#F2B8B5', contrastText: '#601410' },
+                  surfaceVariant: { main: '#49454F', contrastText: '#E7E0EC' },
+                  background: { default: '#1C1B1F', paper: '#1C1B1F' },
+                  text: { primary: '#E6E1E5', secondary: '#CAC4D0' },
+              }),
     },
+    // Keep typography and component overrides outside of the mode ternary
     typography: {
         fontFamily: ['Roboto', 'Inter', 'sans-serif'].join(','),
         displayMedium: { fontSize: '2.5rem', fontWeight: 400, letterSpacing: '-0.01em' },
@@ -37,9 +55,9 @@ const M3Theme = createTheme({
         body1: { fontWeight: 400 }
     },
     components: {
-        MuiCard: { styleOverrides: { root: { borderRadius: 12, boxShadow: '0px 1px 3px rgba(0,0,0,0.12)' } } },
+        MuiCard: { styleOverrides: { root: { borderRadius: 12, boxShadow: '0px 1px 3px rgba(0,0,0,0.4)', backgroundColor: mode === 'dark' ? '#2d2b2f' : undefined } } },
         MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 20, textTransform: 'none' } } },
-        MuiDialog: { styleOverrides: { paper: { borderRadius: 28, padding: 16, backgroundColor: '#FFFBFE' } } }
+        MuiDialog: { styleOverrides: { paper: { borderRadius: 28, padding: 16, backgroundColor: mode === 'dark' ? '#1C1B1F' : '#FFFBFE' } } }
     },
 });
 
@@ -355,9 +373,30 @@ function App() {
     const [newItemColor, setNewItemColor] = useState('#6750A4');
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
-
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+
+    const [mode, setMode] = useState(
+        localStorage.getItem('themeMode') || (prefersDarkMode ? 'dark' : 'light')
+    );
+
+    // 2. Theme Handler
+    const colorMode = React.useMemo(() => ({
+        // Function to toggle the mode
+        toggleColorMode: () => {
+            setMode((prevMode) => {
+                const newMode = prevMode === 'light' ? 'dark' : 'light';
+                localStorage.setItem('themeMode', newMode);
+                return newMode;
+            });
+        },
+    }), []);
+
+    // 3. Memoized Theme Creator
+    const finalTheme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
 
     // 1. Check Auth Status on Load
     useEffect(() => {
@@ -492,7 +531,7 @@ const handleStatusChange = async (id, newStatus) => {
     
     if (!isLoggedIn) {
         return (
-            <ThemeProvider theme={M3Theme}>
+            <ThemeProvider theme={finalTheme}>
                 <CssBaseline enableColorScheme />
                 <AuthCard setLoggedIn={setIsLoggedIn} />
             </ThemeProvider>
@@ -536,7 +575,14 @@ const handleStatusChange = async (id, newStatus) => {
                         <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
                         </Fab>
-                        
+                        <Box sx={{ my: 2, textAlign: 'center' }}>
+                            <IconButton onClick={colorMode.toggleColorMode} color="primary" sx={{ p: 1, border: '1px solid', borderColor: 'divider' }}>
+                                {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                            </IconButton>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                {theme.palette.mode === 'dark' ? 'Dark' : 'Light'}
+                            </Typography>
+                        </Box>
                         <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 4 }}>
                             {navItems.map((item) => {
                                 const isActive = view === item.view;
