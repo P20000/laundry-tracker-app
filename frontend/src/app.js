@@ -722,17 +722,20 @@ function App() {
                                         variant={isActive ? 'contained' : 'text'} 
                                         color={isActive ? 'secondary' : 'inherit'} 
                                         sx={{ 
-                                            minWidth: 30, 
-                                            width: 30, 
-                                            height: 30, 
+                                            // FIX 1: Restore M3 standard button size for Nav Rail items (56x56)
+                                            minWidth: 56, 
+                                            width: 56, 
+                                            height: 56, 
                                             borderRadius: 4, 
                                             flexDirection: 'column', 
                                             p: 1, 
+                                            
                                             color: isActive ? 'secondary.contrastText' : 'text.secondary', 
                                             bgcolor: isActive ? 'secondary.main' : 'transparent', 
                                             '&:hover': { bgcolor: isActive ? 'secondary.dark' : 'action.hover' },
-                                            // ADD THIS LINE: Targets the icon and text inside the button
-                                            '& .MuiSvgIcon-root': { fontSize: 15 }, 
+                                            
+                                            // FIX 2: Explicitly set the icon size to 28px (up from 24px default)
+                                            '& .MuiSvgIcon-root': { fontSize: 28 }, 
                                         }}
                                     >
                                         {item.icon}
