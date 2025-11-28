@@ -6,9 +6,11 @@ const processHistory = (history) => {
     if (!history || history.length === 0) return [];
     
     const timeline = {};
+    // Sort oldest first for correct month order
     history.sort((a, b) => new Date(a.washDate) - new Date(b.washDate));
 
     history.forEach(event => {
+        // NOTE: washDate is returned as a string from Turso
         const date = new Date(event.washDate);
         const yearMonth = date.getFullYear() + '-' + (date.getMonth() + 1).toString().padStart(2, '0');
         
