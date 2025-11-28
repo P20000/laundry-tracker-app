@@ -252,6 +252,7 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                         title={item.currentStatus === 'DAMAGED' ? "Mark Repaired" : "Report Damage"}
                     >
                         {item.currentStatus === 'DAMAGED' ? <CheckroomIcon /> : <WarningIcon />}
+                    </Button>
                     <IconButton 
                         onClick={(e) => { 
                             e.stopPropagation(); // Prevents opening history modal when clicking delete
@@ -274,7 +275,6 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                     >
                         <DeleteIcon fontSize="small" />
                     </IconButton>
-                    </Button>
                 </Box>
             </Box>
         </Box>
