@@ -211,16 +211,6 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
             </Box>
 
             <Box sx={{ p: 2 }}>
-                <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
-                    <CustomLogo 
-                        sx={{ 
-                            color: 'primary.main', // Inherits M3 primary color 
-                            width: 20, 
-                            height: 20 
-                        }} 
-                    />
-                </Box>
-                
                 <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>{item.category}</Typography>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>Size: {item.size}</Typography>
@@ -726,16 +716,28 @@ function App() {
                             {navItems.map((item) => {
                                 const isActive = view === item.view;
                                 return (
-                                    <Box key={item.name} onClick={() => setView(item.view)} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isActive ? 1 : 0.7, cursor: 'pointer' }}>
-                                        <Box sx={{ 
-                                            bgcolor: isActive ? 'secondary.container' : 'transparent', 
-                                            color: isActive ? 'secondary.onContainer' : 'text.primary',
-                                            px: 2.5, py: 0.5, borderRadius: 4, mb: 0.5 
-                                        }}>
-                                            {item.icon}
-                                        </Box>
-                                        <Typography variant="caption" fontWeight={isActive ? 700 : 400}>{item.name}</Typography>
-                                    </Box>
+                                    <Button 
+                                        key={item.name} 
+                                        onClick={() => setView(item.view)} 
+                                        variant={isActive ? 'contained' : 'text'} 
+                                        color={isActive ? 'secondary' : 'inherit'} 
+                                        sx={{ 
+                                            minWidth: 56, 
+                                            width: 56, 
+                                            height: 56, 
+                                            borderRadius: 4, 
+                                            flexDirection: 'column', 
+                                            p: 1, 
+                                            color: isActive ? 'secondary.contrastText' : 'text.secondary', 
+                                            bgcolor: isActive ? 'secondary.main' : 'transparent', 
+                                            '&:hover': { bgcolor: isActive ? 'secondary.dark' : 'action.hover' },
+                                            // ADD THIS LINE: Targets the icon and text inside the button
+                                            '& .MuiSvgIcon-root': { fontSize: 28 }, 
+                                        }}
+                                    >
+                                        {item.icon}
+                                        <Typography variant="caption" sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: isActive ? 700 : 400 }}>{item.name}</Typography>
+                                    </Button>
                                 )
                             })}
                         </Box>
