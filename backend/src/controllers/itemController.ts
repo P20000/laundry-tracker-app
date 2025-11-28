@@ -167,3 +167,30 @@ export const updateItemStatus = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to update status.' });
     }
 };
+
+export const getItemHistory = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Fetch all wash events for the given item, verifying ownership
+        const sql = `
+            SELECT 
+                w.washDate, 
+                w.notes 
+            FROM wash_events w
+            JOIN clothing_items ci ON w.clothingItemId = ci.id
+            WHERE ci.id = ? AND ci.userId = ?
+            ORDER BY w.washDate DESC
+        `;
+        const result = await client.execute({ sql, args: [id, userId] });
+
+        // Since the rows are simple, we return them directly
+        return res.status(200).json(result.rows);
+
+    } catch (error: unknown) {
+        console.error('Error fetching item history:', error);
+        return res.status(500).json({ error: 'Failed to fetch item history.' });
+    }
+};

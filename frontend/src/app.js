@@ -14,29 +14,31 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import BuildIcon from '@mui/icons-material/Build';
 import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dark Mode)
 import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
+import EventIcon from '@mui/icons-material/Event'; // Icon for item history button 
+import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
 // --- New SVG Logo Component ---
-// Replace the contents of the 'svg' tag with the code exported from Adobe Illustrator
 const CustomLogo = (props) => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
-        width="40" 
-        height="40" 
-        viewBox="0 0 24 24" 
+        // Use the original viewBox dimensions from your Illustrator export
+        viewBox="0 0 703.73 965.85" 
         fill="none" 
-        stroke="primary.main" 
-        strokeWidth="2" 
+        stroke="currentColor" 
+        strokeWidth="51" // Use the largest stroke width as a base
         strokeLinecap="round" 
         strokeLinejoin="round" 
-        {...props}
-        >
-                <rect class="cls-1" x="25.5" y="616.47" width="652.73" height="161.94" rx="80.97"/>
-                <rect class="cls-1" x="25.5" y="778.41" width="652.73" height="161.94" rx="80.97"/>
-                <line class="cls-1" x1="351.87" y1="465.33" x2="351.87" y2="556.68"/>
-                <polyline class="cls-1" points="408.56 511.01 678.23 511.01 351.87 254.4 25.5 511.01 295.17 511.01"/><line class="cls-1" x1="351.87" y1="254.4" x2="351.87" y2="179.68"/>
-                <path class="cls-1" d="M427.66,119.68s-.19-73,73-73c33.16,0,52,15.77,62.78,33,16.51,26.54,16,60.29-.35,86.93-10.91,17.74-29.93,34.22-63,34.22" transform="translate(-147.61 -21.2)"/>
-                <path class="cls-1" d="M425.14,448.06" transform="translate(-147.61 -21.2)"/>
+        {...props} // Allows inheriting props like color and sx
+    >
+        {/* Hanger and Folded Clothes (Your Illustrator Paths) */}
+        <rect x="25.5" y="616.47" width="652.73" height="161.94" rx="80.97"/>
+        <rect x="25.5" y="778.41" width="652.73" height="161.94" rx="80.97"/>
+        <line x1="351.87" y1="465.33" x2="351.87" y2="556.68"/>
+        <polyline points="408.56 511.01 678.23 511.01 351.87 254.4 25.5 511.01 295.17 511.01"/>
+        <line x1="351.87" y1="254.4" x2="351.87" y2="179.68"/>
+        <path d="M427.66,119.68s-.19-73,73-73c33.16,0,52,15.77,62.78,33,16.51,26.54,16,60.29-.35,86.93-10.91,17.74-29.93,34.22-63,34.22" transform="translate(-147.61 -21.2)"/>
+        <path d="M425.14,448.06" transform="translate(-147.61 -21.2)"/>
     </svg>
 );
 
@@ -153,7 +155,7 @@ const EmptyState = ({ view, onAddClick }) => {
     );
 };
 
-const ItemCard = ({ item, onUpdateStatus }) => {
+const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
     // --- DYNAMIC STATUS LOGIC ---
     let statusColor = 'success';
     let statusLabel = 'Clean';
@@ -238,7 +240,16 @@ const ItemCard = ({ item, onUpdateStatus }) => {
                     >
                         {mainBtnText}
                     </Button>
-                    
+                    <Button 
+                        size="small" 
+                        variant="text" 
+                        color="secondary" 
+                        onClick={() => onViewDetails(item)} // Call the new handler
+                        sx={{ minWidth: 40, px: 1 }}
+                        title="View Wash History"
+                    >
+                        <EventIcon />
+                    </Button>
                     {/* Damage Toggle Button (Toggles between DAMAGED and CLEAN) */}
                     <Button 
                         size="small" 
@@ -404,6 +415,7 @@ function App() {
     const [newItemColor, setNewItemColor] = useState('#6750A4');
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
+    const [selectedItem, setSelectedItem] = useState(null);
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -527,35 +539,41 @@ function App() {
         } catch (err) { console.error("Network error adding item:", err); }
     };
 
-// Inside the App function, replacing the old function:
-const handleStatusChange = async (id, newStatus) => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        if (!token) return handleLogout();
+    // Inside the App function, replacing the old function:
+    const handleStatusChange = async (id, newStatus) => {
+            const token = localStorage.getItem(AUTH_TOKEN_KEY);
+            if (!token) return handleLogout();
 
-        let endpoint = `/items/${id}/status`;
-        let method = 'PATCH';
-        let statusPayload = { status: newStatus };
+            let endpoint = `/items/${id}/status`;
+            let method = 'PATCH';
+            let statusPayload = { status: newStatus };
 
-        // CASE 1: COMPLETING A WASH (WASHED -> CLEAN)
-        // This hits the POST /wash endpoint to record history
-        if (newStatus === 'WASHED') { 
-             endpoint = `/items/${id}/wash`; 
-             method = 'POST';
-             statusPayload = { notes: 'Washed via app' };
-        } 
-        
-        // CASE 2: TOGGLING DAMAGE (DAMAGED -> CLEAN or vice-versa)
-        // Handled by standard PATCH /status with the new status passed by the button
-        
-        try {
-            const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
-                method: method,
-                headers: getAuthHeaders(token),
-                body: JSON.stringify(statusPayload)
-            });
-            if (res.status === 401) { handleLogout(); return; }
-            if (res.ok) fetchItems();
-        } catch (err) { console.error("Failed to update status:", err); }
+            // CASE 1: COMPLETING A WASH (WASHED -> CLEAN)
+            // This hits the POST /wash endpoint to record history
+            if (newStatus === 'WASHED') { 
+                endpoint = `/items/${id}/wash`; 
+                method = 'POST';
+                statusPayload = { notes: 'Washed via app' };
+            } 
+            
+            // CASE 2: TOGGLING DAMAGE (DAMAGED -> CLEAN or vice-versa)
+            // Handled by standard PATCH /status with the new status passed by the button
+            
+            try {
+                const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
+                    method: method,
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify(statusPayload)
+                });
+                if (res.status === 401) { handleLogout(); return; }
+                if (res.ok) fetchItems();
+            } catch (err) { console.error("Failed to update status:", err); }
+        };
+
+    // NEW HANDLER: Opens the History Modal
+    const handleViewDetails = (item) => {
+        setSelectedItem(item);
+        setIsModalOpen(true);
     };
 
     // --- Render Logic ---
@@ -681,7 +699,11 @@ const handleStatusChange = async (id, newStatus) => {
                             <Grid container spacing={2}>
                                 {items.map(item => (
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
-                                        <ItemCard item={item} onUpdateStatus={handleStatusChange} />
+                                        <ItemCard 
+                                            item={item} 
+                                            onUpdateStatus={handleStatusChange} 
+                                            onViewDetails={handleViewDetails} // Pass the new handler here
+                                        />
                                     </Grid>
                                 ))}
                             </Grid>

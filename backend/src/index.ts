@@ -9,7 +9,8 @@ import {
     getDamagedItems, 
     createItem,
     markAsWashed,
-    updateItemStatus 
+    updateItemStatus
+    getItemHistory 
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -66,6 +67,8 @@ protectedRouter.get('/admin/dashboard', getSystemStats);
 protectedRouter.post('/items', createItem);
 protectedRouter.get('/items', getAllItems);
 
+// Item History Route
+protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions
 protectedRouter.post('/items/:id/wash', markAsWashed); 
 protectedRouter.patch('/items/:id/status', updateItemStatus); 
