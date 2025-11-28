@@ -723,8 +723,8 @@ function App() {
                                         color={isActive ? 'secondary' : 'inherit'} 
                                         sx={{ 
                                             minWidth: 56, 
-                                            width: 56, 
-                                            height: 56, 
+                                            width: 30, 
+                                            height: 30, 
                                             borderRadius: 4, 
                                             flexDirection: 'column', 
                                             p: 1, 
