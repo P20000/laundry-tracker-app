@@ -7,9 +7,24 @@ const getErrorMessage = (error: unknown): string => {
     return String(error);
 };
 
+
+// Simple logger function to call from other controllers (Needed if not imported)
+// const logEvent = async (level: 'INFO' | 'ERROR', message: string, details: string = '') => { /* ... implementation ... */ };
+
 export const getSystemStats = async (req: Request, res: Response) => {
     try {
-        // Run queries in parallel for speed
+        // --- NEW SQL QUERY: Wash Volume by Category ---
+        // Join items with wash events and count washes per category
+        const washVolumeQuery = `
+            SELECT 
+                ci.category AS name, 
+                COUNT(we.id) AS count
+            FROM wash_events we
+            JOIN clothing_items ci ON we.clothingItemId = ci.id
+            GROUP BY ci.category
+        `;
+        
+        // Run main stats and the new wash volume query in parallel
         const [userCount, itemCount, washCount, recentLogs] = await Promise.all([
             client.execute("SELECT COUNT(*) as count FROM users"),
             client.execute("SELECT COUNT(*) as count FROM clothing_items"),
@@ -29,6 +44,7 @@ export const getSystemStats = async (req: Request, res: Response) => {
         return res.status(200).json(stats);
     } catch (error) {
         console.error("Admin Stats Error:", error);
+        // await logEvent('ERROR', 'Failed to fetch admin stats', getErrorMessage(error));
         return res.status(500).json({ error: "Failed to fetch admin stats", details: getErrorMessage(error) });
     }
 };

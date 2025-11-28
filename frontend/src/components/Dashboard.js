@@ -78,14 +78,32 @@ export const Dashboard = ({ apiUrl, token }) => {
                 {/* Chart Section */}
                 <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 3, height: '400px' }}>
-                        <Typography variant="h6" mb={3}>Data Overview</Typography>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
+                        <Typography variant="h6" mb={3}>Data Overview (Items/Users)</Typography>
+                        <ResponsiveContainer width="100%" height="90%">
+                            <BarChart data={chartData}> 
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" />
                                 <YAxis />
                                 <Tooltip />
                                 <Bar dataKey="count" fill="#6750A4" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Paper>
+                </Grid>
+
+                {/* ADDED: New Wash Volume by Category Chart */}
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3, height: '400px' }}>
+                        <Typography variant="h6" mb={3}>Wash Volume by Category</Typography>
+                        <ResponsiveContainer width="100%" height="90%">
+                            <BarChart data={stats.washVolumeByCategory}> {/* Uses the new data */}
+                                <CartesianGrid strokeDasharray="3 3" />
+                                {/* Chart uses category name on X-axis and count on Y-axis */}
+                                <XAxis dataKey="name" /> 
+                                <YAxis />
+                                <Tooltip />
+                                {/* Use a secondary color for visual distinction */}
+                                <Bar dataKey="count" fill="#006A60" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </Paper>
