@@ -250,12 +250,10 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
                         gap={1} 
                         mb={2} 
                         sx={{ cursor: 'pointer' }}
-                        // Call the new handler when the indicator is clicked
-                        onClick={() => onViewDetails(item)} 
+                        // FIX: Call the new, dedicated handler here!
+                        onClick={() => onOpenDamageEditor(item)} // NEW: This opens the dedicated editor
                     >
-                        <WarningIcon fontSize="small" color="error" />
-                        <Typography variant="body2" color="error" fontWeight="bold">Severity:</Typography>
-                        <Chip size="small" label={item.damageLevel || 1} sx={{ bgcolor: item.damageLevel >= 4 ? 'error.light' : 'warning.light' }} />
+                        {/* ... (Indicator UI code here) ... */}
                     </Box>
                 )}
 
@@ -460,6 +458,9 @@ function App() {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [isEditingDamage, setIsEditingDamage] = useState(false);
+    const [currentEditingItem, setCurrentEditingItem] = useState(null);
+    const [damageSeverityInput, setDamageSeverityInput] = useState(1); // Input state for modal
 
 
     const [mode, setMode] = useState(
@@ -477,7 +478,7 @@ function App() {
             });
         },
     }), []);
-
+    
     // 3. Memoized Theme Creator
     const finalTheme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
@@ -608,6 +609,37 @@ function App() {
         }
     };
 
+    //Opens the Damage Severity Modal
+    const handleOpenDamageEditor = (item) => {
+    setCurrentEditingItem(item);
+    setDamageSeverityInput(item.damageLevel || 1); // Set current value
+    setIsEditingDamage(true);
+    };
+
+    const handleSaveDamageSeverity = async () => {
+        if (!currentEditingItem) return;
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/details`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ damageLevel: damageSeverityInput }), // Send only damageLevel
+            });
+
+            if (res.ok) {
+                fetchItems(); // Refresh
+                setIsEditingDamage(false);
+                setCurrentEditingItem(null);
+            } else if (res.status === 401) {
+                handleLogout();
+            }
+        } catch (err) {
+            console.error("Failed to update damage severity:", err);
+        }
+    };
+
     // Inside the App function, replacing the old function:
     const handleStatusChange = async (id, newStatus) => {
             const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -639,7 +671,7 @@ function App() {
             } catch (err) { console.error("Failed to update status:", err); }
         };
 
-    // NEW HANDLER: Opens the History Modal
+    //Opens the History Modal
     const handleViewDetails = (item) => {
         setSelectedItem(item);
         setIsModalOpen(true);
@@ -683,6 +715,8 @@ function App() {
     return (
         <ThemeProvider theme={finalTheme}>
             <CssBaseline enableColorScheme />
+
+
             <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
                 
                 {/* Desktop Navigation Rail */}
@@ -777,6 +811,7 @@ function App() {
                                             onUpdateStatus={handleStatusChange} 
                                             onViewDetails={handleViewDetails}
                                             onDeleteItem={handleDeleteItem} // added delete handler
+                                            onOpenDamageEditor={handleOpenDamageEditor} // <-- NEW: Pass the dedicated handler
                                         />
                                     </Grid>
                                 ))}
@@ -901,6 +936,36 @@ function App() {
                     </DialogActions>
                 )}
             </Dialog>
+
+            {/* Damage Severity Modal */}
+            <Dialog open={isDamageEditorOpen} onClose={() => setIsEditingDamage(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Set Damage Severity</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" mb={2}>
+                        Rate the damage level for **{currentEditingItem?.name}**.
+                    </Typography>
+
+                    <FormControl fullWidth variant="filled" size="small">
+                        <InputLabel>Severity</InputLabel>
+                        <Select 
+                            value={damageSeverityInput} 
+                            onChange={(e) => setDamageSeverityInput(parseInt(e.target.value, 10))} 
+                            label="Severity"
+                        >
+                            <MenuItem value={1}>1 - Minor Wear</MenuItem>
+                            <MenuItem value={2}>2 - Cosmetic Fix</MenuItem>
+                            <MenuItem value={3}>3 - Medium Tear</MenuItem>
+                            <MenuItem value={4}>4 - Major Repair</MenuItem>
+                            <MenuItem value={5}>5 - Unwearable (Discard)</MenuItem>
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setIsEditingDamage(false)} color="secondary">Cancel</Button>
+                    <Button onClick={handleSaveDamageSeverity} variant="contained" color="primary">Save Severity</Button>
+                </DialogActions>
+            </Dialog>
+
         </ThemeProvider>
     );
 }
