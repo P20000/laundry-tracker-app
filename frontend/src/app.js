@@ -613,8 +613,8 @@ function App() {
                             <CustomLogo 
                                 sx={{ 
                                     color: 'primary.main', // Inherits M3 primary color 
-                                    width: 32, 
-                                    height: 32 
+                                    width: 24, 
+                                    height: 24 
                                 }} 
                             />
                         </Box>
