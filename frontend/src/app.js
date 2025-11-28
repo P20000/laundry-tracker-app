@@ -722,7 +722,7 @@ function App() {
                                         variant={isActive ? 'contained' : 'text'} 
                                         color={isActive ? 'secondary' : 'inherit'} 
                                         sx={{ 
-                                            minWidth: 56, 
+                                            minWidth: 30, 
                                             width: 30, 
                                             height: 30, 
                                             borderRadius: 4, 
