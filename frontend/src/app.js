@@ -210,6 +210,8 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
             }}>
                 {!item.imageUrl && <CheckroomIcon sx={{ fontSize: 48, opacity: 0.5 }} />}
             </Box>
+
+            {/* delete button */}
             <IconButton 
                 onClick={(e) => { 
                     e.stopPropagation(); // Prevents opening history modal when clicking delete
@@ -232,6 +234,7 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
             >
                 <DeleteIcon fontSize="small" />
             </IconButton>
+
             <Box sx={{ p: 2 }}>
                 {/* 1. Item Name and Status Chip */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} mt={1}>
@@ -241,7 +244,15 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
 
                 {/* 2. DAMAGE LEVEL INDICATOR (New Placement) */}
                 {(item.currentStatus === 'DAMAGED') && (
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <Box 
+                        display="flex" 
+                        alignItems="center" 
+                        gap={1} 
+                        mb={2} 
+                        sx={{ cursor: 'pointer' }}
+                        // Call the new handler when the indicator is clicked
+                        onClick={() => onViewDetails(item)} 
+                    >
                         <WarningIcon fontSize="small" color="error" />
                         <Typography variant="body2" color="error" fontWeight="bold">Severity:</Typography>
                         <Chip size="small" label={item.damageLevel || 1} sx={{ bgcolor: item.damageLevel >= 4 ? 'error.light' : 'warning.light' }} />
