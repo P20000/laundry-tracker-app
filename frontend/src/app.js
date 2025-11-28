@@ -594,9 +594,9 @@ function App() {
     )
     }
     const navItems = [
-        { name: 'Catalog', icon: <CheckroomIcon />, view: 'catalog' },
-        { name: 'Laundry', icon: <LocalLaundryServiceIcon />, view: 'laundry' },
-        { name: 'Damaged', icon: <WarningIcon />, view: 'damaged' },
+        { name: 'Catalog', icon: <CheckroomIcon sx={{ fontSize: 28 }} />, view: 'catalog' },
+        { name: 'Laundry', icon: <LocalLaundryServiceIcon sx={{ fontSize: 28 }} />, view: 'laundry' },
+        { name: 'Damaged', icon: <WarningIcon sx={{ fontSize: 28 }} />, view: 'damaged' },
     ];
 
     const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
