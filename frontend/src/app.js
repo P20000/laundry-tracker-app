@@ -199,7 +199,7 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
     const lastWashedDate = item.lastWashed ? new Date(item.lastWashed).toLocaleDateString() : 'Never';
 
     return (
-        <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
+        <Box sx={{position : 'relative', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
             <Box sx={{ 
                 height: 160, width: '100%', 
                 bgcolor: item.color + '20', 
@@ -252,7 +252,6 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                         title={item.currentStatus === 'DAMAGED' ? "Mark Repaired" : "Report Damage"}
                     >
                         {item.currentStatus === 'DAMAGED' ? <CheckroomIcon /> : <WarningIcon />}
-                    </Button>
                     <IconButton 
                         onClick={(e) => { 
                             e.stopPropagation(); // Prevents opening history modal when clicking delete
@@ -275,6 +274,7 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                     >
                         <DeleteIcon fontSize="small" />
                     </IconButton>
+                    </Button>
                 </Box>
             </Box>
         </Box>
