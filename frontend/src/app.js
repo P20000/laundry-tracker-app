@@ -200,25 +200,6 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
 
     return (
         <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
-            <IconButton 
-            onClick={(e) => { 
-                e.stopPropagation(); 
-                onDeleteItem(item.id); 
-            }} 
-            sx={{ 
-                position: 'absolute', 
-                top: 8, 
-                right: 8, 
-                bgcolor: 'background.paper', 
-                zIndex: 10, 
-                p: 0.5,
-                color: 'error.main',
-                '&:hover': { bgcolor: 'error.light', color: 'white' }
-            }}
-            size="small"
-        >
-            <DeleteIcon fontSize="small" />
-        </IconButton>
             <Box sx={{ 
                 height: 160, width: '100%', 
                 bgcolor: item.color + '20', 
@@ -272,6 +253,28 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                     >
                         {item.currentStatus === 'DAMAGED' ? <CheckroomIcon /> : <WarningIcon />}
                     </Button>
+                    <IconButton 
+                        onClick={(e) => { 
+                            e.stopPropagation(); // Prevents opening history modal when clicking delete
+                            onDeleteItem(item.id); 
+                        }} 
+                        sx={{ 
+                            position: 'absolute', // Absolute position relative to the parent Box
+                            top: 8, 
+                            right: 8, 
+                            bgcolor: 'background.paper', 
+                            zIndex: 10, 
+                            p: 0.5,
+                            borderRadius: '50%',
+                            boxShadow: 1,
+                            color: 'error.main',
+                            '&:hover': { bgcolor: 'error.light', color: 'white' }
+                        }}
+                        size="small"
+                        title="Delete Item"
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
                 </Box>
             </Box>
         </Box>
