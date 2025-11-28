@@ -254,6 +254,9 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
                         onClick={() => onOpenDamageEditor(item)} // NEW: This opens the dedicated editor
                     >
                         {/* ... (Indicator UI code here) ... */}
+                        <WarningIcon fontSize="small" color="error" />
+                            <Typography variant="body2" color="error" fontWeight="bold">Severity:</Typography>
+                            <Chip size="small" label={item.damageLevel || 1} sx={{ bgcolor: item.damageLevel >= 4 ? 'error.light' : 'warning.light' }} />
                     </Box>
                 )}
 
