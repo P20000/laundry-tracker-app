@@ -11,7 +11,8 @@ import {
     markAsWashed,
     updateItemStatus,
     getItemHistory, 
-    deleteItem
+    deleteItem,
+    updateItemDetails
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -73,6 +74,7 @@ protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions
 protectedRouter.post('/items/:id/wash', markAsWashed); 
 protectedRouter.patch('/items/:id/status', updateItemStatus); 
+protectedRouter.patch('/items/:id/details', updateItemDetails);
 
 // Views
 protectedRouter.get('/laundry', getLaundryItems);
