@@ -215,8 +215,8 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
                     <CustomLogo 
                         sx={{ 
                             color: 'primary.main', // Inherits M3 primary color 
-                            width: 32, 
-                            height: 32 
+                            width: 20, 
+                            height: 20 
                         }} 
                     />
                 </Box>
@@ -744,36 +744,55 @@ function App() {
             </Box>
 
             {/* Add Item Dialog */}
-            <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth="xs">
+            <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-                    New Item
-                    <IconButton onClick={() => setIsModalOpen(false)} size="small"><CloseIcon /></IconButton>
+                    {/* Dynamic Title based on context */}
+                    {selectedItem ? `History: ${selectedItem.name}` : 'New Item'}
+                    <IconButton onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
+                
                 <DialogContent sx={{ pt: 0 }}>
-                    <Box display="flex" flexDirection="column" gap={3} mt={1}>
-                        <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                            <input accept="image/*" style={{ display: 'none' }} id="raised-button-file" type="file" onChange={handleImageUpload} />
-                            <label htmlFor="raised-button-file" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                {!newItemImagePreview && ( <Box textAlign="center" color="text.secondary"> <PhotoCamera sx={{ fontSize: 40, mb: 1 }} /> <Typography variant="caption" display="block">Upload Photo</Typography> </Box> )}
-                            </label>
+                    {selectedItem ? (
+                        // --- 1. RENDER HISTORY TIMELINE ---
+                        <Box sx={{ minHeight: 300 }}>
+                            <WashHistoryTimeline 
+                                itemId={selectedItem.id} 
+                                apiUrl={API_PROTECTED_URL} 
+                                token={localStorage.getItem(AUTH_TOKEN_KEY)} 
+                            />
                         </Box>
+                    ) : (
+                        // --- 2. RENDER ADD ITEM FORM ---
+                        <Box display="flex" flexDirection="column" gap={3} mt={1}>
+                            {/* Image Upload Block (from previous component) */}
+                            <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                                <input accept="image/*" style={{ display: 'none' }} id="raised-button-file" type="file" onChange={handleImageUpload} />
+                                <label htmlFor="raised-button-file" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    {!newItemImagePreview && ( <Box textAlign="center" color="text.secondary"> <PhotoCamera sx={{ fontSize: 40, mb: 1 }} /> <Typography variant="caption" display="block">Upload Photo</Typography> </Box> )}
+                                </label>
+                            </Box>
 
-                        <TextField label="Item Name" variant="filled" fullWidth value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="e.g. Navy Blazer" size="small" />
-
-                        <Box display="flex" gap={2}>
-                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Category</InputLabel><Select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)} label="Category"><MenuItem value="Formals">Formals</MenuItem><MenuItem value="Casuals">Casuals</MenuItem><MenuItem value="Activewear">Activewear</MenuItem></Select></FormControl>
-                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Size</InputLabel><Select value={newItemSize} onChange={(e) => setNewItemSize(e.target.value)} label="Size"><MenuItem value="XS">XS</MenuItem><MenuItem value="S">S</MenuItem><MenuItem value="M">M</MenuItem><MenuItem value="L">L</MenuItem><MenuItem value="XL">XL</MenuItem><MenuItem value="XXL">XXL</MenuItem></Select></FormControl>
+                            {/* Input Fields (Item Name, Category, Size, etc.) */}
+                            <TextField label="Item Name" variant="filled" fullWidth value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="e.g. Navy Blazer" size="small" />
+                            <Box display="flex" gap={2}>
+                                <FormControl fullWidth variant="filled" size="small"><InputLabel>Category</InputLabel><Select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)} label="Category"><MenuItem value="Formals">Formals</MenuItem><MenuItem value="Casuals">Casuals</MenuItem><MenuItem value="Activewear">Activewear</MenuItem></Select></FormControl>
+                                <FormControl fullWidth variant="filled" size="small"><InputLabel>Size</InputLabel><Select value={newItemSize} onChange={(e) => setNewItemSize(e.target.value)} label="Size"><MenuItem value="XS">XS</MenuItem><MenuItem value="S">S</MenuItem><MenuItem value="M">M</MenuItem><MenuItem value="L">L</MenuItem><MenuItem value="XL">XL</MenuItem><MenuItem value="XXL">XXL</MenuItem></Select></FormControl>
+                            </Box>
+                            <Box display="flex" gap={2}>
+                                <FormControl fullWidth variant="filled" size="small"><InputLabel>Type</InputLabel><Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} label="Type"><MenuItem value="Shirt">Shirt</MenuItem><MenuItem value="Pants">Pants</MenuItem><MenuItem value="Dress">Dress</MenuItem><MenuItem value="Outerwear">Outerwear</MenuItem></Select></FormControl>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}><Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography><input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} /></Box>
+                            </Box>
                         </Box>
-                        <Box display="flex" gap={2}>
-                            <FormControl fullWidth variant="filled" size="small"><InputLabel>Type</InputLabel><Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} label="Type"><MenuItem value="Shirt">Shirt</MenuItem><MenuItem value="Pants">Pants</MenuItem><MenuItem value="Dress">Dress</MenuItem><MenuItem value="Outerwear">Outerwear</MenuItem></Select></FormControl>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}><Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography><input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} /></Box>
-                        </Box>
-                    </Box>
+                    )}
                 </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setIsModalOpen(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
-                </DialogActions>
+                
+                {/* Actions: Only show 'Save Item' for the Add Item Form */}
+                {!selectedItem && (
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
+                        <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
+                    </DialogActions>
+                )}
             </Dialog>
         </ThemeProvider>
     );
