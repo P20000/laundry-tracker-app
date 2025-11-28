@@ -156,7 +156,7 @@ const EmptyState = ({ view, onAddClick }) => {
     );
 };
 
-const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
+const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
     // --- DYNAMIC STATUS LOGIC ---
     let statusColor = 'success';
     let statusLabel = 'Clean';
