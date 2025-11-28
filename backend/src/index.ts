@@ -9,7 +9,7 @@ import {
     getDamagedItems, 
     createItem,
     markAsWashed,
-    updateItemStatus
+    updateItemStatus,
     getItemHistory 
 } from './controllers/itemController';
 
