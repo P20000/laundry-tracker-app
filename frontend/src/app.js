@@ -618,7 +618,20 @@ function App() {
                                 }} 
                             />
                         </Box>
-                        
+                        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
+                            {/* NEW: Wrapper Box to constrain the SVG size */}
+                            <Box sx={{ width: 32, height: 32, color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <CustomLogo 
+                                    // We only pass minimal props here. The size is controlled by the parent Box.
+                                    sx={{ 
+                                        // We ensure the SVG takes up 100% of the wrapper box size
+                                        width: '100%', 
+                                        height: '100%'
+                                    }} 
+                                />
+                            </Box>
+                        </Box>
+                                                
                         <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
                         </Fab>
