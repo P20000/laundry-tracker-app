@@ -210,14 +210,52 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
             }}>
                 {!item.imageUrl && <CheckroomIcon sx={{ fontSize: 48, opacity: 0.5 }} />}
             </Box>
-            
+            <IconButton 
+                onClick={(e) => { 
+                    e.stopPropagation(); // Prevents opening history modal when clicking delete
+                    onDeleteItem(item.id); 
+                }} 
+                sx={{ 
+                    position: 'absolute', // Absolute position relative to the parent Box
+                    top: 8, 
+                    right: 8, 
+                    bgcolor: 'background.paper', 
+                    zIndex: 10, 
+                    p: 0.5,
+                    borderRadius: '50%',
+                    boxShadow: 1,
+                    color: 'error.main',
+                    '&:hover': { bgcolor: 'error.light', color: 'white' }
+                }}
+                size="small"
+                title="Delete Item"
+            >
+                <DeleteIcon fontSize="small" />
+            </IconButton>
             <Box sx={{ p: 2 }}>
+                {/* 1. Item Name and Status Chip */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} mt={1}>
+                    <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2, fontWeight: 500 }}>{item.name}</Typography>
+                    <Chip label={statusLabel} color={statusColor} size="small" sx={{ height: 24, fontSize: '0.7rem' }} />
+                </Box>
+
+                {/* 2. DAMAGE LEVEL INDICATOR (New Placement) */}
+                {(item.currentStatus === 'DAMAGED') && (
+                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+                        <WarningIcon fontSize="small" color="error" />
+                        <Typography variant="body2" color="error" fontWeight="bold">Severity:</Typography>
+                        <Chip size="small" label={item.damageLevel || 1} sx={{ bgcolor: item.damageLevel >= 4 ? 'error.light' : 'warning.light' }} />
+                    </Box>
+                )}
+
+                {/* 3. Category, Size, Last Washed */}
                 <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>{item.category}</Typography>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>Size: {item.size}</Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', width: '100%' }}>Last Washed: {lastWashedDate}</Typography>
                 </Box>
 
+                {/* 4. Action Buttons */}
                 <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
                     {/* Main Action Button (WASHED, CLEAN, or READY_FOR_WASH) */}
                     <Button 
@@ -253,28 +291,6 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem }) => {
                     >
                         {item.currentStatus === 'DAMAGED' ? <CheckroomIcon /> : <WarningIcon />}
                     </Button>
-                    <IconButton 
-                        onClick={(e) => { 
-                            e.stopPropagation(); // Prevents opening history modal when clicking delete
-                            onDeleteItem(item.id); 
-                        }} 
-                        sx={{ 
-                            position: 'absolute', // Absolute position relative to the parent Box
-                            top: 8, 
-                            right: 8, 
-                            bgcolor: 'background.paper', 
-                            zIndex: 10, 
-                            p: 0.5,
-                            borderRadius: '50%',
-                            boxShadow: 1,
-                            color: 'error.main',
-                            '&:hover': { bgcolor: 'error.light', color: 'white' }
-                        }}
-                        size="small"
-                        title="Delete Item"
-                    >
-                        <DeleteIcon fontSize="small" />
-                    </IconButton>
                 </Box>
             </Box>
         </Box>
@@ -426,6 +442,7 @@ function App() {
     const [newItemType, setNewItemType] = useState('Shirt');
     const [newItemSize, setNewItemSize] = useState('M');
     const [newItemColor, setNewItemColor] = useState('#6750A4');
+    const [newItemDamageLevel, setNewItemDamageLevel] = useState(1); // NEW STATE (Default Low)
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
     const [selectedItem, setSelectedItem] = useState(null);
@@ -536,7 +553,8 @@ function App() {
             category: newItemCategory, 
             size: newItemSize, 
             color: newItemColor, 
-            imageUrl: base64Image 
+            imageUrl: base64Image,
+            damageLevel: newItemDamageLevel, // ADDED
         };
         try {
             const res = await fetch(`${API_PROTECTED_URL}/items`, {
@@ -839,8 +857,26 @@ function App() {
                                 <FormControl fullWidth variant="filled" size="small"><InputLabel>Size</InputLabel><Select value={newItemSize} onChange={(e) => setNewItemSize(e.target.value)} label="Size"><MenuItem value="XS">XS</MenuItem><MenuItem value="S">S</MenuItem><MenuItem value="M">M</MenuItem><MenuItem value="L">L</MenuItem><MenuItem value="XL">XL</MenuItem><MenuItem value="XXL">XXL</MenuItem></Select></FormControl>
                             </Box>
                             <Box display="flex" gap={2}>
-                                <FormControl fullWidth variant="filled" size="small"><InputLabel>Type</InputLabel><Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} label="Type"><MenuItem value="Shirt">Shirt</MenuItem><MenuItem value="Pants">Pants</MenuItem><MenuItem value="Dress">Dress</MenuItem><MenuItem value="Outerwear">Outerwear</MenuItem></Select></FormControl>
+                                <FormControl fullWidth variant="filled" size="small">
+                                    <InputLabel>Type</InputLabel>
+                                    <Select value={newItemType} onChange={(e) => setNewItemType(e.target.value)} label="Type">
+                                        <MenuItem value="Shirt">Shirt</MenuItem>
+                                        <MenuItem value="Pants">Pants</MenuItem>
+                                        <MenuItem value="Dress">Dress</MenuItem>
+                                        <MenuItem value="Outerwear">Outerwear</MenuItem>
+                                    </Select>
+                                </FormControl>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}><Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography><input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} /></Box>
+                            </Box>
+                            <Box display="flex" gap={2}>
+                                <FormControl fullWidth variant="filled" size="small">
+                                    <InputLabel>Damage Severity</InputLabel>
+                                    <Select value={newItemDamageLevel} onChange={(e) => setNewItemDamageLevel(parseInt(e.target.value))} label="Damage Severity">
+                                        <MenuItem value={1}>1 - Minor Wear</MenuItem>
+                                        <MenuItem value={3}>3 - Medium Tear</MenuItem>
+                                        <MenuItem value={5}>5 - Unwearable</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </Box>
                         </Box>
                     )}

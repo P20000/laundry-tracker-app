@@ -19,6 +19,7 @@ export interface IClothingItem {
     currentStatus: 'CLEAN' | 'READY_FOR_WASH' | 'WASHING' | 'DAMAGED' | 'OVERDUE';
     damageLog: string | null;
     lastWashed: Date | null;
+    damageLevel: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -30,4 +31,5 @@ export interface INewItemPayload {
     size: string;
     color: string;
     imageUrl: string;
+    damageLevel: number;
 }

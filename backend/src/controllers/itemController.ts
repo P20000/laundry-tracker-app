@@ -24,6 +24,7 @@ const mapResultToItems = (rows: any[]): IClothingItem[] => {
         imageUrl: row.imageUrl,
         currentStatus: row.currentStatus,
         damageLog: row.damageLog,
+        damageLevel: row.damageLevel,
         lastWashed: row.lastWashed ? new Date(row.lastWashed) : null,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt)
@@ -35,7 +36,7 @@ const mapResultToItems = (rows: any[]): IClothingItem[] => {
 export const createItem = async (req: Request, res: Response) => {
     // 1. Get the authenticated User ID from the request (set by authMiddleware)
     const userId = req.userId;
-    const { name, itemType, category, size, color, imageUrl } = req.body as INewItemPayload;
+    const { name, itemType, category, size, color, imageUrl, damageLevel } = req.body as INewItemPayload;
 
     if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
     if (!name || !itemType) return res.status(400).json({ error: 'Missing required fields.' });
@@ -46,7 +47,7 @@ export const createItem = async (req: Request, res: Response) => {
         // The SQL expects 8 total values now: (id, name, itemType, category, size, color, imageUrl, userId)
         const sql = `
             INSERT INTO clothing_items 
-            (id, name, itemType, category, size, color, imageUrl, currentStatus, userId)
+            (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?)
             `;
         
@@ -59,6 +60,7 @@ export const createItem = async (req: Request, res: Response) => {
             size || 'M',            // 5
             color || '#000000',     // 6
             imageUrl || '',         // 7
+            damageLevel || 1,       // NEW: damageLevel
             userId                  // 8
         ];
 
