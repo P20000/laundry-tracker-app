@@ -608,17 +608,7 @@ function App() {
                 
                 {/* Desktop Navigation Rail */}
                 {!isMobile && (
-                    <Box sx={{ width: 80, height: '100%', bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-                        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
-                            <CustomLogo 
-                                sx={{ 
-                                    color: 'primary.main', // Inherits M3 primary color 
-                                    width: 24, 
-                                    height: 24 
-                                }} 
-                            />
-                        </Box>
-                        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
+                    <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, width: '100%' }}>
                             {/* NEW: Wrapper Box to constrain the SVG size */}
                             <Box sx={{ width: 32, height: 32, color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <CustomLogo 
@@ -629,9 +619,8 @@ function App() {
                                         height: '100%'
                                     }} 
                                 />
-                            </Box>
                         </Box>
-                                                
+                        
                         <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
                         </Fab>
