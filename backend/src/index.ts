@@ -10,7 +10,8 @@ import {
     createItem,
     markAsWashed,
     updateItemStatus,
-    getItemHistory 
+    getItemHistory, 
+    deleteItem
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -66,7 +67,7 @@ protectedRouter.get('/admin/dashboard', getSystemStats);
 // --- ITEM ROUTES ---
 protectedRouter.post('/items', createItem);
 protectedRouter.get('/items', getAllItems);
-
+protectedRouter.delete('/items/:id', deleteItem);
 // Item History Route
 protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions

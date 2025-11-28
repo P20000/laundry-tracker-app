@@ -15,6 +15,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dark Mode)
 import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
 import EventIcon from '@mui/icons-material/Event'; // Icon for item history button 
+import DeleteIcon from '@mui/icons-material/Delete';
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
@@ -199,6 +200,25 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
 
     return (
         <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
+            <IconButton 
+            onClick={(e) => { 
+                e.stopPropagation(); 
+                onDeleteItem(item.id); 
+            }} 
+            sx={{ 
+                position: 'absolute', 
+                top: 8, 
+                right: 8, 
+                bgcolor: 'background.paper', 
+                zIndex: 10, 
+                p: 0.5,
+                color: 'error.main',
+                '&:hover': { bgcolor: 'error.light', color: 'white' }
+            }}
+            size="small"
+        >
+            <DeleteIcon fontSize="small" />
+        </IconButton>
             <Box sx={{ 
                 height: 160, width: '100%', 
                 bgcolor: item.color + '20', 
@@ -209,7 +229,7 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails }) => {
             }}>
                 {!item.imageUrl && <CheckroomIcon sx={{ fontSize: 48, opacity: 0.5 }} />}
             </Box>
-
+            
             <Box sx={{ p: 2 }}>
                 <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Typography variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>{item.category}</Typography>
@@ -529,6 +549,33 @@ function App() {
         } catch (err) { console.error("Network error adding item:", err); }
     };
 
+    const handleDeleteItem = async (id) => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        // Use window.confirm for simplicity, but a custom modal is better UX
+        if (!window.confirm('Are you sure you want to permanently delete this item?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}/items/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(token),
+            });
+
+            if (res.ok) {
+                fetchItems(); // Refresh the list
+            } else if (res.status === 401) {
+                handleLogout();
+            } else {
+                console.error("Failed to delete item:", await res.json());
+            }
+        } catch (err) {
+            console.error("Network error deleting item:", err);
+        }
+    };
+
     // Inside the App function, replacing the old function:
     const handleStatusChange = async (id, newStatus) => {
             const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -696,7 +743,8 @@ function App() {
                                         <ItemCard 
                                             item={item} 
                                             onUpdateStatus={handleStatusChange} 
-                                            onViewDetails={handleViewDetails} // Pass the new handler here
+                                            onViewDetails={handleViewDetails}
+                                            onDeleteItem={handleDeleteItem} // added delete handler
                                         />
                                     </Grid>
                                 ))}

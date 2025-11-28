@@ -194,3 +194,29 @@ export const getItemHistory = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to fetch item history.' });
     }
 };
+
+export const deleteItem = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // SQL DELETE statement ensures only items belonging to the authenticated user are deleted.
+        const result = await client.execute({
+            sql: "DELETE FROM clothing_items WHERE id = ? AND userId = ?",
+            args: [id, userId]
+        });
+
+        if (result.rowsAffected === 0) {
+            return res.status(404).json({ error: "Item not found or does not belong to user." });
+        }
+
+        return res.status(200).json({ message: "Item deleted successfully." });
+
+    } catch (error: unknown) {
+        console.error('Error deleting item:', error);
+        // Log to database for dashboard (uncomment logEvent if integrated)
+        // await logEvent('ERROR', 'Failed to delete item', getErrorMessage(error));
+        return res.status(500).json({ error: 'Failed to delete item.' });
+    }
+};
