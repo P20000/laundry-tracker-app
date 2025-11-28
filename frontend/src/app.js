@@ -458,7 +458,7 @@ function App() {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [isEditingDamage, setIsEditingDamage] = useState(false);
+    const [isDamageEditorOpen, setIsEditingDamage] = useState(false);
     const [currentEditingItem, setCurrentEditingItem] = useState(null);
     const [damageSeverityInput, setDamageSeverityInput] = useState(1); // Input state for modal
 
