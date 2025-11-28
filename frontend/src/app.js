@@ -732,7 +732,7 @@ function App() {
                                             bgcolor: isActive ? 'secondary.main' : 'transparent', 
                                             '&:hover': { bgcolor: isActive ? 'secondary.dark' : 'action.hover' },
                                             // ADD THIS LINE: Targets the icon and text inside the button
-                                            '& .MuiSvgIcon-root': { fontSize: 28 }, 
+                                            '& .MuiSvgIcon-root': { fontSize: 15 }, 
                                         }}
                                     >
                                         {item.icon}
