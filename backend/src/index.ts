@@ -10,9 +10,9 @@ import {
     createItem,
     markAsWashed,
     updateItemStatus,
+    updateItemDetails,
     getItemHistory, 
-    deleteItem,
-    updateItemDetails
+    deleteItem
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 

@@ -222,3 +222,52 @@ export const deleteItem = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to delete item.' });
     }
 };
+
+export const updateItemDetails = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId;
+    const updates = req.body; // e.g., { damageLevel: 5, damageLog: "Large tear" }
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No update data provided.' });
+
+    // 1. Build the SQL SET clause dynamically
+    const setClauses: string[] = [];
+    const args: any[] = [];
+    
+    // Add updatedAt timestamp
+    setClauses.push('updatedAt = datetime(\'now\')');
+
+    // Iterate over updates payload to build SQL
+    for (const key in updates) {
+        // Simple sanitization: only allow known fields to prevent injection
+        if (['damageLevel', 'damageLog', 'name', 'size', 'color', 'category', 'itemType'].includes(key)) {
+            setClauses.push(`${key} = ?`);
+            args.push(updates[key]);
+        }
+    }
+
+    if (setClauses.length === 0) {
+         return res.status(400).json({ error: 'Invalid fields provided for update.' });
+    }
+
+    // 2. Construct the final SQL query
+    const sql = `UPDATE clothing_items SET ${setClauses.join(', ')} WHERE id = ? AND userId = ?`;
+    
+    // 3. Add item ID and user ID to arguments
+    args.push(id, userId);
+
+    try {
+        const result = await client.execute({ sql, args });
+
+        if (result.rowsAffected === 0) {
+            return res.status(404).json({ error: "Item not found or does not belong to user." });
+        }
+
+        return res.status(200).json({ message: "Item details updated successfully." });
+    } catch (error: unknown) {
+        console.error('Error updating item details:', error);
+        // Log event if needed
+        return res.status(500).json({ error: 'Failed to update item details.' });
+    }
+};
