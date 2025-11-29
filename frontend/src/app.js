@@ -1140,20 +1140,51 @@ function App() {
                     // Hide the action menu when in batch selection mode
                     hidden={isBatchWashOpen} 
                     icon={<SpeedDialIcon />}
-                    direction={isMobile ? "up" : "left"} // Show up on mobile, left on desktop
-                    sx={{ position: 'absolute', bottom: 0, right: 0 }}
+                    direction="up" // Show up on mobile, left on desktop
+                    sx={
+                        { position: 'absolute', bottom: 0, right: 0 } 
+                    }
                 >
                     <SpeedDialAction
                         key="New Item"
-                        icon={<AddIcon />}
-                        tooltipTitle="New Item"
+                        // Use an invisible icon and put the text in the tooltipTitle
+                        icon={
+                            <Fab variant="extended" size="small" sx={{ 
+                                bgcolor: 'secondary.container', 
+                                color: 'secondary.main', 
+                                // FIX: Set minimum width to fit text + icon and adapt size
+                                minWidth: 100, 
+                                px: 2, 
+                                py: 1.5,
+                                justifyContent: 'flex-start'
+                            }}>
+                                <AddIcon sx={{ mr: 1 }} />
+                                Add Item
+                            </Fab>
+                        }
+                        tooltipTitle="" // Set title to empty string to avoid rendering the default tooltip box
                         onClick={() => setIsAddItemModalOpen(true)}
-                        tooltipOpen // Keep tooltip visible on desktop rail/float
+                        // Set tooltipOpen to true to force it to show the label (which is our custom FAB)
+                        tooltipOpen 
                     />
+
+                    {/* Action 2: Batch Wash (Custom EFAB) */}
                     <SpeedDialAction
                         key="Batch Wash"
-                        icon={<CleaningServicesIcon />}
-                        tooltipTitle="Start Batch Wash"
+                        icon={
+                            <Fab variant="extended" size="small" sx={{ 
+                                bgcolor: 'secondary.container', 
+                                color: 'secondary.main', 
+                                minWidth: 100,
+                                px: 2, 
+                                py: 1.5,
+                                justifyContent: 'flex-start'
+                            }}>
+                                <CleaningServicesIcon sx={{ mr: 1 }} />
+                                Batch Wash
+                            </Fab>
+                        }
+                        tooltipTitle=""
                         onClick={() => setIsBatchWashOpen(true)}
                         tooltipOpen
                     />
@@ -1211,7 +1242,7 @@ function App() {
                 {/* Actions: Only show 'Save Item' for the Add Item Form */}
                 {!selectedItem && (
                     <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
+                        <Button onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
                         <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                     </DialogActions>
                 )}
