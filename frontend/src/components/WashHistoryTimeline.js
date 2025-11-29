@@ -1,41 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Chip } from '@mui/material';
-import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Box, Typography, CircularProgress, Chip, IconButton } from '@mui/material';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const processHistory = (history) => {
     if (!history || history.length === 0) return [];
     
-    const timeline = {};
-    // Sort oldest first for correct month order
+    // Sort oldest first (ascending date)
     history.sort((a, b) => new Date(a.washDate) - new Date(b.washDate));
-
-    history.forEach(event => {
-        // NOTE: washDate is returned as a string from Turso
+    
+    // Convert to simple date objects
+    return history.map(event => {
         const date = new Date(event.washDate);
-        const yearMonth = date.getFullYear() + '-' + (date.getMonth() + 1).toString().padStart(2, '0');
-        
-        if (!timeline[yearMonth]) {
-            timeline[yearMonth] = [];
-        }
-        timeline[yearMonth].push(date);
+        return { 
+            id: event.id || Math.random(), // Use unique ID
+            date: date.getDate(),
+            month: date.toLocaleString('en-us', { month: 'short' }),
+            year: date.getFullYear(),
+            day: date.toLocaleString('en-us', { weekday: 'short' }),
+            fullDate: date.toLocaleDateString(),
+            timestamp: date.getTime(),
+        };
     });
-
-    return Object.entries(timeline).map(([key, dates]) => ({
-        month: key,
-        dates: dates.map(d => ({ 
-            date: d.getDate(),
-            fullDate: d.toLocaleDateString(),
-            day: d.toLocaleString('en-us', { weekday: 'short' }),
-        })).sort((a, b) => a.date - b.date)
-    }));
 };
-
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
     const [history, setHistory] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const scrollRef = useRef(null);
     
     const AUTH_HEADERS = { 'Authorization': `Bearer ${token}` };
 
@@ -44,7 +37,6 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
             setLoading(true);
             setError(null);
             try {
-                // Ensure API URL path is correct
                 const res = await fetch(`${apiUrl}/items/${itemId}/history`, { headers: AUTH_HEADERS }); 
                 if (res.status === 401) throw new Error("Unauthorized");
                 if (!res.ok) throw new Error("Failed to fetch history data.");
@@ -61,57 +53,171 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
         if (itemId) fetchHistory();
     }, [itemId, apiUrl, token]);
 
+    // Processed data, sorted oldest first
+    const processedData = useMemo(() => processHistory(history || []), [history]);
+
+    // Calculate unique months for display
+    const uniqueMonths = useMemo(() => {
+        const months = new Set();
+        return processedData.filter(event => {
+            const monthYear = `${event.month} ${event.year}`;
+            if (months.has(monthYear)) return false;
+            months.add(monthYear);
+            return true;
+        });
+    }, [processedData]);
+
+    // --- SCROLL HANDLERS ---
+    const scrollAmount = 300; // Pixels to scroll per click
+    const handleScroll = (direction) => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth',
+            });
+        }
+    };
+    
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
     if (error) return <Typography color="error" sx={{ p: 2 }}>Error loading history: {error}</Typography>;
     
-    if (!history || history.length === 0) {
+    if (processedData.length === 0) {
         return <Typography color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>No wash history recorded yet.</Typography>;
     }
 
-    const processedData = processHistory(history);
+    // --- Component Rendering ---
     
+    // Calculate total duration in days (for proportional spacing)
+    const firstDate = processedData[0].timestamp;
+    const lastDate = processedData[processedData.length - 1].timestamp;
+    const totalDurationMs = lastDate - firstDate;
+    
+    // Scale the entire timeline to a minimum width (e.g., 2000px) if dates are close
+    const MIN_WIDTH = 2000;
+    const DURATION_SCALE_FACTOR = totalDurationMs > 0 ? MIN_WIDTH / totalDurationMs : 0;
+    const timelineWidth = Math.max(MIN_WIDTH, processedData.length * 100);
+
+
     return (
-        <Box sx={{ p: 2, overflowX: 'auto', whiteSpace: 'nowrap', pb: 3 }}>
-            
-            {processedData.map(monthData => (
-                <Box key={monthData.month} sx={{ display: 'inline-block', minWidth: 150, mr: 4 }}>
+        <Box sx={{ 
+            p: 2, 
+            position: 'relative', 
+            display: 'flex', 
+            alignItems: 'center', 
+            height: 200, // Fixed height for timeline visualization
+            maxWidth: '100%',
+        }}>
+            {/* Left Scroll Button */}
+            <IconButton onClick={() => handleScroll('left')} sx={{ zIndex: 10, bgcolor: 'background.paper', boxShadow: 3 }}>
+                <ChevronLeftIcon />
+            </IconButton>
+
+            {/* Scrollable Timeline Container */}
+            <Box ref={scrollRef} sx={{ 
+                flexGrow: 1, 
+                overflowX: 'hidden', 
+                mx: 1,
+                scrollSnapType: 'x mandatory',
+                position: 'relative',
+                height: '100%',
+            }}>
+                
+                {/* Timeline Visualization */}
+                <Box sx={{ 
+                    width: timelineWidth, // Dynamic calculated width
+                    position: 'absolute',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    height: 80,
+                }}>
                     
-                    {/* Month Header (M3 Chip Style) */}
-                    <Chip 
-                        label={`${monthNames[parseInt(monthData.month.split('-')[1]) - 1]} ${monthData.month.split('-')[0]}`}
-                        sx={{ mb: 2, bgcolor: 'primary.container', color: 'primary.main', fontWeight: 'bold' }}
-                    />
-                    
-                    {/* Vertical Timeline Line */}
-                    <Box sx={{ borderLeft: '2px solid', borderColor: 'divider', minHeight: 150, ml: 3 }}>
+                    {/* The Main Horizontal Line */}
+                    <Box sx={{ 
+                        height: '2px', 
+                        width: '100%', 
+                        bgcolor: 'primary.main', 
+                        position: 'absolute', 
+                        top: '50%', 
+                        transform: 'translateY(-50%)' 
+                    }} />
+
+                    {/* Wash Events (Circles) */}
+                    {processedData.map((event, index) => {
+                        // Calculate position based on proportional time passed since first wash
+                        const timeSinceStartMs = event.timestamp - firstDate;
+                        let positionX;
                         
-                        {monthData.dates.map(event => (
-                            <Box key={event.date} sx={{ position: 'relative', ml: -3, py: 1 }}>
-                                {/* Blue Circle (The Wash Event Marker) */}
-                                <Box sx={{ 
-                                    width: 40, height: 40, 
-                                    borderRadius: '50%', 
-                                    bgcolor: 'primary.main', 
-                                    color: 'white', 
+                        if (totalDurationMs > 0) {
+                            // Proportional position based on time
+                            positionX = (timeSinceStartMs / totalDurationMs) * MIN_WIDTH; 
+                        } else {
+                            // If only one event, center it
+                            positionX = MIN_WIDTH / 2;
+                        }
+                        
+                        // Fallback adjustment for scaling the container width
+                        positionX = Math.min(positionX, timelineWidth - 50); // Ensure it doesn't overflow
+
+                        // Determine if this is the start of a new month (for the Chip)
+                        const isNewMonth = index === 0 || event.month !== processedData[index - 1].month;
+
+                        return (
+                            <Box key={event.id} sx={{ 
+                                position: 'absolute',
+                                left: positionX,
+                                top: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                textAlign: 'center',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                            }}>
+                                {/* Month Header Chip (Only show for the first event of the month) */}
+                                {isNewMonth && (
+                                    <Chip 
+                                        label={`${event.month} ${event.year}`}
+                                        sx={{ 
+                                            position: 'absolute',
+                                            top: -50,
+                                            bgcolor: 'secondary.container', 
+                                            color: 'onSecondary.container', 
+                                            fontWeight: 'bold',
+                                        }}
+                                    />
+                                )}
+                                
+                                {/* The Wash Circle */}
+                                <Box sx={{
+                                    width: 30, height: 30,
+                                    borderRadius: '50%',
+                                    bgcolor: 'primary.main',
+                                    color: 'white',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    position: 'absolute', left: -20, top: 0,
-                                    zIndex: 1, boxShadow: 2
+                                    boxShadow: 3,
+                                    mb: 1,
+                                    border: '4px solid white' // Adds a clean halo
                                 }}>
-                                    <Typography variant="caption" fontWeight="bold">
+                                    <Typography variant="body2" fontWeight="bold">
                                         {event.date}
                                     </Typography>
                                 </Box>
                                 
-                                {/* Event Detail (Date/Day) */}
-                                <Box sx={{ ml: 4, pt: 0.5 }}>
-                                    <Typography variant="body2">{event.fullDate}</Typography>
-                                    <Typography variant="caption" color="text.secondary">{event.day} Wash</Typography>
-                                </Box>
+                                {/* Day Label */}
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                    {event.day}
+                                </Typography>
                             </Box>
-                        ))}
-                    </Box>
+                        );
+                    })}
+                    
                 </Box>
-            ))}
+            </Box>
+
+            {/* Right Scroll Button */}
+            <IconButton onClick={() => handleScroll('right')} sx={{ zIndex: 10, bgcolor: 'background.paper', boxShadow: 3 }}>
+                <ChevronRightIcon />
+            </IconButton>
         </Box>
     );
 };
