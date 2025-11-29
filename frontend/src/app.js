@@ -1021,12 +1021,6 @@ function App() {
                                     <CloseIcon />
                                 </IconButton>
                             )}
-                            {/* Mobile Add Button */}
-                            {isMobile && (
-                                <IconButton onClick={() => setIsAddItemModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
-                                    <AddIcon />
-                                </IconButton>
-                            )}
                         </Box>
                     </Box>
 
@@ -1063,7 +1057,7 @@ function App() {
                     
                     {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
                     {isBatchWashOpen && (
-                        <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 10 }}>
+                        <Box sx={{ position: 'absolute', bottom: theme.spacing(16), right: theme.spacing(6), zIndex: 1000 }}>
                             <Button 
                                 variant="contained" 
                                 color="primary" 
@@ -1135,8 +1129,8 @@ function App() {
             <Box sx={{ 
                 // Fixed positioning relative to the entire screen/viewport
                 position: 'fixed', 
-                bottom: theme.spacing(4), // 32px from bottom
-                right: theme.spacing(4), // 32px from right
+                bottom: theme.spacing(12), // 32px from bottom
+                right: theme.spacing(2), // 32px from right
                 zIndex: 1000, 
                 // Ensure it's hidden during selection mode (desktop)
                 display: isBatchWashOpen && !isMobile ? 'none' : 'block' 
@@ -1147,18 +1141,19 @@ function App() {
                     hidden={isBatchWashOpen} 
                     icon={<SpeedDialIcon />}
                     direction={isMobile ? "up" : "left"} // Show up on mobile, left on desktop
+                    sx={{ position: 'absolute', bottom: 0, right: 0 }}
                 >
                     <SpeedDialAction
                         key="New Item"
                         icon={<AddIcon />}
-                        // tooltipTitle="New Item"
+                        tooltipTitle="New Item"
                         onClick={() => setIsAddItemModalOpen(true)}
                         tooltipOpen // Keep tooltip visible on desktop rail/float
                     />
                     <SpeedDialAction
                         key="Batch Wash"
                         icon={<CleaningServicesIcon />}
-                        // tooltipTitle="Start Batch Wash"
+                        tooltipTitle="Start Batch Wash"
                         onClick={() => setIsBatchWashOpen(true)}
                         tooltipOpen
                     />
