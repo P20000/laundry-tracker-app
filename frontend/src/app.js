@@ -578,7 +578,7 @@ function App() {
     const [isBatchJobCreationOpen, setIsBatchJobCreationOpen] = useState(false); // Used for the time input modal
     const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of item IDs for batch
     const [washDurationHours, setWashDurationHours] = useState(24); // Duration input for job
-
+    const [open, setOpen] = useState(false);
     // Form State 
     const [isLoading, setIsLoading] = useState(false);
     const [newItemName, setNewItemName] = useState('');
@@ -701,7 +701,26 @@ function App() {
         setView('catalog'); 
     };
 
+    // --- Handlers (Menu Toggle) ---
+    const handleToggleOpen = () => {
+        // If we are opening the menu, ensure we are not currently in batch selection mode
+        if (!open && isBatchWashOpen) {
+            setIsBatchWashOpen(false); // Exit batch selection mode if opening the menu
+        }
+        setOpen((prev) => !prev);
+    };
 
+
+    const handleAddItemFab = () => {
+        setOpen(false); // Close the menu
+        setIsModalOpen(true); // Your existing function to open the Add Item Modal
+    };
+    
+    const handleBatchWashFab = () => {
+        setOpen(false); // Close the menu
+        setIsBatchWashOpen(true); // Your existing function to activate batch selection mode
+        setSelectedItemIds([]); // Clear any previous selection when starting a new batch
+    };
     // --- Handlers (AddItem, StatusChange) ---
     
     const handleImageUpload = (event) => {
