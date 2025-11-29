@@ -446,7 +446,6 @@ function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
     // Form State 
@@ -540,7 +539,7 @@ function App() {
         setView('catalog'); 
     };
 
-    
+
     // --- Handlers (AddItem, StatusChange) ---
     
     const handleImageUpload = (event) => {
@@ -610,7 +609,7 @@ function App() {
             console.error("Network error deleting item:", err);
         }
     };
-    
+
     //Opens the Damage Severity Modal
     const handleOpenDamageEditor = (item) => {
     setCurrentEditingItem(item);
@@ -676,7 +675,7 @@ function App() {
     //Opens the History Modal
     const handleViewDetails = (item) => {
         setSelectedItem(item);
-        setIsHistoryModalOpen(true);
+        setIsModalOpen(true);
     };
 
     // --- Render Logic ---
@@ -870,11 +869,11 @@ function App() {
             </Box>
 
             {/* Add Item Dialog */}
-            <Dialog open={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
+            <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     {/* Dynamic Title based on context */}
                     {selectedItem ? `History: ${selectedItem.name}` : 'New Item'}
-                    <IconButton onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
+                    <IconButton onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
                 
                 <DialogContent sx={{ pt: 0 }}>
@@ -933,12 +932,12 @@ function App() {
                 {/* Actions: Only show 'Save Item' for the Add Item Form */}
                 {!selectedItem && (
                     <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
+                        <Button onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
                         <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                     </DialogActions>
                 )}
             </Dialog>
-                
+
             {/* Damage Severity Modal */}
             <Dialog open={isDamageEditorOpen} onClose={() => setIsEditingDamage(false)} maxWidth="xs" fullWidth>
                 <DialogTitle>Set Damage Severity</DialogTitle>
