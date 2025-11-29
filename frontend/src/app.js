@@ -445,9 +445,8 @@ const AuthCard = ({ setLoggedIn }) => {
 function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
-    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Dedicated state for Add Item Form
-    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Dedicated state for History Timeline
-    const [isDamageEditorOpen, setIsEditingDamage] = useState(false); // Dedicated state for Damage Severity Editor
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
     // Form State 
@@ -463,6 +462,7 @@ function App() {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [isDamageEditorOpen, setIsEditingDamage] = useState(false);
     const [currentEditingItem, setCurrentEditingItem] = useState(null);
     const [damageSeverityInput, setDamageSeverityInput] = useState(1); // Input state for modal
 
@@ -540,7 +540,7 @@ function App() {
         setView('catalog'); 
     };
 
-
+    
     // --- Handlers (AddItem, StatusChange) ---
     
     const handleImageUpload = (event) => {
@@ -579,14 +579,11 @@ function App() {
             if (res.ok) {
                 fetchItems(); 
                 // Reset and Close
-                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
+                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsModalOpen(false);
             }
         } catch (err) { console.error("Network error adding item:", err); }
     };
 
-    const handleOpenAddItemModal = () => { // New function to open Add Item form
-    setIsAddItemOpen(true);
-    };
     const handleDeleteItem = async (id) => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         if (!token) return handleLogout();
@@ -613,7 +610,7 @@ function App() {
             console.error("Network error deleting item:", err);
         }
     };
-
+    
     //Opens the Damage Severity Modal
     const handleOpenDamageEditor = (item) => {
     setCurrentEditingItem(item);
@@ -741,7 +738,7 @@ function App() {
                             </Box>
                         </Box>
                         
-                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsAddItemModalOpen(true)}>
+                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
                             <AddIcon />
                         </Fab>
                         <Box sx={{ my: 2, textAlign: 'center' }}>
@@ -795,7 +792,7 @@ function App() {
                             )}
                             {/* Mobile Add Button */}
                             {isMobile && (
-                                <IconButton onClick={() => setIsAddItemModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
+                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
                                 </IconButton>
                             )}
@@ -805,8 +802,8 @@ function App() {
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {items.length === 0 ? (
-                            // Pass setIsAddItemModalOpen to EmptyState to trigger modal
-                            <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
+                            // Pass setIsModalOpen to EmptyState to trigger modal
+                            <EmptyState view={view} onAddClick={() => setIsModalOpen(true)} />
                         ) : (
                             <Grid container spacing={2}>
                                 {items.map(item => (
@@ -877,7 +874,7 @@ function App() {
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     {/* Dynamic Title based on context */}
                     {selectedItem ? `History: ${selectedItem.name}` : 'New Item'}
-                    <IconButton onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
+                    <IconButton onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
                 
                 <DialogContent sx={{ pt: 0 }}>
@@ -936,12 +933,12 @@ function App() {
                 {/* Actions: Only show 'Save Item' for the Add Item Form */}
                 {!selectedItem && (
                     <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
+                        <Button onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
                         <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                     </DialogActions>
                 )}
             </Dialog>
-
+                
             {/* Damage Severity Modal */}
             <Dialog open={isDamageEditorOpen} onClose={() => setIsEditingDamage(false)} maxWidth="xs" fullWidth>
                 <DialogTitle>Set Damage Severity</DialogTitle>
