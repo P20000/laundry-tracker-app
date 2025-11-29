@@ -295,9 +295,17 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
                     <Button 
                         size="small" 
                         variant="text" 
+                        // If DAMAGED, the action is always FIX (set to CLEAN). If CLEAN, the action is open the modal.
                         color={item.currentStatus === 'DAMAGED' ? 'success' : 'error'} 
-                        // Toggles status: If currently DAMAGED -> set CLEAN. If not damaged -> set DAMAGED.
-                        onClick={() => onUpdateStatus(item.id, item.currentStatus === 'DAMAGED' ? 'CLEAN' : 'DAMAGED')} 
+                        onClick={() => {
+                            // If already DAMAGED, allow immediate toggle back to CLEAN (Repaired)
+                            if (item.currentStatus === 'DAMAGED') {
+                                onUpdateStatus(item.id, 'CLEAN');
+                            } else {
+                                // If CLEAN/Laundry/Overdue, open the severity selection modal first
+                                onOpenDamageEditor(item); 
+                            }
+                        }} 
                         sx={{ minWidth: 40, px: 1 }}
                         title={item.currentStatus === 'DAMAGED' ? "Mark Repaired" : "Report Damage"}
                     >
@@ -624,10 +632,15 @@ function App() {
         if (!token) return handleLogout();
 
         try {
-            const res = await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/details`, {
-                method: 'PATCH',
-                headers: getAuthHeaders(token),
-                body: JSON.stringify({ damageLevel: damageSeverityInput }), // Send only damageLevel
+            await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/details`, {
+                        method: 'PATCH',
+                        headers: getAuthHeaders(token),
+                        body: JSON.stringify({ damageLevel: damageSeverityInput }),
+            });
+            await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/status`, {
+                        method: 'PATCH',
+                        headers: getAuthHeaders(token),
+                        body: JSON.stringify({ status: 'DAMAGED' }),
             });
 
             if (res.ok) {
@@ -811,7 +824,7 @@ function App() {
                                         <ItemCard 
                                             item={item} 
                                             onUpdateStatus={handleStatusChange} 
-                                            onViewDetails={handleViewDetails}
+                                            onViewDetails={handleOpenHistoryModal}
                                             onDeleteItem={handleDeleteItem} // added delete handler
                                             onOpenDamageEditor={handleOpenDamageEditor} // Pass the dedicated handler
                                         />
