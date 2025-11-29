@@ -256,7 +256,27 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
                         {/* ... (Indicator UI code here) ... */}
                         <WarningIcon fontSize="small" color="error" />
                             <Typography variant="body2" color="error" fontWeight="bold">Severity:</Typography>
-                            <Chip size="small" label={item.damageLevel || 1} sx={{ bgcolor: item.damageLevel >= 4 ? 'error.light' : 'warning.light' }} />
+                            <Chip 
+                                size="small" 
+                                label={item.damageLevel || 1} 
+                                sx={(theme) => ({ // Use theme to access mode and palette
+                                    // Dynamic background color based on severity and theme mode
+                                    bgcolor: item.damageLevel >= 4 
+                                        ? theme.palette.mode === 'dark' ? theme.palette.error.dark : theme.palette.error.light 
+                                        : theme.palette.mode === 'dark' ? theme.palette.warning.dark : theme.palette.warning.light,
+                                    
+                                    // Dynamic text color based on theme mode
+                                    color: theme.palette.mode === 'dark' 
+                                        ? (item.damageLevel >= 4 ? theme.palette.error.contrastText : theme.palette.warning.contrastText) // Dark mode needs light text
+                                        : theme.palette.mode === 'light' 
+                                            ? (item.damageLevel >= 4 ? theme.palette.error.contrastText : theme.palette.warning.contrastText) // Light mode needs dark text on light. (default M3 behavior)
+                                            : undefined, // Let MUI handle contrastText if not explicitly defined
+                                    
+                                    // Optional: Ensure enough padding or specific font size if needed
+                                    fontWeight: 'bold',
+                                    minWidth: 32, // Ensure it's not too small
+                                })} 
+                            />
                     </Box>
                 )}
 
