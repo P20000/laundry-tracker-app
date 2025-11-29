@@ -1160,27 +1160,29 @@ function App() {
                         { position: 'absolute', bottom: 0, right: 0 } 
                     }
                 >
+                    {/* Action 1: New Item (Custom EFAB) */}
                     <SpeedDialAction
                         key="New Item"
-                        // Use an invisible icon and put the text in the tooltipTitle
                         icon={
                             <Fab variant="extended" size="small" sx={(theme) => ({ 
-                            // FIX: Use Primary colors for high-contrast filled look
-                            bgcolor: theme.palette.primary.main, 
-                            color: theme.palette.primary.contrastText, // White text/icon
-                            minWidth: 100, 
-                            px: 2, 
-                            py: 1.5,
-                            justifyContent: 'flex-start'
-                        })}>
-                            <AddIcon sx={{ mr: 1 }} />
-                            Add Item
-                        </Fab>
+                                bgcolor: theme.palette.primary.main, 
+                                color: theme.palette.primary.contrastText, 
+                                // FIX: Remove minWidth completely and rely on padding
+                                width: 'auto', 
+                                minWidth: 0,
+                                px: 2, 
+                                py: 1.5,
+                                // Align content to the left inside the extended FAB
+                                justifyContent: 'flex-start',
+                                // Increase internal gap slightly if needed for better look
+                                gap: 8 
+                            })}>
+                                <AddIcon sx={{ mr: 0.5 }} /> {/* Reduced margin right */}
+                                Add Item
+                            </Fab>
                         }
-                        tooltipTitle="" // Set title to empty string to avoid rendering the default tooltip box
-                        onClick={() => setIsAddItemModalOpen(true)}
-                        // Set tooltipOpen to true to force it to show the label (which is our custom FAB)
-                        tooltipOpen 
+                        tooltipTitle="" // Keep empty to use custom FAB label
+                        tooltipOpen // Forces display of the custom FAB label
                     />
 
                     {/* Action 2: Batch Wash (Custom EFAB) */}
@@ -1188,20 +1190,20 @@ function App() {
                         key="Batch Wash"
                         icon={
                             <Fab variant="extended" size="small" sx={(theme) => ({ 
-                                // FIX: Use Primary colors for high-contrast filled look
                                 bgcolor: theme.palette.primary.main, 
-                                color: theme.palette.primary.contrastText, // White text/icon
-                                minWidth: 100,
+                                color: theme.palette.primary.contrastText, 
+                                width: 'auto', 
+                                minWidth: 0,
                                 px: 2, 
                                 py: 1.5,
-                                justifyContent: 'flex-start'
+                                justifyContent: 'flex-start',
+                                gap: 8
                             })}>
-                                <CleaningServicesIcon sx={{ mr: 1 }} />
+                                <CleaningServicesIcon sx={{ mr: 0.5 }} />
                                 Batch Wash
                             </Fab>
                         }
                         tooltipTitle=""
-                        onClick={() => setIsBatchWashOpen(true)}
                         tooltipOpen
                     />
                 </SpeedDial>
