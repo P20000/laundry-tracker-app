@@ -1151,14 +1151,14 @@ function App() {
                     <SpeedDialAction
                         key="New Item"
                         icon={<AddIcon />}
-                        tooltipTitle="New Item"
+                        // tooltipTitle="New Item"
                         onClick={() => setIsAddItemModalOpen(true)}
                         tooltipOpen // Keep tooltip visible on desktop rail/float
                     />
                     <SpeedDialAction
                         key="Batch Wash"
                         icon={<CleaningServicesIcon />}
-                        tooltipTitle="Start Batch Wash"
+                        // tooltipTitle="Start Batch Wash"
                         onClick={() => setIsBatchWashOpen(true)}
                         tooltipOpen
                     />
