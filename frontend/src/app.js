@@ -632,26 +632,36 @@ function App() {
         if (!token) return handleLogout();
 
         try {
-            await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/details`, {
-                        method: 'PATCH',
-                        headers: getAuthHeaders(token),
-                        body: JSON.stringify({ damageLevel: damageSeverityInput }),
-            });
-            await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/status`, {
-                        method: 'PATCH',
-                        headers: getAuthHeaders(token),
-                        body: JSON.stringify({ status: 'DAMAGED' }),
+            // 1. Send PATCH request to update the damageLevel (res1)
+            const res1 = await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/details`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ damageLevel: damageSeverityInput }),
             });
 
-            if (res.ok) {
-                fetchItems(); // Refresh
-                setIsEditingDamage(false);
-                setCurrentEditingItem(null);
-            } else if (res.status === 401) {
-                handleLogout();
-            }
+            // Check first response status
+            if (res1.status === 401) return handleLogout();
+            if (!res1.ok) throw new Error("Failed to save severity level.");
+
+            // 2. Send PATCH request to update the currentStatus to DAMAGED (res2)
+            const res2 = await fetch(`${API_PROTECTED_URL}/items/${currentEditingItem.id}/status`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ status: 'DAMAGED' }),
+            });
+
+            // Check second response status
+            if (res2.status === 401) return handleLogout();
+            if (!res2.ok) throw new Error("Failed to set item status to DAMAGED.");
+            
+            // If BOTH successful:
+            fetchItems(); // Refresh
+            setIsEditingDamage(false);
+            setCurrentEditingItem(null);
+            
         } catch (err) {
             console.error("Failed to update damage severity:", err);
+            // Display a general error message to the user here if you have a message state
         }
     };
 
