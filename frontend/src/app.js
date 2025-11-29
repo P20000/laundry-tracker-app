@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-    AssessmentIcon, SpeedDial, SpeedDialAction, ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
+    ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
+    CircularProgress, // <- Added for loading fix
+    // MUI Core Components (SpeedDial must be imported from here)
+    SpeedDial, 
+    SpeedDialAction, 
 } from '@mui/material';
+
+// --- Separately Imported Icons (All are mandatory) ---
 import AddIcon from '@mui/icons-material/Add';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService'; 
@@ -12,17 +18,17 @@ import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import BuildIcon from '@mui/icons-material/Build';
-import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dark Mode)
-import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
-import EventIcon from '@mui/icons-material/Event'; // Icon for item history button 
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import EventIcon from '@mui/icons-material/Event'; 
 import DeleteIcon from '@mui/icons-material/Delete';
-import CircularProgress from '@mui/material/CircularProgress';
-import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // Icon for new Wash Jobs tab
-import SpeedDial, { SpeedDialIcon } from '@mui/material/SpeedDial'; // Component for the FAB twist
-import SpeedDialAction from '@mui/material/SpeedDialAction';
-import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // Icon for batch action
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import Checkbox from '@mui/material/Checkbox';
+import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // For Wash Jobs tab
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // For batch action icon
+import AssessmentIcon from '@mui/icons-material/Assessment'; // Correct icon for Admin Dashboard
+import Checkbox from '@mui/material/Checkbox'; // For batch selection checkboxes
+import SpeedDialIcon from '@mui/material/SpeedDialIcon'; // <- FIX: Correct path for SpeedDialIcon
+
+// --- Project Components ---
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
