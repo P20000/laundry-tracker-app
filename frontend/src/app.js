@@ -99,6 +99,21 @@ const getDesignTokens = (mode) => ({
     components: {
         MuiCard: { styleOverrides: { root: { borderRadius: 12, boxShadow: '0px 1px 3px rgba(0,0,0,0.4)', backgroundColor: mode === 'dark' ? '#2d2b2f' : undefined } } },
         MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 20, textTransform: 'none' } } },
+        MuiFab: {
+        styleOverrides: {
+            root: {
+                borderRadius: 16, // Default FAB is squared-off, EFAB should be pill
+            }
+        },
+        variants: [
+            {
+                props: { variant: 'extended' },
+                style: {
+                    borderRadius: 20, // Enforce pill shape for extended FABs
+                }
+            }
+        ]
+    },
         MuiDialog: { styleOverrides: { paper: { borderRadius: 28, padding: 16, backgroundColor: mode === 'dark' ? '#1C1B1F' : '#FFFBFE' } } }
     },
 });
@@ -1140,7 +1155,7 @@ function App() {
                     // Hide the action menu when in batch selection mode
                     hidden={isBatchWashOpen} 
                     icon={<SpeedDialIcon />}
-                    direction="up" // Show up on mobile, left on desktop
+                    direction="up"
                     sx={
                         { position: 'absolute', bottom: 0, right: 0 } 
                     }
@@ -1150,9 +1165,9 @@ function App() {
                         // Use an invisible icon and put the text in the tooltipTitle
                         icon={
                             <Fab variant="extended" size="small" sx={{ 
+                                
                                 bgcolor: 'secondary.container', 
-                                color: 'secondary.main', 
-                                // FIX: Set minimum width to fit text + icon and adapt size
+                                color: 'onSecondary.container',
                                 minWidth: 100, 
                                 px: 2, 
                                 py: 1.5,
@@ -1174,7 +1189,7 @@ function App() {
                         icon={
                             <Fab variant="extended" size="small" sx={{ 
                                 bgcolor: 'secondary.container', 
-                                color: 'secondary.main', 
+                                color: 'onSecondary.container', 
                                 minWidth: 100,
                                 px: 2, 
                                 py: 1.5,
