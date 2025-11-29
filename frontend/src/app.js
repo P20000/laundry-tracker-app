@@ -17,6 +17,10 @@ import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Ligh
 import EventIcon from '@mui/icons-material/Event'; // Icon for item history button 
 import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
+import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // Icon for new Wash Jobs tab
+import SpeedDial, { SpeedDialIcon } from '@mui/material/SpeedDial'; // Component for the FAB twist
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // Icon for batch action
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
@@ -157,7 +161,7 @@ const EmptyState = ({ view, onAddClick }) => {
     );
 };
 
-const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDamageEditor }) => {
+const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDamageEditor, isSelectionMode, onToggleSelection, isSelected }) => {
     // --- DYNAMIC STATUS LOGIC ---
     let statusColor = 'success';
     let statusLabel = 'Clean';
@@ -201,6 +205,15 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
 
     return (
         <Box sx={{position : 'relative', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
+            
+            {/* NEW: Checkbox overlay for batch selection */}
+            {isSelectionMode && (
+                <Box onClick={() => onToggleSelection(item.id)} sx={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', p: 1, cursor: 'pointer', bgcolor: isSelected ? 'primary.main' : 'transparent', opacity: isSelected ? 0.2 : 0.8, '&:hover': { opacity: 1 } }}>
+                    <Checkbox checked={isSelected} color="secondary" sx={{ zIndex: 6, color: isSelected ? 'primary.contrastText' : 'secondary.main' }} />
+                </Box>
+            )}
+
+            {/* Item Image or Placeholder */}
             <Box sx={{ 
                 height: 160, width: '100%', 
                 bgcolor: item.color + '20', 
@@ -235,7 +248,8 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
             >
                 <DeleteIcon fontSize="small" />
             </IconButton>
-
+            
+            
             <Box sx={{ p: 2 }}>
                 {/* 1. Item Name and Status Chip */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} mt={1}>
@@ -474,10 +488,16 @@ const AuthCard = ({ setLoggedIn }) => {
 function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
-    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // For History Timeline
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
-    
+
+    // NEW STATES: For Batch Creation Workflow
+    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Used for single item add
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Used for history view
+    const [isBatchWashOpen, setIsBatchWashOpen] = useState(false); // Used for batch selection mode
+    const [isBatchJobCreationOpen, setIsBatchJobCreationOpen] = useState(false); // Used for the time input modal
+    const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of item IDs for batch
+    const [washDurationHours, setWashDurationHours] = useState(24); // Duration input for job
+
     // Form State 
     const [isLoading, setIsLoading] = useState(false);
     const [newItemName, setNewItemName] = useState('');
@@ -528,7 +548,12 @@ function App() {
     // 2. Fetch data only if logged in
     useEffect(() => {
         if (isLoggedIn) {
-            fetchItems();
+            // NEW TRIGGER: Check for completed jobs first if accessing a relevant view
+            if (view === 'laundry' || view === 'jobs') {
+                checkAndFetch();
+            } else {
+                fetchItems();
+        }
         } else {
             setItems([]); 
         }
@@ -618,6 +643,45 @@ function App() {
                 setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
             }
         } catch (err) { console.error("Network error adding item:", err); }
+        };
+
+    // --- New Batch Wash Job Handler ---
+    const handleCreateWashJob = async () => {
+        if (selectedItemIds.length === 0) {
+            console.error("No items selected for wash job.");
+            return;
+        }
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        const payload = {
+            itemIds: selectedItemIds,
+            durationHours: washDurationHours,
+        };
+
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}/wash-jobs`, {
+                method: 'POST',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                // Success: Items are now marked WASHING in the DB.
+                fetchItems(); 
+                // Reset and Close
+                setSelectedItemIds([]);
+                setIsBatchJobCreationOpen(false);
+                // Optionally set the view to the new 'jobs' tab
+                setView('jobs'); 
+            } else if (res.status === 401) {
+                handleLogout();
+            } else {
+                console.error("Failed to create wash job:", await res.json());
+            }
+        } catch (err) {
+            console.error("Network error creating wash job:", err);
+        }
     };
 
     const handleDeleteItem = async (id) => {
@@ -653,7 +717,8 @@ function App() {
     setDamageSeverityInput(item.damageLevel || 1); // Set current value
     setIsEditingDamage(true);
     };
-
+    
+    // Saves the Damage Severity Level
     const handleSaveDamageSeverity = async () => {
         if (!currentEditingItem) return;
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -730,6 +795,36 @@ function App() {
         setIsHistoryModalOpen(true);
     };
 
+    // Batch Selection Toggle
+    const handleToggleItemSelection = (id) => {
+        setSelectedItemIds(prevIds => {
+            if (prevIds.includes(id)) {
+                return prevIds.filter(itemId => itemId !== id);
+            } else {
+                return [...prevIds, id];
+            }
+        });
+    };
+
+    // Batch Wash Job Creation
+    const handleOpenBatchJobModal = () => {
+        // Check if any items are selected and available for washing
+        const availableItemIds = items
+            .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING')
+            .map(item => item.id);
+
+        if (availableItemIds.length === 0) {
+            // You would use a MUI Snackbar/Toast here, but for now, console error
+            console.error("Please select at least one item that is not damaged or already washing.");
+            return; 
+        }
+
+        setSelectedItemIds(availableItemIds); // Filtered list
+        setIsBatchWashOpen(false); // Close selection mode
+        setIsBatchJobCreationOpen(true); // Open duration modal
+    };
+
+
     // --- Render Logic ---
     
     if (!isLoggedIn) {
@@ -761,6 +856,8 @@ function App() {
         { name: 'Catalog', icon: <CheckroomIcon sx={{ fontSize: 28 }} />, view: 'catalog' },
         { name: 'Laundry', icon: <LocalLaundryServiceIcon sx={{ fontSize: 28 }} />, view: 'laundry' },
         { name: 'Damaged', icon: <WarningIcon sx={{ fontSize: 28 }} />, view: 'damaged' },
+        { name: 'Wash Jobs', icon: <DryCleaningIcon sx={{ fontSize: 28 }} />, view: 'jobs' },
+        { name: 'Admin', icon: <DashboardIcon sx={{ fontSize: 28 }} />, view: 'admin' },
     ];
 
     const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
@@ -869,6 +966,11 @@ function App() {
                                             onViewDetails={handleOpenHistoryModal}
                                             onDeleteItem={handleDeleteItem} // added delete handler
                                             onOpenDamageEditor={handleOpenDamageEditor} // Pass the dedicated handler
+                                            
+                                            // Batch Selection Props
+                                            isSelectionMode={isBatchWashOpen}
+                                            onToggleSelection={handleToggleItemSelection}
+                                            isSelected={selectedItemIds.includes(item.id)}
                                         />
                                     </Grid>
                                 ))}

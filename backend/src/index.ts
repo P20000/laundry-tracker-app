@@ -11,7 +11,9 @@ import {
     markAsWashed,
     updateItemStatus,
     updateItemDetails,
-    getItemHistory, 
+    getItemHistory,
+    createWashJob,
+    checkWashJobs, 
     deleteItem
 } from './controllers/itemController';
 
@@ -69,6 +71,7 @@ protectedRouter.get('/admin/dashboard', getSystemStats);
 protectedRouter.post('/items', createItem);
 protectedRouter.get('/items', getAllItems);
 protectedRouter.delete('/items/:id', deleteItem);
+protectedRouter.post('/wash-jobs/check', checkWashJobs);
 // Item History Route
 protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions
@@ -79,7 +82,8 @@ protectedRouter.patch('/items/:id/details', updateItemDetails);
 // Views
 protectedRouter.get('/laundry', getLaundryItems);
 protectedRouter.get('/damaged', getDamagedItems);
-
+// New Route: Batch Wash Job Creation
+protectedRouter.post('/wash-jobs', createWashJob);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 

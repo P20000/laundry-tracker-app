@@ -312,3 +312,45 @@ export const updateItemDetails = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to update item details.' });
     }
 };
+
+export const createWashJob = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    const { itemIds, durationHours } = req.body as { itemIds: string[], durationHours: number };
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+    if (!itemIds || itemIds.length === 0 || !durationHours) {
+        return res.status(400).json({ error: 'Missing item IDs or duration.' });
+    }
+
+    try {
+        const jobId = randomUUID();
+        const startTime = new Date();
+        const completionTime = new Date(startTime.getTime() + durationHours * 3600000); // 3600000ms per hour
+        
+        // 1. Create the Wash Job entry
+        await client.execute({
+            sql: "INSERT INTO wash_jobs (id, userId, durationHours, completionTime) VALUES (?, ?, ?, ?)",
+            args: [jobId, userId, durationHours, completionTime.toISOString()]
+        });
+
+        // 2. Update status of all selected items to WASHING
+        const itemUpdateSql = `
+            UPDATE clothing_items 
+            SET currentStatus = 'WASHING' 
+            WHERE id IN (${itemIds.map(() => '?').join(', ')}) AND userId = ?
+        `;
+        
+        await client.execute({ 
+            sql: itemUpdateSql, 
+            args: [...itemIds, userId] // Item IDs + User ID
+        });
+
+        // 3. Optional: Store item list in a separate table if required later. (Skipped for MVP simplicity)
+
+        return res.status(201).json({ jobId, message: `Wash job created, status set to WASHING for ${itemIds.length} items.` });
+
+    } catch (error: unknown) {
+        console.error('Create Wash Job Error:', error);
+        return res.status(500).json({ error: 'Failed to create wash job.' });
+    }
+};
