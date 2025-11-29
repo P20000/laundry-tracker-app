@@ -445,7 +445,9 @@ const AuthCard = ({ setLoggedIn }) => {
 function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Dedicated state for Add Item Form
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Dedicated state for History Timeline
+    const [isDamageEditorOpen, setIsEditingDamage] = useState(false); // Dedicated state for Damage Severity Editor
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
     // Form State 
@@ -461,7 +463,6 @@ function App() {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [isDamageEditorOpen, setIsEditingDamage] = useState(false);
     const [currentEditingItem, setCurrentEditingItem] = useState(null);
     const [damageSeverityInput, setDamageSeverityInput] = useState(1); // Input state for modal
 
@@ -529,9 +530,7 @@ function App() {
                 lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
                 createdAt: new Date(item.createdAt),
             })));
-        } catch (err) {
-            console.error("Failed to fetch items:", err);
-        }
+        }  catch (err) { console.error("Failed to fetch items:", err); }
     };
 
     const handleLogout = () => {
@@ -580,11 +579,14 @@ function App() {
             if (res.ok) {
                 fetchItems(); 
                 // Reset and Close
-                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsModalOpen(false);
+                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
             }
         } catch (err) { console.error("Network error adding item:", err); }
     };
 
+    const handleOpenAddItemModal = () => { // New function to open Add Item form
+    setIsAddItemOpen(true);
+    };
     const handleDeleteItem = async (id) => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         if (!token) return handleLogout();
@@ -677,7 +679,7 @@ function App() {
     //Opens the History Modal
     const handleViewDetails = (item) => {
         setSelectedItem(item);
-        setIsModalOpen(true);
+        setIsHistoryModalOpen(true);
     };
 
     // --- Render Logic ---
@@ -739,7 +741,7 @@ function App() {
                             </Box>
                         </Box>
                         
-                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
+                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsAddItemModalOpen(true)}>
                             <AddIcon />
                         </Fab>
                         <Box sx={{ my: 2, textAlign: 'center' }}>
@@ -793,7 +795,7 @@ function App() {
                             )}
                             {/* Mobile Add Button */}
                             {isMobile && (
-                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
+                                <IconButton onClick={() => setIsAddItemModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
                                 </IconButton>
                             )}
@@ -803,8 +805,8 @@ function App() {
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {items.length === 0 ? (
-                            // Pass setIsModalOpen to EmptyState to trigger modal
-                            <EmptyState view={view} onAddClick={() => setIsModalOpen(true)} />
+                            // Pass setIsAddItemModalOpen to EmptyState to trigger modal
+                            <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                         ) : (
                             <Grid container spacing={2}>
                                 {items.map(item => (
@@ -814,7 +816,7 @@ function App() {
                                             onUpdateStatus={handleStatusChange} 
                                             onViewDetails={handleViewDetails}
                                             onDeleteItem={handleDeleteItem} // added delete handler
-                                            onOpenDamageEditor={handleOpenDamageEditor} // <-- NEW: Pass the dedicated handler
+                                            onOpenDamageEditor={handleOpenDamageEditor} // Pass the dedicated handler
                                         />
                                     </Grid>
                                 ))}
@@ -871,11 +873,11 @@ function App() {
             </Box>
 
             {/* Add Item Dialog */}
-            <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
+            <Dialog open={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     {/* Dynamic Title based on context */}
                     {selectedItem ? `History: ${selectedItem.name}` : 'New Item'}
-                    <IconButton onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
+                    <IconButton onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
                 
                 <DialogContent sx={{ pt: 0 }}>
@@ -934,7 +936,7 @@ function App() {
                 {/* Actions: Only show 'Save Item' for the Add Item Form */}
                 {!selectedItem && (
                     <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
+                        <Button onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
                         <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                     </DialogActions>
                 )}
