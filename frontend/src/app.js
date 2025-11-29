@@ -21,6 +21,8 @@ import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // Icon for new W
 import SpeedDial, { SpeedDialIcon } from '@mui/material/SpeedDial'; // Component for the FAB twist
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // Icon for batch action
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import Checkbox from '@mui/material/Checkbox';
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
@@ -483,6 +485,64 @@ const AuthCard = ({ setLoggedIn }) => {
     );
 };
 
+const BatchJobCreationDialog = ({ isOpen, handleClose, items, selectedIds, duration, setDuration, handleCreateJob }) => {
+    const selectedItemsList = items.filter(item => selectedIds.includes(item.id));
+    const [isLoading, setIsLoading] = useState(false); // Local state for loading
+
+    return (
+        <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="xs">
+            <DialogTitle>Create Batch Wash Job</DialogTitle>
+            <DialogContent>
+                <Typography variant="subtitle1" mb={2} color="primary">
+                    {selectedItemsList.length} items selected.
+                </Typography>
+                
+                <Box mb={3}>
+                    <Typography variant="body2" color="text.secondary" mb={1}>
+                        Items in Batch:
+                    </Typography>
+                    <Box sx={{ maxHeight: 150, overflowY: 'auto', border: '1px solid #ddd', p: 1, borderRadius: 1 }}>
+                        {selectedItemsList.map(item => (
+                            <Chip key={item.id} label={`${item.name} (${item.size})`} size="small" sx={{ m: 0.5 }} />
+                        ))}
+                    </Box>
+                </Box>
+                
+                <FormControl fullWidth variant="filled" size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Wash Duration (Hours)</InputLabel>
+                    <Select 
+                        value={duration} 
+                        onChange={(e) => setDuration(parseInt(e.target.value))} 
+                        label="Wash Duration (Hours)"
+                    >
+                        <MenuItem value={6}>6 Hours (Quick)</MenuItem>
+                        <MenuItem value={12}>12 Hours</MenuItem>
+                        <MenuItem value={24}>24 Hours (Standard)</MenuItem>
+                        <MenuItem value={48}>48 Hours (Heavy Duty)</MenuItem>
+                    </Select>
+                </FormControl>
+                <Typography variant="caption" color="text.secondary">
+                    Items will be marked CLEAN after this duration expires.
+                </Typography>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} color="secondary">Cancel</Button>
+                <Button 
+                    onClick={() => {
+                        setIsLoading(true);
+                        handleCreateJob();
+                    }} 
+                    variant="contained" 
+                    color="primary" 
+                    disabled={selectedItemsList.length === 0 || isLoading}
+                >
+                    {isLoading ? <CircularProgress size={24} /> : 'Start Wash Job'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
 // --- Main Component ---
 
 function App() {
@@ -553,13 +613,32 @@ function App() {
                 checkAndFetch();
             } else {
                 fetchItems();
-        }
+            }
         } else {
             setItems([]); 
         }
     }, [isLoggedIn, view]);
 
     // --- API Interaction ---
+    // NEW FUNCTION: Combines job check and item fetch
+    const checkAndFetch = async () => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return;
+
+        try {
+            // 1. Run the server-side check to update statuses
+            await fetch(`${API_PROTECTED_URL}/wash-jobs/check`, {
+                method: 'POST',
+                headers: getAuthHeaders(token),
+            });
+            
+            // 2. Fetch the updated list
+            fetchItems(); 
+        } catch (e) {
+            console.error("Job Check Failed:", e);
+            fetchItems(); // Still try to fetch the current list even if check failed
+        }
+    };
 
     const fetchItems = async () => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -857,7 +936,7 @@ function App() {
         { name: 'Laundry', icon: <LocalLaundryServiceIcon sx={{ fontSize: 28 }} />, view: 'laundry' },
         { name: 'Damaged', icon: <WarningIcon sx={{ fontSize: 28 }} />, view: 'damaged' },
         { name: 'Wash Jobs', icon: <DryCleaningIcon sx={{ fontSize: 28 }} />, view: 'jobs' },
-        { name: 'Admin', icon: <DashboardIcon sx={{ fontSize: 28 }} />, view: 'admin' },
+        { name: 'Admin', icon: <AssessmentIcon sx={{ fontSize: 28 }} />, view: 'admin' },
     ];
 
     const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
@@ -886,9 +965,53 @@ function App() {
                             </Box>
                         </Box>
                         
-                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsAddItemModalOpen(true)}>
-                            <AddIcon />
-                        </Fab>
+                        <Box sx={{ height: 320, transform: 'translateZ(0px)', flexGrow: 1, position: 'relative', mb: 4, mt: 2 }}>
+                            <SpeedDial
+                                ariaLabel="SpeedDial basic example"
+                                // Show the SpeedDial options only when not in selection mode
+                                hidden={isBatchWashOpen} 
+                                icon={<SpeedDialIcon />}
+                                direction="up"
+                                sx={{ position: 'absolute', bottom: 16, right: 16 }}
+                            >
+                                <SpeedDialAction
+                                    key="New Item"
+                                    icon={<AddIcon />}
+                                    tooltipTitle="New Item"
+                                    onClick={() => setIsAddItemModalOpen(true)} // Opens the single item modal
+                                />
+                                <SpeedDialAction
+                                    key="Batch Wash"
+                                    icon={<CleaningServicesIcon />} // Use the imported icon
+                                    tooltipTitle="Batch Wash"
+                                    onClick={() => setIsBatchWashOpen(true)} // Activates selection mode
+                                />
+                            </SpeedDial>
+                        </Box>
+                        {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
+                        {isBatchWashOpen && (
+                            <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 10 }}>
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    onClick={handleOpenBatchJobModal}
+                                    sx={{ borderRadius: 5, py: 1.5, px: 3 }}
+                                >
+                                    Queue {selectedItemIds.length} Items
+                                </Button>
+                                <Button 
+                                    variant="text" 
+                                    color="secondary" 
+                                    onClick={() => {
+                                        setIsBatchWashOpen(false); // Exit selection mode
+                                        setSelectedItemIds([]); // Clear selection
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </Box>
+                        )}
+
                         <Box sx={{ my: 2, textAlign: 'center' }}>
                             <IconButton onClick={colorMode.toggleColorMode} color="primary" sx={{ p: 1, border: '1px solid', borderColor: 'divider' }}>
                                 {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
@@ -897,6 +1020,7 @@ function App() {
                                 {theme.palette.mode === 'dark' ? 'Dark' : 'Light'}
                             </Typography>
                         </Box>
+
                         <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 4 }}>
                             {navItems.map((item) => {
                                 const isActive = view === item.view;
