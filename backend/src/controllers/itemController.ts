@@ -4,6 +4,9 @@ import { IClothingItem, INewItemPayload } from '../../../shared/types';
 // import { logEvent } from './adminController'; // Optional: Uncomment if admin controller exists
 import { randomUUID } from 'crypto';
 
+// --- Constants ---
+const MAX_CLEAN_DAYS = 15; // Days before an item is considered overdue for washing
+
 // --- Helper: Error Message Formatter ---
 const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) return error.message;
@@ -12,23 +15,52 @@ const getErrorMessage = (error: unknown): string => {
 
 // --- Helper: Convert SQL result into typed array ---
 // LibSQL results are generic, so we map them back to the IClothingItem type.
+// const mapResultToItems = (rows: any[]): IClothingItem[] => {
+    
+//     return rows.map(row => ({
+//         id: row.id,
+//         userId: row.userId,
+//         name: row.name,
+//         itemType: row.itemType,
+//         category: row.category,
+//         size: row.size,
+//         color: row.color,
+//         imageUrl: row.imageUrl,
+//         currentStatus: row.currentStatus,
+//         damageLog: row.damageLog,
+//         damageLevel: row.damageLevel,
+//         lastWashed: row.lastWashed ? new Date(row.lastWashed) : null,
+//         createdAt: new Date(row.createdAt),
+//         updatedAt: new Date(row.updatedAt)
+//     }));
+// };
+
 const mapResultToItems = (rows: any[]): IClothingItem[] => {
-    return rows.map(row => ({
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        itemType: row.itemType,
-        category: row.category,
-        size: row.size,
-        color: row.color,
-        imageUrl: row.imageUrl,
-        currentStatus: row.currentStatus,
-        damageLog: row.damageLog,
-        damageLevel: row.damageLevel,
-        lastWashed: row.lastWashed ? new Date(row.lastWashed) : null,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt)
-    }));
+    // We update this mapping function to include the OVERDUE logic
+
+    const now = new Date();
+    // Calculate the timestamp 30 days ago
+    const thirtyDaysAgo = now.setDate(now.getDate() - MAX_CLEAN_DAYS); 
+
+    return rows.map(row => {
+        let currentStatus = row.currentStatus;
+        const lastWashedTimestamp = row.lastWashed ? new Date(row.lastWashed).getTime() : 0;
+
+        // Condition for OVERDUE: Must be CLEAN, and lastWashed was more than 30 days ago
+        // This is a calculated, non-persistent status update for the frontend
+        if (currentStatus === 'CLEAN' && lastWashedTimestamp > 0 && lastWashedTimestamp < thirtyDaysAgo) {
+            currentStatus = 'OVERDUE';
+        }
+        
+        return {
+            ...row,
+            currentStatus: currentStatus, // This can now be 'OVERDUE'
+            damageLevel: row.damageLevel,
+            lastWashed: row.lastWashed ? new Date(row.lastWashed) : null,
+            createdAt: new Date(row.createdAt),
+            updatedAt: new Date(row.updatedAt)
+        };
+    });
 };
 
 // --- Database Operations ---
@@ -85,9 +117,12 @@ export const getAllItems = async (req: Request, res: Response) => {
             sql: "SELECT * FROM clothing_items WHERE userId = ? ORDER BY createdAt DESC",
             args: [userId]
         });
-        return res.status(200).json(mapResultToItems(result.rows));
+        const itemsWithStatus = mapResultToItems(result.rows); // Map to include OVERDUE logic
+        return res.status(200).json(itemsWithStatus);
     } catch (error: unknown) {
-        return res.status(500).json({ error: 'Failed to fetch catalog.' });
+        const msg = getErrorMessage(error);
+        console.error('Error fetching all items:', error);
+        return res.status(500).json({ error: 'Failed to fetch items.', details: msg });
     }
 };
 
@@ -102,8 +137,14 @@ export const getLaundryItems = async (req: Request, res: Response) => {
             ORDER BY lastWashed ASC
         `;
         const result = await client.execute({ sql, args: [userId] });
-        return res.status(200).json(mapResultToItems(result.rows));
+        const allItems = mapResultToItems(result.rows);
+        const laundryItems = allItems.filter(item => 
+            item.currentStatus === 'READY_FOR_WASH' || item.currentStatus === 'OVERDUE'
+        );
+        return res.status(200).json(laundryItems);
     } catch (error: unknown) {
+        const msg = getErrorMessage(error);
+        console.error('Failed to fetch laundry items, error : ', error);
         return res.status(500).json({ error: 'Failed to fetch laundry list.' });
     }
 };
