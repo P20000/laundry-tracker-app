@@ -16,6 +16,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon (Dar
 import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon (Light Mode)
 import EventIcon from '@mui/icons-material/Event'; // Icon for item history button 
 import DeleteIcon from '@mui/icons-material/Delete';
+import CircularProgress from '@mui/material/CircularProgress';
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
 
