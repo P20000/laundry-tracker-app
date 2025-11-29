@@ -478,6 +478,7 @@ function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
     // Form State 
+    const [isLoading, setIsLoading] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('Casuals');
     const [newItemType, setNewItemType] = useState('Shirt');
@@ -536,9 +537,11 @@ function App() {
 
     const fetchItems = async () => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        
         if (!token) return;
 
         try {
+            setIsLoading(true);
             let endpoint = '/items';
             if (view === 'laundry') endpoint = '/laundry';
             if (view === 'damaged') endpoint = '/damaged';
@@ -558,8 +561,12 @@ function App() {
                 lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
                 createdAt: new Date(item.createdAt),
             })));
-        }  catch (err) { console.error("Failed to fetch items:", err); }
-    };
+        }  catch (err) { 
+                console.error("Failed to fetch items:", err); 
+            } finally {
+        setIsLoading(false); // <--- STOP LOADING
+    }
+    }; 
 
     const handleLogout = () => {
         localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -844,7 +851,11 @@ function App() {
 
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
-                        {items.length === 0 ? (
+                        {isLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                                <CircularProgress color="primary" size={60} />
+                            </Box>
+                        ) : items.length === 0 ? (
                             // Pass setIsModalOpen to EmptyState to trigger modal
                             <EmptyState view={view} onAddClick={() => setIsModalOpen(true)} />
                         ) : (
