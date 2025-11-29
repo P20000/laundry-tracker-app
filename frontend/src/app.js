@@ -713,7 +713,7 @@ function App() {
 
     const handleAddItemFab = () => {
         setOpen(false); // Close the menu
-        setIsModalOpen(true); // Your existing function to open the Add Item Modal
+        setIsAddItemModalOpen(true); // Your existing function to open the Add Item Modal
     };
     
     const handleBatchWashFab = () => {
@@ -1149,8 +1149,8 @@ function App() {
                                 <CircularProgress color="primary" size={60} />
                             </Box>
                         ) : items.length === 0 ? (
-                            // Pass setIsModalOpen to EmptyState to trigger modal
-                            <EmptyState view={view} onAddClick={() => setIsModalOpen(true)} />
+                            // Pass setIsAddItemModalOpen to EmptyState to trigger modal
+                            <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                         ) : (
                             <Grid container spacing={2}>
                                 {items.map(item => (
