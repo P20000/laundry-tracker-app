@@ -1038,6 +1038,90 @@ function App() {
                             )}
                         </Box>
                     </Box>
+                    
+                    <Box sx={(theme) => ({ 
+                        // Fixed positioning relative to the entire screen/viewport
+                        position: 'fixed', 
+                        bottom: theme.spacing(4), // 32px from bottom
+                        right: theme.spacing(4), // 32px from right
+                        zIndex: 1000, 
+                        // Show only when NOT in the dedicated batch selection mode (to prevent conflict)
+                        display: isBatchWashOpen ? 'none' : 'block' 
+                    })}>
+                        
+                        {/* Action Pills (Visible only when 'open' is true) */}
+                        {open && (
+                            <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: 72, // 56px FAB height + margin
+                                right: 0,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: theme.spacing(1.5),
+                                alignItems: 'flex-end', // Align pills to the right
+                            }}
+                            >
+                                {/* Action 1: Add Item */}
+                                <Box
+                                    onClick={handleAddItemFab}
+                                    sx={(theme) => ({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        px: 2.5,
+                                        py: 1.25,
+                                        borderRadius: 999, // Pill shape
+                                        // Primary colors for the filled EFAB style
+                                        bgcolor: theme.palette.primary.main, 
+                                        color: theme.palette.primary.contrastText, 
+                                        boxShadow: 4,
+                                        cursor: 'pointer',
+                                    })}
+                                >
+                                    <AddIcon fontSize="small" />
+                                    <Typography variant="body2" fontWeight={600}>
+                                        Add Item
+                                    </Typography>
+                                </Box>
+
+                                {/* Action 2: Start Batch Wash */}
+                                <Box
+                                    onClick={handleBatchWashFab}
+                                    sx={(theme) => ({
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        px: 2.5,
+                                        py: 1.25,
+                                        borderRadius: 999,
+                                        bgcolor: theme.palette.primary.main, 
+                                        color: theme.palette.primary.contrastText,
+                                        boxShadow: 4,
+                                        cursor: 'pointer',
+                                    })}
+                                >
+                                    <CleaningServicesIcon fontSize="small" />
+                                    <Typography variant="body2" fontWeight={600}>
+                                        Batch Wash
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
+
+                        {/* Main FAB (Toggles the actions) */}
+                        <Fab
+                            color="primary"
+                            onClick={handleToggleOpen} 
+                            sx={{
+                                width: 56,
+                                height: 56,
+                                boxShadow: 6,
+                            }}
+                        >
+                            {open ? <CloseIcon /> : <AddIcon />}
+                        </Fab>
+                    </Box>
 
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
@@ -1141,105 +1225,7 @@ function App() {
                     )}
                 </Box>
             </Box>
-            <Box
-                sx={{
-                    position: 'fixed',
-                    bottom: (theme) => theme.spacing(4),
-                    right: (theme) => theme.spacing(2),
-                    zIndex: 1000,
-                    display: isBatchWashOpen && !isMobile ? 'none' : 'block',
-                }}
-                >
-                {/* Main FAB */}
-                <Fab
-                    color="primary"
-                    onClick={handleToggleOpen} // control open/close
-                    sx={{
-                    width: 56,
-                    height: 56,
-                    boxShadow: 6,
-                    }}
-                >
-                    {open ? <CloseIcon /> : <AddIcon />}
-                </Fab>
-
-                {/* Action pills */}
-                {open && (
-                    <Box
-                    sx={{
-                        position: 'absolute',
-                        bottom: 72, // just above main FAB
-                        right: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1.5,
-                    }}
-                    >
-                    <Box
-                        onClick={handleAddItem}
-                        sx={(theme) => ({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 999,
-                        bgcolor: '#6C4ACF', // your purple
-                        color: '#fff',
-                        boxShadow: 4,
-                        cursor: 'pointer',
-                        })}
-                    >
-                        <MailOutlineIcon fontSize="small" />
-                        <Typography variant="body2" fontWeight={600}>
-                        Document
-                        </Typography>
-                    </Box>
-
-                    <Box
-                        onClick={handleMessage}
-                        sx={(theme) => ({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 999,
-                        bgcolor: '#6C4ACF',
-                        color: '#fff',
-                        boxShadow: 4,
-                        cursor: 'pointer',
-                        })}
-                    >
-                        <ChatBubbleOutlineIcon fontSize="small" />
-                        <Typography variant="body2" fontWeight={600}>
-                        Message
-                        </Typography>
-                    </Box>
-
-                    <Box
-                        onClick={handleFolder}
-                        sx={(theme) => ({
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 999,
-                        bgcolor: '#6C4ACF',
-                        color: '#fff',
-                        boxShadow: 4,
-                        cursor: 'pointer',
-                        })}
-                    >
-                        <FolderOpenIcon fontSize="small" />
-                        <Typography variant="body2" fontWeight={600}>
-                        Folder
-                        </Typography>
-                    </Box>
-                    </Box>
-                )}
-                </Box>
+            
             {/* Add Item Dialog */}
             <Dialog open={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
