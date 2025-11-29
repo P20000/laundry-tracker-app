@@ -445,7 +445,8 @@ const AuthCard = ({ setLoggedIn }) => {
 function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // For History Timeline
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     
     // Form State 
@@ -457,7 +458,7 @@ function App() {
     const [newItemDamageLevel, setNewItemDamageLevel] = useState(1); // NEW STATE (Default Low)
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
-    const [selectedItem, setSelectedItem] = useState(null);
+    const [selectedItem, setSelectedItem] = useState(null); // Used by History
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -578,7 +579,7 @@ function App() {
             if (res.ok) {
                 fetchItems(); 
                 // Reset and Close
-                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsModalOpen(false);
+                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
             }
         } catch (err) { console.error("Network error adding item:", err); }
     };
@@ -673,9 +674,9 @@ function App() {
         };
 
     //Opens the History Modal
-    const handleViewDetails = (item) => {
+    const handleOpenHistoryModal = (item) => {
         setSelectedItem(item);
-        setIsModalOpen(true);
+        setIsHistoryModalOpen(true);
     };
 
     // --- Render Logic ---
@@ -737,7 +738,7 @@ function App() {
                             </Box>
                         </Box>
                         
-                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsModalOpen(true)}>
+                        <Fab color="secondary" size="medium" sx={{ mb: 4, boxShadow: 0 }} onClick={() => setIsAddItemModalOpen(true)}>
                             <AddIcon />
                         </Fab>
                         <Box sx={{ my: 2, textAlign: 'center' }}>
@@ -791,7 +792,7 @@ function App() {
                             )}
                             {/* Mobile Add Button */}
                             {isMobile && (
-                                <IconButton onClick={() => setIsModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
+                                <IconButton onClick={() => setIsAddItemModalOpen(true)} sx={{ bgcolor: 'secondary.main', color: 'primary.contrastText' }}>
                                     <AddIcon />
                                 </IconButton>
                             )}
@@ -869,25 +870,14 @@ function App() {
             </Box>
 
             {/* Add Item Dialog */}
-            <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
+            <Dialog open={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     {/* Dynamic Title based on context */}
                     {selectedItem ? `History: ${selectedItem.name}` : 'New Item'}
-                    <IconButton onClick={() => { setIsModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
+                    <IconButton onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
                 </DialogTitle>
                 
                 <DialogContent sx={{ pt: 0 }}>
-                    {selectedItem ? (
-                        // --- 1. RENDER HISTORY TIMELINE ---
-                        <Box sx={{ minHeight: 300 }}>
-                            <WashHistoryTimeline 
-                                itemId={selectedItem.id} 
-                                apiUrl={API_PROTECTED_URL} 
-                                token={localStorage.getItem(AUTH_TOKEN_KEY)} 
-                            />
-                        </Box>
-                    ) : (
-                        // --- 2. RENDER ADD ITEM FORM ---
                         <Box display="flex" flexDirection="column" gap={3} mt={1}>
                             {/* Image Upload Block (from previous component) */}
                             <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -926,7 +916,6 @@ function App() {
                                 </FormControl>
                             </Box>
                         </Box>
-                    )}
                 </DialogContent>
                 
                 {/* Actions: Only show 'Save Item' for the Add Item Form */}
@@ -936,6 +925,25 @@ function App() {
                         <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
                     </DialogActions>
                 )}
+            </Dialog>
+            
+            {/* History Modal */}
+            <Dialog open={isHistoryModalOpen} onClose={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} fullWidth maxWidth="md">
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+                    History: {selectedItem?.name}
+                    <IconButton onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 0 }}>
+                    <Box sx={{ minHeight: 300 }}>
+                        {selectedItem && (
+                            <WashHistoryTimeline 
+                                itemId={selectedItem.id} 
+                                apiUrl={API_PROTECTED_URL} 
+                                token={localStorage.getItem(AUTH_TOKEN_KEY)} 
+                            />
+                        )}
+                    </Box>
+                </DialogContent>
             </Dialog>
 
             {/* Damage Severity Modal */}
