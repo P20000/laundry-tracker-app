@@ -1164,18 +1164,18 @@ function App() {
                         key="New Item"
                         // Use an invisible icon and put the text in the tooltipTitle
                         icon={
-                            <Fab variant="extended" size="small" sx={{ 
-                                
-                                bgcolor: 'secondary.container', 
-                                color: 'onSecondary.container',
-                                minWidth: 100, 
-                                px: 2, 
-                                py: 1.5,
-                                justifyContent: 'flex-start'
-                            }}>
-                                <AddIcon sx={{ mr: 1 }} />
-                                Add Item
-                            </Fab>
+                            <Fab variant="extended" size="small" sx={(theme) => ({ 
+                            // FIX: Use Primary colors for high-contrast filled look
+                            bgcolor: theme.palette.primary.main, 
+                            color: theme.palette.primary.contrastText, // White text/icon
+                            minWidth: 100, 
+                            px: 2, 
+                            py: 1.5,
+                            justifyContent: 'flex-start'
+                        })}>
+                            <AddIcon sx={{ mr: 1 }} />
+                            Add Item
+                        </Fab>
                         }
                         tooltipTitle="" // Set title to empty string to avoid rendering the default tooltip box
                         onClick={() => setIsAddItemModalOpen(true)}
@@ -1187,14 +1187,15 @@ function App() {
                     <SpeedDialAction
                         key="Batch Wash"
                         icon={
-                            <Fab variant="extended" size="small" sx={{ 
-                                bgcolor: 'secondary.container', 
-                                color: 'onSecondary.container', 
+                            <Fab variant="extended" size="small" sx={(theme) => ({ 
+                                // FIX: Use Primary colors for high-contrast filled look
+                                bgcolor: theme.palette.primary.main, 
+                                color: theme.palette.primary.contrastText, // White text/icon
                                 minWidth: 100,
                                 px: 2, 
                                 py: 1.5,
                                 justifyContent: 'flex-start'
-                            }}>
+                            })}>
                                 <CleaningServicesIcon sx={{ mr: 1 }} />
                                 Batch Wash
                             </Fab>
