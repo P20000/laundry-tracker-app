@@ -971,30 +971,6 @@ function App() {
                             </Box>
                         </Box>
                         
-                        <Box sx={{ height: 320, transform: 'translateZ(0px)', flexGrow: 1, position: 'relative', mb: 4, mt: 2 }}>
-                            <SpeedDial
-                                ariaLabel="SpeedDial basic example"
-                                // Show the SpeedDial options only when not in selection mode
-                                hidden={isBatchWashOpen} 
-                                icon={<SpeedDialIcon />}
-                                direction="up"
-                                sx={{ position: 'absolute', bottom: 16, right: 16 }}
-                            >
-                                <SpeedDialAction
-                                    key="New Item"
-                                    icon={<AddIcon />}
-                                    tooltipTitle="New Item"
-                                    onClick={() => setIsAddItemModalOpen(true)} // Opens the single item modal
-                                />
-                                <SpeedDialAction
-                                    key="Batch Wash"
-                                    icon={<CleaningServicesIcon />} // Use the imported icon
-                                    tooltipTitle="Batch Wash"
-                                    onClick={() => setIsBatchWashOpen(true)} // Activates selection mode
-                                />
-                            </SpeedDial>
-                        </Box>
-
                         <Box sx={{ my: 2, textAlign: 'center' }}>
                             <IconButton onClick={colorMode.toggleColorMode} color="primary" sx={{ p: 1, border: '1px solid', borderColor: 'divider' }}>
                                 {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
@@ -1156,7 +1132,38 @@ function App() {
                     )}
                 </Box>
             </Box>
-
+            <Box sx={{ 
+                // Fixed positioning relative to the entire screen/viewport
+                position: 'fixed', 
+                bottom: theme.spacing(4), // 32px from bottom
+                right: theme.spacing(4), // 32px from right
+                zIndex: 1000, 
+                // Ensure it's hidden during selection mode (desktop)
+                display: isBatchWashOpen && !isMobile ? 'none' : 'block' 
+            }}>
+                <SpeedDial
+                    ariaLabel="Batch Creation and Add Item"
+                    // Hide the action menu when in batch selection mode
+                    hidden={isBatchWashOpen} 
+                    icon={<SpeedDialIcon />}
+                    direction={isMobile ? "up" : "left"} // Show up on mobile, left on desktop
+                >
+                    <SpeedDialAction
+                        key="New Item"
+                        icon={<AddIcon />}
+                        tooltipTitle="New Item"
+                        onClick={() => setIsAddItemModalOpen(true)}
+                        tooltipOpen // Keep tooltip visible on desktop rail/float
+                    />
+                    <SpeedDialAction
+                        key="Batch Wash"
+                        icon={<CleaningServicesIcon />}
+                        tooltipTitle="Start Batch Wash"
+                        onClick={() => setIsBatchWashOpen(true)}
+                        tooltipOpen
+                    />
+                </SpeedDial>
+            </Box>
             {/* Add Item Dialog */}
             <Dialog open={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
