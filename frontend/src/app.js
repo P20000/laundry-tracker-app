@@ -928,19 +928,17 @@ function App() {
     // Batch Wash Job Creation
     const handleOpenBatchJobModal = () => {
         // Check if any items are selected and available for washing
-        const availableItemIds = items
-            .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING')
-            .map(item => item.id);
+        const availableItems = items
+            .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING');
 
-        if (availableItemIds.length === 0) {
-            // You would use a MUI Snackbar/Toast here, but for now, console error
+        if (availableItems.length === 0) {
             console.error("Please select at least one item that is not damaged or already washing.");
             return; 
         }
 
-        setSelectedItemIds(availableItemIds); // Filtered list
+        setSelectedItemIds(availableItems.map(item => item.id)); // Filtered list
         setIsBatchWashOpen(false); // Close selection mode
-        setIsBatchJobCreationOpen(true); // Open duration modal
+        setIsBatchJobCreationOpen(true); // <--- Use the dedicated setter here
     };
 
 
@@ -1350,7 +1348,15 @@ function App() {
                     <Button onClick={handleSaveDamageSeverity} variant="contained" color="primary">Save Severity</Button>
                 </DialogActions>
             </Dialog>
-
+            {/* Batch Job Creation Dialog */}
+            <BatchJobCreationDialog
+                isOpen={isBatchJobCreationOpen}
+                handleClose={() => setIsBatchJobCreationOpen(false)}
+                selectedItems={items.filter(item => selectedItemIds.includes(item.id))}
+                duration={washDurationHours}
+                setDuration={setWashDurationHours}
+                handleCreateJob={handleCreateWashJob}
+            />
         </ThemeProvider>
     );
 }
