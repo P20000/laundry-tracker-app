@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
+    AssessmentIcon, SpeedDial, SpeedDialAction, ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
@@ -988,29 +988,6 @@ function App() {
                                 />
                             </SpeedDial>
                         </Box>
-                        {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
-                        {isBatchWashOpen && (
-                            <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 10 }}>
-                                <Button 
-                                    variant="contained" 
-                                    color="primary" 
-                                    onClick={handleOpenBatchJobModal}
-                                    sx={{ borderRadius: 5, py: 1.5, px: 3 }}
-                                >
-                                    Queue {selectedItemIds.length} Items
-                                </Button>
-                                <Button 
-                                    variant="text" 
-                                    color="secondary" 
-                                    onClick={() => {
-                                        setIsBatchWashOpen(false); // Exit selection mode
-                                        setSelectedItemIds([]); // Clear selection
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                            </Box>
-                        )}
 
                         <Box sx={{ my: 2, textAlign: 'center' }}>
                             <IconButton onClick={colorMode.toggleColorMode} color="primary" sx={{ p: 1, border: '1px solid', borderColor: 'divider' }}>
@@ -1101,6 +1078,30 @@ function App() {
                             </Grid>
                         )}
                     </Box>
+                    
+                    {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
+                    {isBatchWashOpen && (
+                        <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 10 }}>
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                onClick={handleOpenBatchJobModal}
+                                sx={{ borderRadius: 5, py: 1.5, px: 3 }}
+                            >
+                                Queue {selectedItemIds.length} Items
+                            </Button>
+                            <Button 
+                                variant="text" 
+                                color="secondary" 
+                                onClick={() => {
+                                    setIsBatchWashOpen(false); // Exit selection mode
+                                    setSelectedItemIds([]); // Clear selection
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    )}
 
                     {/* Mobile Bottom Nav */}
                     {isMobile && (
