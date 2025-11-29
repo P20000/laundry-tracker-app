@@ -12,9 +12,9 @@ import {
     updateItemStatus,
     updateItemDetails,
     getItemHistory,
+    deleteItem,
     createWashJob,
-    checkWashJobs, 
-    deleteItem
+    checkWashJobs 
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -71,7 +71,7 @@ protectedRouter.get('/admin/dashboard', getSystemStats);
 protectedRouter.post('/items', createItem);
 protectedRouter.get('/items', getAllItems);
 protectedRouter.delete('/items/:id', deleteItem);
-protectedRouter.post('/wash-jobs/check', checkWashJobs);
+
 // Item History Route
 protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions
@@ -84,6 +84,7 @@ protectedRouter.get('/laundry', getLaundryItems);
 protectedRouter.get('/damaged', getDamagedItems);
 // New Route: Batch Wash Job Creation
 protectedRouter.post('/wash-jobs', createWashJob);
+protectedRouter.post('/wash-jobs/check', checkWashJobs);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 
