@@ -354,3 +354,54 @@ export const createWashJob = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to create wash job.' });
     }
 };
+
+export const checkWashJobs = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        const now = new Date().toISOString();
+        
+        // 1. Identify completed jobs (where completionTime has passed AND status is IN_PROGRESS)
+        const completedJobsQuery = await client.execute({
+            sql: "SELECT id, completionTime FROM wash_jobs WHERE userId = ? AND status = 'IN_PROGRESS' AND completionTime <= ?",
+            args: [userId, now]
+        });
+
+        const completedJobIds = completedJobsQuery.rows.map(row => row.id);
+
+        if (completedJobIds.length === 0) {
+            return res.status(200).json({ message: "No jobs completed yet." });
+        }
+
+        // 2. For each completed job, update the status of the associated items to CLEAN/READY
+        
+        // --- BATCH UPDATE FOR ITEMS ---
+        // This is complex in raw SQL because we need a transaction to ensure all items are clean.
+        // For MVP, we run a query to find the items associated with these jobs and clean them.
+        
+        // NOTE: Since we didn't save the item IDs inside the wash_jobs table, 
+        // we assume any item marked 'WASHING' belongs to one of these jobs (simplified MVP logic).
+        // A more robust solution would require a lookup table (jobs_items).
+        
+        // For now, we will simply update ALL items that are currently WASHING for this user.
+        await client.execute({
+            sql: "UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now') WHERE userId = ? AND currentStatus = 'WASHING'",
+            args: [userId]
+        });
+
+        // 3. Mark the jobs as COMPLETED
+        const jobUpdateSql = `UPDATE wash_jobs SET status = 'COMPLETED' WHERE id IN (${completedJobIds.map(() => '?').join(', ')})`;
+        await client.execute({
+            sql: jobUpdateSql,
+            args: completedJobIds
+        });
+
+
+        return res.status(200).json({ message: `${completedJobIds.length} wash jobs finished and items marked CLEAN.` });
+
+    } catch (error: unknown) {
+        console.error('Check Wash Jobs Error:', error);
+        return res.status(500).json({ error: 'Failed to check job status.' });
+    }
+};
