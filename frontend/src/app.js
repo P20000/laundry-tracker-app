@@ -1141,73 +1141,105 @@ function App() {
                     )}
                 </Box>
             </Box>
-            <Box sx={{ 
-                // Fixed positioning relative to the entire screen/viewport
-                position: 'fixed', 
-                bottom: theme.spacing(12), // 32px from bottom
-                right: theme.spacing(2), // 32px from right
-                zIndex: 1000, 
-                // Ensure it's hidden during selection mode (desktop)
-                display: isBatchWashOpen && !isMobile ? 'none' : 'block' 
-            }}>
-                <SpeedDial
-                    ariaLabel="Batch Creation and Add Item"
-                    // Hide the action menu when in batch selection mode
-                    hidden={isBatchWashOpen} 
-                    icon={<SpeedDialIcon />}
-                    direction="up"
-                    sx={
-                        { position: 'absolute', bottom: 0, right: 0 } 
-                    }
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: (theme) => theme.spacing(4),
+                    right: (theme) => theme.spacing(2),
+                    zIndex: 1000,
+                    display: isBatchWashOpen && !isMobile ? 'none' : 'block',
+                }}
                 >
-                    {/* Action 1: New Item (Custom EFAB) */}
-                    <SpeedDialAction
-                        key="New Item"
-                        icon={
-                            <Fab variant="extended" size="small" sx={(theme) => ({ 
-                                bgcolor: theme.palette.primary.main, 
-                                color: theme.palette.primary.contrastText, 
-                                // FIX: Remove minWidth completely and rely on padding
-                                width: 'auto', 
-                                minWidth: 0,
-                                px: 2, 
-                                py: 1.5,
-                                // Align content to the left inside the extended FAB
-                                justifyContent: 'flex-start',
-                                // Increase internal gap slightly if needed for better look
-                                gap: 8 
-                            })}>
-                                <AddIcon sx={{ mr: 0.5 }} /> {/* Reduced margin right */}
-                                Add Item
-                            </Fab>
-                        }
-                        tooltipTitle="" // Keep empty to use custom FAB label
-                        tooltipOpen // Forces display of the custom FAB label
-                    />
+                {/* Main FAB */}
+                <Fab
+                    color="primary"
+                    onClick={handleToggleOpen} // control open/close
+                    sx={{
+                    width: 56,
+                    height: 56,
+                    boxShadow: 6,
+                    }}
+                >
+                    {open ? <CloseIcon /> : <AddIcon />}
+                </Fab>
 
-                    {/* Action 2: Batch Wash (Custom EFAB) */}
-                    <SpeedDialAction
-                        key="Batch Wash"
-                        icon={
-                            <Fab variant="extended" size="small" sx={(theme) => ({ 
-                                bgcolor: theme.palette.primary.main, 
-                                color: theme.palette.primary.contrastText, 
-                                width: 'auto', 
-                                minWidth: 0,
-                                px: 2, 
-                                py: 1.5,
-                                justifyContent: 'flex-start',
-                                gap: 8
-                            })}>
-                                <CleaningServicesIcon sx={{ mr: 0.5 }} />
-                                Batch Wash
-                            </Fab>
-                        }
-                        tooltipTitle=""
-                        tooltipOpen
-                    />
-                </SpeedDial>
-            </Box>
+                {/* Action pills */}
+                {open && (
+                    <Box
+                    sx={{
+                        position: 'absolute',
+                        bottom: 72, // just above main FAB
+                        right: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1.5,
+                    }}
+                    >
+                    <Box
+                        onClick={handleAddItem}
+                        sx={(theme) => ({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2.5,
+                        py: 1.25,
+                        borderRadius: 999,
+                        bgcolor: '#6C4ACF', // your purple
+                        color: '#fff',
+                        boxShadow: 4,
+                        cursor: 'pointer',
+                        })}
+                    >
+                        <MailOutlineIcon fontSize="small" />
+                        <Typography variant="body2" fontWeight={600}>
+                        Document
+                        </Typography>
+                    </Box>
+
+                    <Box
+                        onClick={handleMessage}
+                        sx={(theme) => ({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2.5,
+                        py: 1.25,
+                        borderRadius: 999,
+                        bgcolor: '#6C4ACF',
+                        color: '#fff',
+                        boxShadow: 4,
+                        cursor: 'pointer',
+                        })}
+                    >
+                        <ChatBubbleOutlineIcon fontSize="small" />
+                        <Typography variant="body2" fontWeight={600}>
+                        Message
+                        </Typography>
+                    </Box>
+
+                    <Box
+                        onClick={handleFolder}
+                        sx={(theme) => ({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2.5,
+                        py: 1.25,
+                        borderRadius: 999,
+                        bgcolor: '#6C4ACF',
+                        color: '#fff',
+                        boxShadow: 4,
+                        cursor: 'pointer',
+                        })}
+                    >
+                        <FolderOpenIcon fontSize="small" />
+                        <Typography variant="body2" fontWeight={600}>
+                        Folder
+                        </Typography>
+                    </Box>
+                    </Box>
+                )}
+                </Box>
             {/* Add Item Dialog */}
             <Dialog open={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} fullWidth maxWidth={selectedItem ? "md" : "xs"}>
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
