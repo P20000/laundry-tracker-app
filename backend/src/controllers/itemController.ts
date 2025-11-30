@@ -76,7 +76,7 @@ export const createItem = async (req: Request, res: Response) => {
     try {
         const newItemId = randomUUID();
         
-        
+        // fixed sql
         const sql = `
             INSERT INTO clothing_items 
             (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId)
