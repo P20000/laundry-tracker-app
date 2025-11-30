@@ -602,7 +602,6 @@ function App() {
     const [newItemType, setNewItemType] = useState('Shirt');
     const [newItemSize, setNewItemSize] = useState('M');
     const [newItemColor, setNewItemColor] = useState('#6750A4');
-    const [newItemDamageLevel, setNewItemDamageLevel] = useState(1); // NEW STATE (Default Low)
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
     const [selectedItem, setSelectedItem] = useState(null); // Used by History
@@ -753,7 +752,7 @@ function App() {
             size: newItemSize, 
             color: newItemColor, 
             imageUrl: base64Image,
-            damageLevel: newItemDamageLevel, // ADDED
+            damageLevel: 1, // ADDED
         };
         try {
             const res = await fetch(`${API_PROTECTED_URL}/items`, {
@@ -1341,16 +1340,6 @@ function App() {
                                     </Select>
                                 </FormControl>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', width: '30%' }}><Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, ml: 1 }}>Color</Typography><input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} style={{ height: 40, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer' }} /></Box>
-                            </Box>
-                            <Box display="flex" gap={2}>
-                                <FormControl fullWidth variant="filled" size="small">
-                                    <InputLabel>Damage Severity</InputLabel>
-                                    <Select value={newItemDamageLevel} onChange={(e) => setNewItemDamageLevel(parseInt(e.target.value))} label="Damage Severity">
-                                        <MenuItem value={1}>1 - Minor Wear</MenuItem>
-                                        <MenuItem value={3}>3 - Medium Tear</MenuItem>
-                                        <MenuItem value={5}>5 - Unwearable</MenuItem>
-                                    </Select>
-                                </FormControl>
                             </Box>
                         </Box>
                 </DialogContent>
