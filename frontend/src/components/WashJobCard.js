@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Chip, Button } from '@mui/material';
+import { Box, Typography, Chip, Button, useTheme} from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
 
@@ -8,6 +8,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
 
     // itemsInJob might be null/undefined, so ensure it's an array
     const jobItems = itemsInJob || [];
+    const theme = useTheme();
     // Calculate the completion time status
     const completionDate = new Date(jobDetails.completionTime);
     const now = new Date();
