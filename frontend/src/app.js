@@ -693,6 +693,7 @@ function App() {
             let endpoint = '/items';
             if (view === 'laundry') endpoint = '/laundry';
             if (view === 'damaged') endpoint = '/damaged';
+            if (view === 'jobs') endpoint = '/wash-jobs'; // NEW ENDPOINT
             
             const res = await fetch(`${API_PROTECTED_URL}${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -1016,7 +1017,7 @@ function App() {
         { name: 'Catalog', icon: <CheckroomIcon sx={{ fontSize: 28 }} />, view: 'catalog' },
         { name: 'Laundry', icon: <LocalLaundryServiceIcon sx={{ fontSize: 28 }} />, view: 'laundry' },
         { name: 'Damaged', icon: <WarningIcon sx={{ fontSize: 28 }} />, view: 'damaged' },
-        { name: 'Wash Jobs', icon: <DryCleaningIcon sx={{ fontSize: 28 }} />, view: 'jobs' },
+        { name: 'Jobs', icon: <DryCleaningIcon sx={{ fontSize: 28 }} />, view: 'jobs' },
         { name: 'Admin', icon: <AssessmentIcon sx={{ fontSize: 28 }} />, view: 'admin' },
     ];
 
@@ -1189,28 +1190,47 @@ function App() {
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
                                 <CircularProgress color="primary" size={60} />
                             </Box>
-                        ) : items.length === 0 ? (
-                            // Pass setIsAddItemModalOpen to EmptyState to trigger modal
-                            <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                         ) : (
-                            <Grid container spacing={2}>
-                                {items.map(item => (
-                                    <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
-                                        <ItemCard 
-                                            item={item} 
-                                            onUpdateStatus={handleStatusChange} 
-                                            onViewDetails={handleOpenHistoryModal}
-                                            onDeleteItem={handleDeleteItem} // added delete handler
-                                            onOpenDamageEditor={handleOpenDamageEditor} // Pass the dedicated handler
-                                            
-                                            // Batch Selection Props
-                                            isSelectionMode={isBatchWashOpen}
-                                            onToggleSelection={handleToggleItemSelection}
-                                            isSelected={selectedItemIds.includes(item.id)}
-                                        />
+                            <Box>
+                                {/* Conditional Render for JOBS view */}
+                                {view === 'jobs' ? (
+                                    items.length === 0 ? (
+                                        <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
+                                    ) : (
+                                        items.map(job => (
+                                            <WashJobCard 
+                                                key={job.id} 
+                                                jobDetails={job} 
+                                                itemsInJob={job.itemsInJob} 
+                                                onMarkCollected={() => { /* Logic to clear job status goes here */ }}
+                                            />
+                                        ))
+                                    )
+                                ) : items.length === 0 ? (
+                                    /* Standard Empty State for Catalog/Laundry/Damaged */
+                                    <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
+                                ) : (
+                                    /* Standard Item Grid (Catalog, Laundry, Damaged) */
+                                    <Grid container spacing={2}>
+                                        {items.map(item => (
+                                            <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
+                                                <ItemCard 
+                                                    item={item} 
+                                                    onUpdateStatus={handleStatusChange} 
+                                                    onViewDetails={handleOpenHistoryModal}
+                                                    onDeleteItem={handleDeleteItem}
+                                                    onOpenDamageEditor={handleOpenDamageEditor}
+                                                    
+                                                    // Batch Selection Props
+                                                    isSelectionMode={isBatchWashOpen}
+                                                    onToggleSelection={handleToggleItemSelection}
+                                                    isSelected={selectedItemIds.includes(item.id)}
+                                                />
+                                            </Grid>
+                                        ))}
                                     </Grid>
-                                ))}
-                            </Grid>
+                                )}
+                            </Box>
                         )}
                     </Box>
                     
