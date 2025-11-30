@@ -663,7 +663,7 @@ function App() {
             // 2. Fetch the updated list
             fetchItems(); 
         } catch (e) {
-            console.error("Job Check Failed:", e);
+            showNotification("Job Check Failed:", e);
             fetchItems(); // Still try to fetch the current list even if check failed
         }
     };
@@ -695,7 +695,7 @@ function App() {
                 createdAt: new Date(item.createdAt),
             })));
         }  catch (err) { 
-                console.error("Failed to fetch items:", err); 
+                showNotification("Failed to fetch items:", err); 
             } finally {
         setIsLoading(false); // <--- STOP LOADING
     }
@@ -745,7 +745,7 @@ function App() {
         let base64Image = "";
         if (newItemImageBlob) {
             try { base64Image = await fileToBase64(newItemImageBlob); } 
-            catch (e) { console.error("Error converting image", e); }
+            catch (e) { showNotification("Error converting image", e); }
         }
 
         const payload = { 
@@ -768,13 +768,13 @@ function App() {
                 // Reset and Close
                 setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
             }
-        } catch (err) { console.error("Network error adding item:", err); }
+        } catch (err) { showNotification("Network error adding item:", err); }
         };
 
     // --- New Batch Wash Job Handler ---
     const handleCreateWashJob = async () => {
         if (selectedItemIds.length === 0) {
-            console.error("No items selected for wash job.");
+            showNotification("No items selected for wash job.");
             return;
         }
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -803,10 +803,10 @@ function App() {
             } else if (res.status === 401) {
                 handleLogout();
             } else {
-                console.error("Failed to create wash job:", await res.json());
+                showNotification("Failed to create wash job:", await res.json());
             }
         } catch (err) {
-            console.error("Network error creating wash job:", err);
+            showNotification("Network error creating wash job:", err);
         }
     };
 
@@ -830,10 +830,10 @@ function App() {
             } else if (res.status === 401) {
                 handleLogout();
             } else {
-                console.error("Failed to delete item:", await res.json());
+                showNotification("Failed to delete item:", await res.json());
             }
         } catch (err) {
-            console.error("Network error deleting item:", err);
+            showNotification("Network error deleting item:", err);
         }
     };
 
@@ -879,7 +879,7 @@ function App() {
             setCurrentEditingItem(null);
             
         } catch (err) {
-            console.error("Failed to update damage severity:", err);
+            showNotification("Failed to update damage severity:", err);
             // Display a general error message to the user here if you have a message state
         }
     };
@@ -912,7 +912,7 @@ function App() {
                 });
                 if (res.status === 401) { handleLogout(); return; }
                 if (res.ok) fetchItems();
-            } catch (err) { console.error("Failed to update status:", err); }
+            } catch (err) { showNotification("Failed to update status:", err); }
         };
 
     //Opens the History Modal
@@ -934,12 +934,14 @@ function App() {
 
     // Batch Wash Job Creation
     const handleOpenBatchJobModal = () => {
+        // CRITICAL FIX: Ensure items is treated as an array. If items is undefined, use an empty array [].
+        const safeItems = items || [];
         // Check if any items are selected and available for washing
         const availableItems = items
             .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING');
 
         if (availableItems.length === 0) {
-            console.error("Please select at least one item that is not damaged or already washing.");
+            showNotification("Please select at least one item that is not damaged or already washing.");
             return; 
         }
 
@@ -952,6 +954,7 @@ function App() {
         if (reason === 'clickaway') return;
         setSnackbarOpen(false);
     };
+
     const showNotification = (message, severity = 'info') => {
         setSnackbarMessage(message);
         setSnackbarSeverity(severity);
