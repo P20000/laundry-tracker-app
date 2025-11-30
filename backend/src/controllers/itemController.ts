@@ -76,19 +76,26 @@ export const createItem = async (req: Request, res: Response) => {
     try {
         const newItemId = randomUUID();
         
-        // The SQL expects 8 total values now: (id, name, itemType, category, size, color, imageUrl, userId)
-        const sql = `INSERT INTO clothing_items (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId) VALUES (?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?, ?)`;
+        
+        const sql = `
+            INSERT INTO clothing_items 
+            (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId)
+            // FIX 1: Change 'CLEAN' to a placeholder (?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        `;
 
+        // FIX 2: The args array MUST now contain 10 values
         const args = [
-            newItemId,      // 1. The new ID
-            name,           // 2
-            itemType,       // 3
-            category || 'Casuals', // 4
-            size || 'M',    // 5
-            color || '#000000', // 6
-            imageUrl || '', // 7
-            damageLevel || 1, // 8. NEW: damageLevel
-            userId          // 9. User ID
+            newItemId,               // 1. id
+            name,                    // 2. name
+            itemType,                // 3. itemType
+            category || 'Casuals',   // 4. category
+            size || 'M',             // 5. size
+            color || '#000000',      // 6. color
+            imageUrl || '',          // 7. imageUrl
+            'CLEAN',                 // 8. currentStatus (Passed as the 8th argument now)
+            damageLevel || 1,        // 9. damageLevel
+            userId                   // 10. userId
         ];
 
         await client.execute({ sql, args });
@@ -398,5 +405,44 @@ export const checkWashJobs = async (req: Request, res: Response) => {
     } catch (error: unknown) {
         console.error('Check Wash Jobs Error:', error);
         return res.status(500).json({ error: 'Failed to check job status.' });
+    }
+};
+
+export const getActiveWashJobs = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Fetch all jobs for the user, regardless of status
+        const jobsResult = await client.execute({
+            sql: "SELECT * FROM wash_jobs WHERE userId = ? ORDER BY completionTime DESC",
+            args: [userId]
+        });
+
+        const jobDetails = jobsResult.rows;
+
+        // Fetch all items currently marked as WASHING
+        const washingItemsResult = await client.execute({
+             sql: "SELECT id, category, name FROM clothing_items WHERE userId = ? AND currentStatus = 'WASHING'",
+             args: [userId]
+        });
+        
+        const washingItems = washingItemsResult.rows;
+
+        // For MVP, we simplify: we assume all WASHING items belong to the active jobs.
+        // A robust system would link item IDs to job IDs, but we group them here:
+        
+        // Group items conceptually under the oldest IN_PROGRESS job
+        const jobGroups = jobDetails.map(job => ({
+            ...job,
+            itemsInJob: washingItems.map(item => ({ id: item.id, name: item.name, category: item.category })) 
+            // This is a simplified list of all items currently WASHING for this user
+        }));
+        
+        return res.status(200).json(jobGroups);
+
+    } catch (error: unknown) {
+        console.error('Error fetching active wash jobs:', error);
+        return res.status(500).json({ error: 'Failed to fetch active wash jobs.' });
     }
 };

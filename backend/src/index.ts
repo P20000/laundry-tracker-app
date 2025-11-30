@@ -14,7 +14,8 @@ import {
     getItemHistory,
     deleteItem,
     createWashJob,
-    checkWashJobs 
+    checkWashJobs,
+    getActiveWashJobs 
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -87,6 +88,9 @@ protectedRouter.post('/wash-jobs', createWashJob);
 protectedRouter.post('/wash-jobs/check', checkWashJobs);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
+
+// New Route: Fetch Active Wash Jobs
+protectedRouter.get('/wash-jobs', getActiveWashJobs);
 
 // --- Server Start ---
 app.listen(PORT, () => {
