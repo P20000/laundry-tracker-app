@@ -572,6 +572,7 @@ function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
+    
     // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -1190,7 +1191,7 @@ function App() {
                     </Box>
                     
                     {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
-                    {isBatchWashOpen && (selectedItemIds || []).length > 0 &&(
+                    {isBatchWashOpen && (selectedItemIds || []).length > 0 && (
                         <Box sx={{ position: 'absolute', bottom: theme.spacing(16), right: theme.spacing(6), zIndex: 1000 }}>
                             <Button 
                                 variant="contained" 
@@ -1198,7 +1199,7 @@ function App() {
                                 onClick={handleOpenBatchJobModal}
                                 sx={{ borderRadius: 5, py: 1.5, px: 3 }}
                             >
-                                Queue {selectedItemIds.length} Items
+                                Queue {selectedItemIds.length} Items 
                             </Button>
                             <Button 
                                 variant="text" 
