@@ -1190,7 +1190,7 @@ function App() {
                     </Box>
                     
                     {/* NEW SECTION: Batch Mode Button (Visible when selection mode is active) */}
-                    {isBatchWashOpen && (
+                    {isBatchWashOpen && (selectedItemIds || []).length > 0 &&(
                         <Box sx={{ position: 'absolute', bottom: theme.spacing(16), right: theme.spacing(6), zIndex: 1000 }}>
                             <Button 
                                 variant="contained" 
@@ -1368,14 +1368,18 @@ function App() {
             </Dialog>
 
             {/* Batch Job Creation Dialog */}
-            <BatchJobCreationDialog
-                isOpen={isBatchJobCreationOpen}
-                handleClose={() => setIsBatchJobCreationOpen(false)}
-                selectedItems={items.filter(item => selectedItemIds.includes(item.id))}
-                duration={washDurationHours}
-                setDuration={setWashDurationHours}
-                handleCreateJob={handleCreateWashJob}
-            />
+            {isBatchJobCreationOpen && selectedItemIds.length > 0 && (
+                <BatchJobCreationDialog
+                    isOpen={isBatchJobCreationOpen}
+                    handleClose={() => setIsBatchJobCreationOpen(false)}
+                    // Ensure selectedItems is handled safely inside the component if possible
+                    selectedItems={items.filter(item => selectedItemIds.includes(item.id))} 
+                    duration={washDurationHours}
+                    setDuration={setWashDurationHours}
+                    handleCreateJob={handleCreateWashJob}
+                
+                />
+            )}
         </ThemeProvider>
     );
 }
