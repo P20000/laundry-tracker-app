@@ -80,7 +80,6 @@ export const createItem = async (req: Request, res: Response) => {
         const sql = `
             INSERT INTO clothing_items 
             (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId)
-            // FIX 1: Change 'CLEAN' to a placeholder (?)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
         `;
 
