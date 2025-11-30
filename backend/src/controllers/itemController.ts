@@ -77,23 +77,18 @@ export const createItem = async (req: Request, res: Response) => {
         const newItemId = randomUUID();
         
         // The SQL expects 8 total values now: (id, name, itemType, category, size, color, imageUrl, userId)
-        const sql = `
-            INSERT INTO clothing_items 
-            (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?)
-            `;
-        
-        // FIX 2: Pass exactly 8 arguments
+        const sql = `INSERT INTO clothing_items (id, name, itemType, category, size, color, imageUrl, currentStatus, damageLevel, userId) VALUES (?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?, ?)`;
+
         const args = [
-            newItemId,              // 1. The new ID
-            name,                   // 2
-            itemType,               // 3
-            category || 'Casuals',  // 4
-            size || 'M',            // 5
-            color || '#000000',     // 6
-            imageUrl || '',         // 7
-            damageLevel || 1,       // NEW: damageLevel
-            userId                  // 8
+            newItemId,      // 1. The new ID
+            name,           // 2
+            itemType,       // 3
+            category || 'Casuals', // 4
+            size || 'M',    // 5
+            color || '#000000', // 6
+            imageUrl || '', // 7
+            damageLevel || 1, // 8. NEW: damageLevel
+            userId          // 9. User ID
         ];
 
         await client.execute({ sql, args });
