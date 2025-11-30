@@ -94,7 +94,7 @@ export const createItem = async (req: Request, res: Response) => {
             color || '#000000',      // 6. color
             imageUrl || '',          // 7. imageUrl
             'CLEAN',                 // 8. currentStatus (Passed as the 8th argument now)
-            damageLevel || 1,        // 9. damageLevel
+            damageLevel,        // 9. damageLevel
             userId                   // 10. userId
         ];
 
