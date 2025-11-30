@@ -422,7 +422,7 @@ export const getActiveWashJobs = async (req: Request, res: Response) => {
 
         // Fetch all items currently marked as WASHING
         const washingItemsResult = await client.execute({
-             sql: "SELECT id, category, name FROM clothing_items WHERE userId = ? AND currentStatus = 'WASHING'",
+             sql: "SELECT id, category, name, imageURL FROM clothing_items WHERE userId = ? AND currentStatus = 'WASHING'",
              args: [userId]
         });
         
@@ -434,7 +434,7 @@ export const getActiveWashJobs = async (req: Request, res: Response) => {
         // Group items conceptually under the oldest IN_PROGRESS job
         const jobGroups = jobDetails.map(job => ({
             ...job,
-            itemsInJob: washingItems.map(item => ({ id: item.id, name: item.name, category: item.category })) 
+            itemsInJob: washingItems.map(item => ({ id: item.id, name: item.name, category: item.category, imageUrl: item.imageUrl})) 
             // This is a simplified list of all items currently WASHING for this user
         }));
         

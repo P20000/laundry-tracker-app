@@ -13,7 +13,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const completionDate = new Date(jobDetails.completionTime);
     const now = new Date();
     const isCompleted = completionDate <= now;
-    
+    const jobPreviewImageUrl = jobItems.length > 0 ? jobItems[0].imageUrl : '';
     // Status Display
     let statusLabel = isCompleted ? 'WASHED' : 'WASHING';
     let statusColor = isCompleted ? 'success' : 'info';
