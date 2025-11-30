@@ -374,6 +374,79 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
     );
 };
 
+const BatchJobCreationDialog = ({ isOpen, handleClose, selectedItems, duration, setDuration, handleCreateJob }) => {
+    const selectedItemsCount = selectedItems.length;
+    const [isLoading, setIsLoading] = useState(false); 
+
+    // Helper to call the main job handler and manage local loading state
+    const handleJobSubmit = () => {
+        setIsLoading(true);
+        // We rely on the parent handler to call fetchItems and close this modal later.
+        handleCreateJob(); 
+    };
+
+    // Use useEffect to reset loading state if the dialog closes (parent closes it)
+    useEffect(() => {
+        if (!isOpen) {
+            setIsLoading(false);
+        }
+    }, [isOpen]);
+
+
+    return (
+        <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="xs">
+            <DialogTitle>Start Batch Job</DialogTitle>
+            <DialogContent>
+                <Typography variant="subtitle1" mb={2} color="primary">
+                    Queueing {selectedItemsCount} items.
+                </Typography>
+                
+                {/* List of Items Selected */}
+                <Box mb={3}>
+                    <Typography variant="body2" color="text.secondary" mb={1}>
+                        Items in Batch:
+                    </Typography>
+                    <Box sx={{ maxHeight: 150, overflowY: 'auto', border: '1px solid #ddd', p: 1, borderRadius: 1 }}>
+                        {selectedItems.map(item => (
+                            // Ensure the Chip color is dynamic for visibility
+                            <Chip key={item.id} label={`${item.name} (${item.size})`} size="small" sx={{ m: 0.5, bgcolor: 'secondary.container', color: 'onSecondary.container' }} />
+                        ))}
+                    </Box>
+                </Box>
+                
+                {/* Duration Input */}
+                <FormControl fullWidth variant="filled" size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Wash Duration (Hours)</InputLabel>
+                    <Select 
+                        value={duration} 
+                        onChange={(e) => setDuration(parseInt(e.target.value, 10))} 
+                        label="Wash Duration (Hours)"
+                        disabled={isLoading}
+                    >
+                        <MenuItem value={6}>6 Hours (Quick Cycle)</MenuItem>
+                        <MenuItem value={12}>12 Hours</MenuItem>
+                        <MenuItem value={24}>24 Hours (Standard)</MenuItem>
+                        <MenuItem value={48}>48 Hours (Heavy Duty)</MenuItem>
+                    </Select>
+                </FormControl>
+                <Typography variant="caption" color="text.secondary">
+                    Items will be marked CLEAN after the duration is completed.
+                </Typography>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} color="secondary" disabled={isLoading}>Cancel</Button>
+                <Button 
+                    onClick={handleJobSubmit} 
+                    variant="contained" 
+                    color="primary" 
+                    disabled={selectedItemsCount === 0 || isLoading}
+                >
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Start Wash Job'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
 // --- Authentication Component ---
 
 const AuthCard = ({ setLoggedIn }) => {
@@ -584,7 +657,7 @@ function App() {
             fetchItems(); // Still try to fetch the current list even if check failed
         }
     };
-    
+
     // 1. Check Auth Status on Load
     useEffect(() => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
