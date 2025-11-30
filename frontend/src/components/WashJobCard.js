@@ -7,7 +7,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
 
     // itemsInJob might be null/undefined, so ensure it's an array
-    const itemsInJob = itemsInJob || [];
+    const jobItems = itemsInJob || [];
     // Calculate the completion time status
     const completionDate = new Date(jobDetails.completionTime);
     const now = new Date();
@@ -61,7 +61,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mt={0.5}>
                     {/* FIX: Use the safe array here */}
-                    {itemsInJob.length} items in the queue
+                    {jobItems.length} items in the queue
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     {messageLine}
