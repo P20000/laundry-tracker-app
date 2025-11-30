@@ -566,7 +566,25 @@ function App() {
     // 3. Memoized Theme Creator
     const finalTheme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
+    const checkAndFetch = async () => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return;
 
+        try {
+            // 1. Run the server-side check to update statuses
+            await fetch(`${API_PROTECTED_URL}/wash-jobs/check`, {
+                method: 'POST',
+                headers: getAuthHeaders(token),
+            });
+            
+            // 2. Fetch the updated list
+            fetchItems(); 
+        } catch (e) {
+            console.error("Job Check Failed:", e);
+            fetchItems(); // Still try to fetch the current list even if check failed
+        }
+    };
+    
     // 1. Check Auth Status on Load
     useEffect(() => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
