@@ -30,7 +30,7 @@ import Checkbox from '@mui/material/Checkbox'; // For batch selection checkboxes
 // --- Project Components ---
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
-
+import { WashJobCard } from './components/WashJobCard'; // <--- CRITICAL FIX
 // --- New SVG Logo Component ---
 const CustomLogo = (props) => (
     <svg 
