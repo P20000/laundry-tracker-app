@@ -69,7 +69,7 @@ export const createItem = async (req: Request, res: Response) => {
     // 1. Get the authenticated User ID from the request (set by authMiddleware)
     const userId = req.userId;
     const { name, itemType, category, size, color, imageUrl, damageLevel } = req.body as INewItemPayload;
-
+    const safeDamageLevel = parseInt(damageLevel as any) || 1;
     if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
     if (!name || !itemType) return res.status(400).json({ error: 'Missing required fields.' });
 
@@ -94,7 +94,7 @@ export const createItem = async (req: Request, res: Response) => {
             color || '#000000',      // 6. color
             imageUrl || '',          // 7. imageUrl
             'CLEAN',                 // 8. currentStatus (Passed as the 8th argument now)
-            damageLevel,        // 9. damageLevel
+            safeDamageLevel,        // 9. damageLevel
             userId                   // 10. userId
         ];
 
