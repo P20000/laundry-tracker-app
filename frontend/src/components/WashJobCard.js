@@ -27,12 +27,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
             gap: 3,
             padding: 2.5,
             borderRadius: 999,
-            backgroundColor:
-                theme.palette.mode === 'dark'
-                ? '#14171C'
-                : theme.palette.grey[900],
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.45)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             });
     
     return (
@@ -48,11 +43,6 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                     overflow: 'hidden',
                     flexShrink: 0,
                     border: '2px solid rgba(255,255,255,0.25)',
-                    boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
-                    backgroundColor:
-                    theme.palette.mode === 'dark'
-                        ? '#111111'
-                        : theme.palette.grey[200],
                 }}
                 >
                 {/* The "Ghosted" Image Effect (Simulated overlapping item summary) */}
