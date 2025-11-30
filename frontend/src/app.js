@@ -8,6 +8,8 @@ import {
 } from '@mui/material';
 
 // --- Separately Imported Icons (All are mandatory) ---
+import Snackbar from '@mui/material/Snackbar'; // The main component
+import MuiAlert from '@mui/material/Alert';   // Used inside Snackbar for styling
 import AddIcon from '@mui/icons-material/Add';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService'; 
@@ -570,7 +572,11 @@ function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
-
+    // Snackbar State
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('info'); // 'success', 'error', 'warning', 'info'
+    
     // NEW STATES: For Batch Creation Workflow
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Used for single item add
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Used for history view
@@ -579,6 +585,7 @@ function App() {
     const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of item IDs for batch
     const [washDurationHours, setWashDurationHours] = useState(24); // Duration input for job
     const [open, setOpen] = useState(false);
+    
     // Form State 
     const [isLoading, setIsLoading] = useState(false);
     const [newItemName, setNewItemName] = useState('');
@@ -941,7 +948,15 @@ function App() {
         setIsBatchJobCreationOpen(true); // <--- Use the dedicated setter here
     };
 
-
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') return;
+        setSnackbarOpen(false);
+    };
+    const showNotification = (message, severity = 'info') => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+    };
     // --- Render Logic ---
     
     if (!isLoggedIn) {
@@ -1348,6 +1363,7 @@ function App() {
                     <Button onClick={handleSaveDamageSeverity} variant="contained" color="primary">Save Severity</Button>
                 </DialogActions>
             </Dialog>
+
             {/* Batch Job Creation Dialog */}
             <BatchJobCreationDialog
                 isOpen={isBatchJobCreationOpen}
