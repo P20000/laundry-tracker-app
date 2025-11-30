@@ -3,8 +3,6 @@ import {
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
     CircularProgress, // <- Added for loading fix
     // MUI Core Components (SpeedDial must be imported from here)
-    SpeedDial, 
-    SpeedDialAction, 
 } from '@mui/material';
 
 // --- Separately Imported Icons (All are mandatory) ---
@@ -28,7 +26,6 @@ import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // For Wash Jobs 
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // For batch action icon
 import AssessmentIcon from '@mui/icons-material/Assessment'; // Correct icon for Admin Dashboard
 import Checkbox from '@mui/material/Checkbox'; // For batch selection checkboxes
-import SpeedDialIcon from '@mui/material/SpeedDialIcon'; // <- FIX: Correct path for SpeedDialIcon
 
 // --- Project Components ---
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
@@ -508,63 +505,6 @@ const AuthCard = ({ setLoggedIn }) => {
     );
 };
 
-const BatchJobCreationDialog = ({ isOpen, handleClose, items, selectedIds, duration, setDuration, handleCreateJob }) => {
-    const selectedItemsList = items.filter(item => selectedIds.includes(item.id));
-    const [isLoading, setIsLoading] = useState(false); // Local state for loading
-
-    return (
-        <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="xs">
-            <DialogTitle>Create Batch Wash Job</DialogTitle>
-            <DialogContent>
-                <Typography variant="subtitle1" mb={2} color="primary">
-                    {selectedItemsList.length} items selected.
-                </Typography>
-                
-                <Box mb={3}>
-                    <Typography variant="body2" color="text.secondary" mb={1}>
-                        Items in Batch:
-                    </Typography>
-                    <Box sx={{ maxHeight: 150, overflowY: 'auto', border: '1px solid #ddd', p: 1, borderRadius: 1 }}>
-                        {selectedItemsList.map(item => (
-                            <Chip key={item.id} label={`${item.name} (${item.size})`} size="small" sx={{ m: 0.5 }} />
-                        ))}
-                    </Box>
-                </Box>
-                
-                <FormControl fullWidth variant="filled" size="small" sx={{ mb: 2 }}>
-                    <InputLabel>Wash Duration (Hours)</InputLabel>
-                    <Select 
-                        value={duration} 
-                        onChange={(e) => setDuration(parseInt(e.target.value))} 
-                        label="Wash Duration (Hours)"
-                    >
-                        <MenuItem value={6}>6 Hours (Quick)</MenuItem>
-                        <MenuItem value={12}>12 Hours</MenuItem>
-                        <MenuItem value={24}>24 Hours (Standard)</MenuItem>
-                        <MenuItem value={48}>48 Hours (Heavy Duty)</MenuItem>
-                    </Select>
-                </FormControl>
-                <Typography variant="caption" color="text.secondary">
-                    Items will be marked CLEAN after this duration expires.
-                </Typography>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose} color="secondary">Cancel</Button>
-                <Button 
-                    onClick={() => {
-                        setIsLoading(true);
-                        handleCreateJob();
-                    }} 
-                    variant="contained" 
-                    color="primary" 
-                    disabled={selectedItemsList.length === 0 || isLoading}
-                >
-                    {isLoading ? <CircularProgress size={24} /> : 'Start Wash Job'}
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
-};
 
 // --- Main Component ---
 
@@ -572,7 +512,7 @@ function App() {
     const [view, setView] = useState('catalog');
     const [items, setItems] = useState([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
-    
+
     // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -581,11 +521,6 @@ function App() {
     // NEW STATES: For Batch Creation Workflow
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Used for single item add
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Used for history view
-    const [isBatchWashOpen, setIsBatchWashOpen] = useState(false); // Used for batch selection mode
-    const [isBatchJobCreationOpen, setIsBatchJobCreationOpen] = useState(false); // Used for the time input modal
-    const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of item IDs for batch
-    const [washDurationHours, setWashDurationHours] = useState(24); // Duration input for job
-    const [open, setOpen] = useState(false);
     
     // Form State 
     const [isLoading, setIsLoading] = useState(false);
@@ -605,6 +540,12 @@ function App() {
     const [currentEditingItem, setCurrentEditingItem] = useState(null);
     const [damageSeverityInput, setDamageSeverityInput] = useState(1); // Input state for modal
 
+    // BATCH WASH STATES (Re-added)
+    const [open, setOpen] = useState(false); // Controls open/close state of the custom FAB menu
+    const [isBatchWashOpen, setIsBatchWashOpen] = useState(false); // Used for batch selection mode
+    const [isBatchJobCreationOpen, setIsBatchJobCreationOpen] = useState(false); // Used for the time input modal
+    const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of item IDs for batch
+    const [washDurationHours, setWashDurationHours] = useState(24); // Duration input for job
 
     const [mode, setMode] = useState(
         localStorage.getItem('themeMode') || (prefersDarkMode ? 'dark' : 'light')
@@ -649,25 +590,7 @@ function App() {
     }, [isLoggedIn, view]);
 
     // --- API Interaction ---
-    // NEW FUNCTION: Combines job check and item fetch
-    const checkAndFetch = async () => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        if (!token) return;
 
-        try {
-            // 1. Run the server-side check to update statuses
-            await fetch(`${API_PROTECTED_URL}/wash-jobs/check`, {
-                method: 'POST',
-                headers: getAuthHeaders(token),
-            });
-            
-            // 2. Fetch the updated list
-            fetchItems(); 
-        } catch (e) {
-            showNotification("Job Check Failed:", e);
-            fetchItems(); // Still try to fetch the current list even if check failed
-        }
-    };
 
     const fetchItems = async () => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -709,26 +632,8 @@ function App() {
         setView('catalog'); 
     };
 
-    // --- Handlers (Menu Toggle) ---
-    const handleToggleOpen = () => {
-        // If we are opening the menu, ensure we are not currently in batch selection mode
-        if (!open && isBatchWashOpen) {
-            setIsBatchWashOpen(false); // Exit batch selection mode if opening the menu
-        }
-        setOpen((prev) => !prev);
-    };
 
 
-    const handleAddItemFab = () => {
-        setOpen(false); // Close the menu
-        setIsAddItemModalOpen(true); // Your existing function to open the Add Item Modal
-    };
-    
-    const handleBatchWashFab = () => {
-        setOpen(false); // Close the menu
-        setIsBatchWashOpen(true); // Your existing function to activate batch selection mode
-        setSelectedItemIds([]); // Clear any previous selection when starting a new batch
-    };
     // --- Handlers (AddItem, StatusChange) ---
     
     const handleImageUpload = (event) => {
@@ -772,44 +677,7 @@ function App() {
         } catch (err) { showNotification("Network error adding item:", err); }
         };
 
-    // --- New Batch Wash Job Handler ---
-    const handleCreateWashJob = async () => {
-        if (selectedItemIds.length === 0) {
-            showNotification("No items selected for wash job.");
-            return;
-        }
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        if (!token) return handleLogout();
 
-        const payload = {
-            itemIds: selectedItemIds,
-            durationHours: washDurationHours,
-        };
-
-        try {
-            const res = await fetch(`${API_PROTECTED_URL}/wash-jobs`, {
-                method: 'POST',
-                headers: getAuthHeaders(token),
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                // Success: Items are now marked WASHING in the DB.
-                fetchItems(); 
-                // Reset and Close
-                setSelectedItemIds([]);
-                setIsBatchJobCreationOpen(false);
-                // Optionally set the view to the new 'jobs' tab
-                setView('jobs'); 
-            } else if (res.status === 401) {
-                handleLogout();
-            } else {
-                showNotification("Failed to create wash job:", await res.json());
-            }
-        } catch (err) {
-            showNotification("Network error creating wash job:", err);
-        }
-    };
 
     const handleDeleteItem = async (id) => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -922,35 +790,7 @@ function App() {
         setIsHistoryModalOpen(true);
     };
 
-    // Batch Selection Toggle
-    const handleToggleItemSelection = (id) => {
-        setSelectedItemIds(prevIds => {
-            if (prevIds.includes(id)) {
-                return prevIds.filter(itemId => itemId !== id);
-            } else {
-                return [...prevIds, id];
-            }
-        });
-    };
-
-    // Batch Wash Job Creation
-    const handleOpenBatchJobModal = () => {
-        // CRITICAL FIX: Ensure items is treated as an array. If items is undefined, use an empty array [].
-        const safeItems = items || [];
-        // Check if any items are selected and available for washing
-        const availableItems = items
-            .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING');
-
-        if (availableItems.length === 0) {
-            showNotification("Please select at least one item that is not damaged or already washing.");
-            return; 
-        }
-
-        setSelectedItemIds(availableItems.map(item => item.id)); // Filtered list
-        setIsBatchWashOpen(false); // Close selection mode
-        setIsBatchJobCreationOpen(true); // <--- Use the dedicated setter here
-    };
-
+    // --- Notification Handler ---
     const handleSnackbarClose = (event, reason) => {
         if (reason === 'clickaway') return;
         setSnackbarOpen(false);
@@ -961,6 +801,99 @@ function App() {
         setSnackbarSeverity(severity);
         setSnackbarOpen(true);
     };
+
+    // Batch Wash Job Creation
+
+    // NEW HANDLER: Toggles the open/close state of the custom FAB menu
+    const handleToggleOpen = () => {
+        // If we are opening the menu, ensure we are not currently in batch selection mode
+        if (!open && isBatchWashOpen) {
+            setIsBatchWashOpen(false); // Exit batch selection mode if opening the menu
+            setSelectedItemIds([]); // Clear selection upon closing the batch selection UI
+        }
+        setOpen((prev) => !prev);
+    };
+
+    // NEW HANDLER: Action for the "Add Item" pill
+    const handleAddItemFab = () => {
+        setOpen(false); // Close the menu
+        setIsAddItemModalOpen(true); // Your existing function to open the Add Item Modal
+    };
+
+    // NEW HANDLER: Action for the "Batch Wash" pill
+    const handleBatchWashFab = () => {
+        setOpen(false); // Close the menu
+        setIsBatchWashOpen(true); // Activate selection mode
+        setSelectedItemIds([]); // Clear any previous selection when starting a new batch
+    };
+
+    // NEW HANDLER: Toggles item selection for batch job creation
+    const handleToggleItemSelection = (id) => {
+        setSelectedItemIds(prevIds => {
+            if (prevIds.includes(id)) {
+                return prevIds.filter(itemId => itemId !== id);
+            } else {
+                return [...prevIds, id];
+            }
+        });
+    };
+
+    // NEW HANDLER: Opens the final modal to set duration and create the job
+    const handleOpenBatchJobModal = () => {
+        const safeItems = items || [];
+
+        // Filter items to find those that are selected AND eligible for washing
+        const availableItems = safeItems
+            .filter(item => selectedItemIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING');
+
+        if (availableItems.length === 0) {
+            showNotification("Please select items that are ready for wash.", "warning");
+            return; 
+        }
+
+        setSelectedItemIds(availableItems.map(item => item.id)); // Store only the IDs of the available items
+        setIsBatchWashOpen(false); // Close selection mode
+        setIsBatchJobCreationOpen(true); // Open duration modal
+    };
+
+    // NEW HANDLER: Submits the Wash Job to the Backend
+    const handleCreateWashJob = async () => {
+        if (selectedItemIds.length === 0) {
+            showNotification("No items selected for wash job.", "warning");
+            return;
+        }
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        const payload = {
+            itemIds: selectedItemIds,
+            durationHours: washDurationHours,
+        };
+
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}/wash-jobs`, {
+                method: 'POST',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                fetchItems(); 
+                showNotification(`Wash job started for ${selectedItemIds.length} items.`, "success");
+                setSelectedItemIds([]);
+                setIsBatchJobCreationOpen(false);
+                // Optionally set the view to the new 'jobs' tab
+                // setView('jobs'); 
+            } else if (res.status === 401) {
+                handleLogout();
+            } else {
+                showNotification(`Failed to create wash job: ${res.status} error.`, "error");
+            }
+        } catch (err) {
+            showNotification("Network error creating wash job.", "error");
+        }
+    };
+
     // --- Render Logic ---
     
     if (!isLoggedIn) {
@@ -1381,6 +1314,23 @@ function App() {
                 
                 />
             )}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                // CRITICAL: This is where the function is "read" and used
+                onClose={handleSnackbarClose} 
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <MuiAlert 
+                    // CRITICAL: The Alert component inside the Snackbar also needs the handler
+                    onClose={handleSnackbarClose} 
+                    severity={snackbarSeverity} 
+                    variant="filled" 
+                    sx={{ width: '100%' }}
+                >
+                    {snackbarMessage}
+                </MuiAlert>
+            </Snackbar>
         </ThemeProvider>
     );
 }
