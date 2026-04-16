@@ -1123,7 +1123,7 @@ function App() {
                     <Box sx={(theme) => ({ 
                         // Fixed positioning relative to the entire screen/viewport
                         position: 'fixed', 
-                        bottom: theme.spacing(4), // 32px from bottom
+                        bottom: isMobile ? theme.spacing(14) : theme.spacing(4), // Raised on mobile for nav bar
                         right: theme.spacing(4), // 32px from right
                         zIndex: 1000, 
                         // Show only when NOT in the dedicated batch selection mode (to prevent conflict)
