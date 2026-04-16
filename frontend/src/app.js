@@ -1166,27 +1166,29 @@ function App() {
                                     </Typography>
                                 </Box>
 
-                                {/* Action 2: Start Batch Wash */}
-                                <Box
-                                    onClick={handleBatchWashFab}
-                                    sx={(theme) => ({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        px: 2.5,
-                                        py: 1.25,
-                                        borderRadius: 999,
-                                        bgcolor: theme.palette.primary.main, 
-                                        color: theme.palette.primary.contrastText,
-                                        boxShadow: 4,
-                                        cursor: 'pointer',
-                                    })}
-                                >
-                                    <CleaningServicesIcon fontSize="small" />
-                                    <Typography variant="body2" fontWeight={600}>
-                                        Batch Wash
-                                    </Typography>
-                                </Box>
+                                 {/* Action 2: Start Batch Wash (Only show if items exist) */}
+                                {items.length > 0 && (
+                                    <Box
+                                        onClick={handleBatchWashFab}
+                                        sx={(theme) => ({
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            px: 2.5,
+                                            py: 1.25,
+                                            borderRadius: 999,
+                                            bgcolor: theme.palette.primary.main, 
+                                            color: theme.palette.primary.contrastText,
+                                            boxShadow: 4,
+                                            cursor: 'pointer',
+                                        })}
+                                    >
+                                        <CleaningServicesIcon fontSize="small" />
+                                        <Typography variant="body2" fontWeight={600}>
+                                            Batch Wash
+                                        </Typography>
+                                    </Box>
+                                )}
                             </Box>
                         )}
 
