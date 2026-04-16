@@ -24,6 +24,7 @@ import { protect } from './middleware/authMiddleware';
 
 // --- NEW IMPORT FOR ADMIN DASHBOARD ---
 import { getSystemStats } from './controllers/adminController'; 
+import { scanItemImage } from './controllers/aiController'; 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +89,8 @@ protectedRouter.get('/damaged', getDamagedItems);
 protectedRouter.post('/wash-jobs', createWashJob);
 protectedRouter.post('/wash-jobs/check', checkWashJobs);
 protectedRouter.patch('/wash-jobs/:id/collect', collectWashJob);
+// New Route: AI Smart Cataloging
+protectedRouter.post('/ai/scan-image', scanItemImage);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 

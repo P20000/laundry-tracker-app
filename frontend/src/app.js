@@ -23,8 +23,9 @@ import EventIcon from '@mui/icons-material/Event';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // For Wash Jobs tab
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // For batch action icon
-import AssessmentIcon from '@mui/icons-material/Assessment'; // Correct icon for Admin Dashboard
-import Checkbox from '@mui/material/Checkbox'; // For batch selection checkboxes
+import AssessmentIcon from '@mui/icons-material/Assessment'; 
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'; 
+import Checkbox from '@mui/material/Checkbox';
 
 // --- Project Components ---
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
@@ -637,6 +638,7 @@ function App() {
     const [newItemColor, setNewItemColor] = useState('#6750A4');
     const [newItemImageBlob, setNewItemImageBlob] = useState(null); 
     const [newItemImagePreview, setNewItemImagePreview] = useState(null); 
+    const [isAIScanning, setIsAIScanning] = useState(false); 
     const [selectedItem, setSelectedItem] = useState(null); // Used by History
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const theme = useTheme();
@@ -799,7 +801,47 @@ function App() {
                 setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
             }
         } catch (err) { showNotification("Network error adding item:", err); }
-        };
+    };
+
+    // NEW HANDLER: Calls the Gemini API to analyze the image
+    const handleAIScan = async () => {
+        if (!newItemImageBlob) {
+            showNotification("Please upload an image first.", "warning");
+            return;
+        }
+
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        setIsAIScanning(true);
+        try {
+            const base64Image = await fileToBase64(newItemImageBlob);
+            const res = await fetch(`${API_PROTECTED_URL}/ai/scan-image`, {
+                method: 'POST',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ imageUrl: base64Image })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                // Map the AI results to our local state
+                if (data.name) setNewItemName(data.name);
+                if (data.category) setNewItemCategory(data.category);
+                if (data.itemType) setNewItemType(data.itemType);
+                if (data.color) setNewItemColor(data.color);
+                if (data.size) setNewItemSize(data.size);
+
+                showNotification("✨ AI successfully analyzed your item!", "success");
+            } else {
+                const errorData = await res.json();
+                showNotification(errorData.error || "AI Scan failed", "error");
+            }
+        } catch (err) {
+            showNotification("Network error during AI scan", "error");
+        } finally {
+            setIsAIScanning(false);
+        }
+    };
 
 
 
@@ -1386,11 +1428,42 @@ function App() {
                 <DialogContent sx={{ pt: 0 }}>
                         <Box display="flex" flexDirection="column" gap={3} mt={1}>
                             {/* Image Upload Block (from previous component) */}
-                            <Box sx={{ height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'text.secondary', position: 'relative', overflow: 'hidden', backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                            <Box sx={{ 
+                                height: 160, width: '100%', borderRadius: 3, bgcolor: 'action.hover', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                border: '1px dashed', borderColor: 'text.secondary', 
+                                position: 'relative', overflow: 'hidden', 
+                                backgroundImage: newItemImagePreview ? `url(${newItemImagePreview})` : 'none', 
+                                backgroundSize: 'cover', backgroundPosition: 'center' 
+                            }}>
                                 <input accept="image/*" style={{ display: 'none' }} id="raised-button-file" type="file" onChange={handleImageUpload} />
                                 <label htmlFor="raised-button-file" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                                     {!newItemImagePreview && ( <Box textAlign="center" color="text.secondary"> <PhotoCamera sx={{ fontSize: 40, mb: 1 }} /> <Typography variant="caption" display="block">Upload Photo</Typography> </Box> )}
                                 </label>
+
+                                {newItemImagePreview && (
+                                    <Button
+                                        onClick={(e) => { e.preventDefault(); handleAIScan(); }}
+                                        variant="contained"
+                                        disabled={isAIScanning}
+                                        startIcon={isAIScanning ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
+                                        size="small"
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 12,
+                                            right: 12,
+                                            bgcolor: 'secondary.main',
+                                            color: 'secondary.contrastText',
+                                            zIndex: 10,
+                                            textTransform: 'none',
+                                            borderRadius: 2,
+                                            boxShadow: 3,
+                                            '&:hover': { bgcolor: 'secondary.dark' }
+                                        }}
+                                    >
+                                        {isAIScanning ? "Scanning..." : "Auto-Fill"}
+                                    </Button>
+                                )}
                             </Box>
 
                             {/* Input Fields (Item Name, Category, Size, etc.) */}
