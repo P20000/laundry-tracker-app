@@ -985,6 +985,27 @@ function App() {
         }
     };
 
+    const handleMarkCollected = async (jobId) => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) return handleLogout();
+
+        try {
+            const res = await fetch(`${API_PROTECTED_URL}/wash-jobs/${jobId}/collect`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(token),
+            });
+
+            if (res.ok) {
+                showNotification("Job collected and items added back to catalog.", "success");
+                fetchItems();
+            } else {
+                showNotification("Failed to collect job.", "error");
+            }
+        } catch (err) {
+            showNotification("Network error collecting job.", "error");
+        }
+    };
+
     // --- Render Logic ---
     
     if (!isLoggedIn) {
@@ -1201,7 +1222,7 @@ function App() {
                                                 key={job.id} 
                                                 jobDetails={job} 
                                                 itemsInJob={job.itemsInJob} 
-                                                onMarkCollected={() => { /* Logic to clear job status goes here */ }}
+                                                onMarkCollected={handleMarkCollected}
                                             />
                                         ))
                                     )

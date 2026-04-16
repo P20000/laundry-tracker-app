@@ -20,6 +20,7 @@ export interface IClothingItem {
     damageLog: string | null;
     lastWashed: Date | null;
     damageLevel: number;
+    jobId?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

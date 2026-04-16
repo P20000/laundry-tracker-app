@@ -56,6 +56,7 @@ const mapResultToItems = (rows: any[]): IClothingItem[] => {
             ...row,
             currentStatus: currentStatus, // This can now be 'OVERDUE'
             damageLevel: row.damageLevel,
+            jobId: row.jobId, // ADDED
             lastWashed: row.lastWashed ? new Date(row.lastWashed) : null,
             createdAt: new Date(row.createdAt),
             updatedAt: new Date(row.updatedAt)
@@ -334,16 +335,16 @@ export const createWashJob = async (req: Request, res: Response) => {
             args: [jobId, userId, durationHours, completionTime.toISOString()]
         });
 
-        // 2. Update status of all selected items to WASHING
+        // 2. Update status of all selected items to WASHING and link the jobId
         const itemUpdateSql = `
             UPDATE clothing_items 
-            SET currentStatus = 'WASHING' 
+            SET currentStatus = 'WASHING', jobId = ? 
             WHERE id IN (${itemIds.map(() => '?').join(', ')}) AND userId = ?
         `;
         
         await client.execute({ 
             sql: itemUpdateSql, 
-            args: [...itemIds, userId] // Item IDs + User ID
+            args: [jobId, ...itemIds, userId] // Job ID + Item IDs + User ID
         });
 
         // 3. Optional: Store item list in a separate table if required later. (Skipped for MVP simplicity)
@@ -376,20 +377,12 @@ export const checkWashJobs = async (req: Request, res: Response) => {
         }
 
         // 2. For each completed job, update the status of the associated items to CLEAN/READY
-        
-        // --- BATCH UPDATE FOR ITEMS ---
-        // This is complex in raw SQL because we need a transaction to ensure all items are clean.
-        // For MVP, we run a query to find the items associated with these jobs and clean them.
-        
-        // NOTE: Since we didn't save the item IDs inside the wash_jobs table, 
-        // we assume any item marked 'WASHING' belongs to one of these jobs (simplified MVP logic).
-        // A more robust solution would require a lookup table (jobs_items).
-        
-        // For now, we will simply update ALL items that are currently WASHING for this user.
-        await client.execute({
-            sql: "UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now') WHERE userId = ? AND currentStatus = 'WASHING'",
-            args: [userId]
-        });
+        for (const jobId of completedJobIds) {
+            await client.execute({
+                sql: "UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now'), jobId = NULL WHERE userId = ? AND jobId = ?",
+                args: [userId, jobId]
+            });
+        }
 
         // 3. Mark the jobs as COMPLETED
         const jobUpdateSql = `UPDATE wash_jobs SET status = 'COMPLETED' WHERE id IN (${completedJobIds.map(() => '?').join(', ')})`;
@@ -397,7 +390,6 @@ export const checkWashJobs = async (req: Request, res: Response) => {
             sql: jobUpdateSql,
             args: completedJobIds
         });
-
 
         return res.status(200).json({ message: `${completedJobIds.length} wash jobs finished and items marked CLEAN.` });
 
@@ -407,36 +399,63 @@ export const checkWashJobs = async (req: Request, res: Response) => {
     }
 };
 
+export const collectWashJob = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Mark the job as COLLECTED
+        const result = await client.execute({
+            sql: "UPDATE wash_jobs SET status = 'COLLECTED' WHERE id = ? AND userId = ? AND status = 'COMPLETED'",
+            args: [id, userId]
+        });
+
+        if (result.rowsAffected === 0) {
+            return res.status(404).json({ error: "Job not found, not completed, or doesn't belong to user." });
+        }
+
+        return res.status(200).json({ message: "Job marked as collected and archived." });
+    } catch (error: unknown) {
+        console.error('Collect Wash Job Error:', error);
+        return res.status(500).json({ error: 'Failed to collect wash job.' });
+    }
+};
+
 export const getActiveWashJobs = async (req: Request, res: Response) => {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
 
     try {
-        // Fetch all jobs for the user, regardless of status
+        // Fetch only IN_PROGRESS and COMPLETED jobs (hide COLLECTED)
         const jobsResult = await client.execute({
-            sql: "SELECT * FROM wash_jobs WHERE userId = ? ORDER BY completionTime DESC",
+            sql: "SELECT * FROM wash_jobs WHERE userId = ? AND status != 'COLLECTED' ORDER BY completionTime DESC",
             args: [userId]
         });
 
         const jobDetails = jobsResult.rows;
 
-        // Fetch all items currently marked as WASHING
+        // Fetch all items currently belonging to a job (either WASHING or finished but uncollected)
         const washingItemsResult = await client.execute({
-             sql: "SELECT id, category, name, imageURL FROM clothing_items WHERE userId = ? AND currentStatus = 'WASHING'",
+             sql: "SELECT id, category, name, imageUrl, jobId FROM clothing_items WHERE userId = ? AND jobId IS NOT NULL",
              args: [userId]
         });
         
         const washingItems = washingItemsResult.rows;
 
-        // For MVP, we simplify: we assume all WASHING items belong to the active jobs.
-        // A robust system would link item IDs to job IDs, but we group them here:
-        
-        // Group items conceptually under the oldest IN_PROGRESS job
-        const jobGroups = jobDetails.map(job => ({
-            ...job,
-            itemsInJob: washingItems.map(item => ({ id: item.id, name: item.name, category: item.category, imageUrl: item.imageUrl})) 
-            // This is a simplified list of all items currently WASHING for this user
-        }));
+        // Group items correctly by their linked jobId
+        const jobGroups = jobDetails.map(job => {
+            const itemsInThisJob = washingItems.filter(item => item.jobId === job.id);
+            return {
+                ...job,
+                itemsInJob: itemsInThisJob.map(item => ({ 
+                    id: item.id, 
+                    name: item.name, 
+                    category: item.category, 
+                    imageUrl: item.imageUrl
+                })) 
+            };
+        });
         
         return res.status(200).json(jobGroups);
 

@@ -15,6 +15,7 @@ import {
     deleteItem,
     createWashJob,
     checkWashJobs,
+    collectWashJob,
     getActiveWashJobs 
 } from './controllers/itemController';
 
@@ -86,6 +87,7 @@ protectedRouter.get('/damaged', getDamagedItems);
 // New Route: Batch Wash Job Creation
 protectedRouter.post('/wash-jobs', createWashJob);
 protectedRouter.post('/wash-jobs/check', checkWashJobs);
+protectedRouter.patch('/wash-jobs/:id/collect', collectWashJob);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 
@@ -93,6 +95,25 @@ app.use('/api/v1', protectedRouter);
 protectedRouter.get('/wash-jobs', getActiveWashJobs);
 
 // --- Server Start ---
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`⚡️ [server]: API running at http://localhost:${PORT}`);
+    
+    // ENSURE DATABASE SCHEMA UPDATES (Simplified Migration)
+    try {
+        await client.execute("ALTER TABLE clothing_items ADD COLUMN jobId TEXT");
+        console.log("✅ Added jobId column to clothing_items table.");
+    } catch (e: any) {
+        if (e.message.includes("duplicate column name")) {
+             // Silence if already exists
+        } else {
+            console.log("ℹ️ Schema update skipped or already applied:", e.message);
+        }
+    }
+
+    try {
+        await client.execute("ALTER TABLE wash_jobs ADD COLUMN status TEXT DEFAULT 'IN_PROGRESS'");
+        console.log("✅ Ensured status column in wash_jobs table.");
+    } catch (e: any) {
+        // Silence errors here too
+    }
 });
