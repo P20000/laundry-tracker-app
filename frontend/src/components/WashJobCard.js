@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Chip, Button, useTheme, LinearProgress, Paper } from '@mui/material';
+import { Box, Typography, Chip, Button, useTheme, LinearProgress, Paper, Grow } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
 import TimerIcon from '@mui/icons-material/Timer';
@@ -34,7 +34,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
             sx={{
                 mb: 3,
                 p: 3,
-                borderRadius: 4,
+                borderRadius: 6, // M3 Large Rounded
                 bgcolor: 'background.paper',
                 border: '1px solid',
                 borderColor: 'divider',
@@ -42,8 +42,12 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 3,
-                transition: '0.3s',
+                transition: theme.transitions.create(['transform', 'box-shadow', 'border-color'], {
+                    easing: theme.transitions.easing.emphasized,
+                    duration: theme.transitions.duration.medium
+                }),
                 '&:hover': {
+                    transform: 'translateY(-2px)',
                     boxShadow: theme.shadows[4],
                     borderColor: 'primary.main',
                 }
@@ -58,7 +62,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                             position: 'absolute',
                             width: 60,
                             height: 60,
-                            borderRadius: 2,
+                            borderRadius: 3, // M3 Small Rounded
                             bgcolor: 'surfaceVariant.main',
                             backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : 'none',
                             backgroundSize: 'cover',
@@ -71,7 +75,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: 2
+                            boxShadow: 2,
+                            transition: 'all 0.3s cubic-bezier(0.2, 0.0, 0.0, 1.0)'
                         }}
                     >
                         {!item.imageUrl && <CheckroomIcon sx={{ fontSize: 30, opacity: 0.5 }} />}
@@ -115,6 +120,10 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                             bgcolor: 'surfaceVariant.main',
                             '& .MuiLinearProgress-bar': {
                                 borderRadius: 4,
+                                transition: theme.transitions.create('transform', {
+                                    easing: theme.transitions.easing.emphasized,
+                                    duration: theme.transitions.duration.long
+                                })
                             }
                         }} 
                     />
@@ -124,23 +133,29 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
             {/* 3. Action Area */}
             <Box sx={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                 {isCompleted ? (
-                    <Button
-                        variant="contained"
-                        color="success"
-                        fullWidth
-                        startIcon={<CalendarTodayIcon />}
-                        onClick={() => onMarkCollected(jobDetails.id)}
-                        sx={{ 
-                            borderRadius: 3, 
-                            py: 1.25,
-                            boxShadow: theme.shadows[2],
-                            '&:hover': { boxShadow: theme.shadows[4] }
-                        }}
-                    >
-                        Collect
-                    </Button>
+                    <Grow in={true} timeout={500}>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            fullWidth
+                            startIcon={<CalendarTodayIcon />}
+                            onClick={() => onMarkCollected(jobDetails.id)}
+                            sx={{ 
+                                borderRadius: 3, 
+                                py: 1.25,
+                                transition: theme.transitions.create(['transform', 'box-shadow'], {
+                                    easing: theme.transitions.easing.emphasized,
+                                    duration: theme.transitions.duration.short
+                                }),
+                                boxShadow: theme.shadows[2],
+                                '&:hover': { transform: 'scale(1.02)', boxShadow: theme.shadows[4] }
+                            }}
+                        >
+                            Collect
+                        </Button>
+                    </Grow>
                 ) : (
-                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary', transition: 'opacity 0.5s' }}>
                         In Progress...
                     </Typography>
                 )}

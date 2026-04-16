@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
-    CircularProgress, // <- Added for loading fix
-    // MUI Core Components (SpeedDial must be imported from here)
+    CircularProgress, Fade, Grow, Zoom, // Transition helpers
 } from '@mui/material';
 
 // --- Separately Imported Icons (All are mandatory) ---
@@ -115,6 +114,19 @@ const getDesignTokens = (mode) => ({
     },
         MuiDialog: { styleOverrides: { paper: { borderRadius: 28, padding: 16, backgroundColor: mode === 'dark' ? '#1C1B1F' : '#FFFBFE' } } }
     },
+    transitions: {
+        easing: {
+            emphasized: 'cubic-bezier(0.2, 0.0, 0.0, 1.0)',
+            emphasizedDecelerate: 'cubic-bezier(0.05, 0.7, 0.1, 1.0)',
+            emphasizedAccelerate: 'cubic-bezier(0.3, 0.0, 0.8, 0.15)',
+            standard: 'cubic-bezier(0.2, 0.0, 0, 1.0)',
+        },
+        duration: {
+            short: 200,
+            medium: 400,
+            long: 600,
+        }
+    }
 });
 
 // --- Helper Functions ---
@@ -151,35 +163,37 @@ const EmptyState = ({ view, onAddClick }) => {
     }
 
     return (
-        <Box sx={{ 
-            p: 8, 
-            mt: 5, 
-            borderRadius: 4, 
-            bgcolor: 'surfaceVariant.main', 
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2
-        }}>
-            <ArchiveIcon sx={{ fontSize: 64, color: 'secondary.main', opacity: 0.5 }} />
-            <Box>
-                <Typography variant="h5" sx={{ color: 'text.primary', mb: 1 }}>{message}</Typography>
-                <Typography variant="body1" color="text.secondary">{description}</Typography>
+        <Grow in={true} timeout={600}>
+            <Box sx={{ 
+                p: 8, 
+                mt: 5, 
+                borderRadius: 4, 
+                bgcolor: 'surfaceVariant.main', 
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2
+            }}>
+                <ArchiveIcon sx={{ fontSize: 64, color: 'secondary.main', opacity: 0.5 }} />
+                <Box>
+                    <Typography variant="h5" sx={{ color: 'text.primary', mb: 1 }}>{message}</Typography>
+                    <Typography variant="body1" color="text.secondary">{description}</Typography>
+                </Box>
+                
+                {showAddButton && (
+                    <Button 
+                        variant="contained" 
+                        color="primary" 
+                        startIcon={<AddIcon />}
+                        onClick={onAddClick}
+                        sx={{ mt: 2, px: 4, py: 1.5 }}
+                    >
+                        Add First Item
+                    </Button>
+                )}
             </Box>
-            
-            {showAddButton && (
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    startIcon={<AddIcon />}
-                    onClick={onAddClick}
-                    sx={{ mt: 2, px: 4, py: 1.5 }}
-                >
-                    Add First Item
-                </Button>
-            )}
-        </Box>
+        </Grow>
     );
 };
 
@@ -226,7 +240,23 @@ const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDam
     const lastWashedDate = item.lastWashed ? new Date(item.lastWashed).toLocaleDateString() : 'Never';
 
     return (
-        <Box sx={{position : 'relative', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: '0.2s', '&:hover': { boxShadow: 2 } }}>
+        <Box sx={(theme) => ({
+            position: 'relative', 
+            bgcolor: 'background.paper', 
+            border: '1px solid', 
+            borderColor: 'divider', 
+            borderRadius: 6, // More M3-like rounded corners
+            overflow: 'hidden', 
+            transition: theme.transitions.create(['transform', 'box-shadow', 'border-color'], {
+                easing: theme.transitions.easing.emphasized,
+                duration: theme.transitions.duration.medium
+            }), 
+            '&:hover': { 
+                transform: 'translateY(-4px) scale(1.02)',
+                boxShadow: theme.shadows[4],
+                borderColor: 'primary.main'
+            } 
+        })}>
             
             {/* NEW: Checkbox overlay for batch selection */}
             {isSelectionMode && (
@@ -488,92 +518,95 @@ const AuthCard = ({ setLoggedIn }) => {
 
     return (
         <Container component="main" maxWidth="xs" sx={{ mt: 8 }}>
-            <Box 
-                component="form" 
-                onSubmit={handleSubmit} 
-                sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center',
-                    p: 4, 
-                    borderRadius: 5, 
-                    bgcolor: 'background.paper',
-                    boxShadow: 3, 
-                    border: '1px solid', 
-                    borderColor: 'divider'
-                }}
-            >
+            <Fade in={true} timeout={800}>
                 <Box 
+                    component="form" 
+                    onSubmit={handleSubmit} 
                     sx={{ 
-                        p: 2, 
-                        borderRadius: '50%', 
-                        bgcolor: 'primary.main', 
-                        color: 'primary.contrastText', 
-                        mb: 2 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        p: 4, 
+                        borderRadius: 5, 
+                        bgcolor: 'background.paper',
+                        boxShadow: 3, 
+                        border: '1px solid', 
+                        borderColor: 'divider'
                     }}
                 >
-                    {isSignup ? <PersonAddIcon fontSize="large" /> : <LockOpenIcon fontSize="large" />}
-                </Box>
+                    {/* ... form content ... */}
+                    <Box 
+                        sx={{ 
+                            p: 2, 
+                            borderRadius: '50%', 
+                            bgcolor: 'primary.main', 
+                            color: 'primary.contrastText', 
+                            mb: 2 
+                        }}
+                    >
+                        {isSignup ? <PersonAddIcon fontSize="large" /> : <LockOpenIcon fontSize="large" />}
+                    </Box>
 
-                <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main', fontWeight: 500 }}>
-                    {isSignup ? 'Register' : 'Sign In'}
-                </Typography>
-                
-                {message && (
-                    <Typography variant="body2" color="error" sx={{ my: 1 }}>
-                        {message}
+                    <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main', fontWeight: 500 }}>
+                        {isSignup ? 'Register' : 'Sign In'}
                     </Typography>
-                )}
+                    
+                    {message && (
+                        <Typography variant="body2" color="error" sx={{ my: 1 }}>
+                            {message}
+                        </Typography>
+                    )}
 
-                <TextField
-                    margin="normal"
-                    required
-                    fullWidth
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    autoFocus
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    variant="filled"
-                    size="small"
-                />
-                <TextField
-                    margin="normal"
-                    required
-                    fullWidth
-                    name="password"
-                    label="Password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    variant="filled"
-                    size="small"
-                />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        variant="filled"
+                        size="small"
+                    />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="Password"
+                        type="password"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        variant="filled"
+                        size="small"
+                    />
 
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 5 }}
-                >
-                    {isSignup ? 'Sign Up' : 'Log In'}
-                </Button>
-                
-                <Grid container justifyContent="center">
-                    <Grid item>
-                        <Button 
-                            onClick={() => setIsSignup(!isSignup)} 
-                            color="primary" 
-                            variant="text"
-                            sx={{ textTransform: 'none' }}
-                        >
-                            {isSignup ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
-                        </Button>
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 5 }}
+                    >
+                        {isSignup ? 'Sign Up' : 'Log In'}
+                    </Button>
+                    
+                    <Grid container justifyContent="center">
+                        <Grid item>
+                            <Button 
+                                onClick={() => setIsSignup(!isSignup)} 
+                                color="primary" 
+                                variant="text"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                {isSignup ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
+                            </Button>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
+                </Box>
+            </Fade>
         </Container>
     );
 };
@@ -1130,46 +1163,23 @@ function App() {
                         display: isBatchWashOpen ? 'none' : 'block' 
                     })}>
                         
-                        {/* Action Pills (Visible only when 'open' is true) */}
+                        {/* Action Pills with Zoom Transitions */}
                         {open && (
                             <Box
                             sx={{
                                 position: 'absolute',
-                                bottom: 72, // 56px FAB height + margin
+                                bottom: 72, 
                                 right: 0,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: theme.spacing(1.5),
-                                alignItems: 'flex-end', // Align pills to the right
+                                alignItems: 'flex-end',
                             }}
                             >
                                 {/* Action 1: Add Item */}
-                                <Box
-                                    onClick={handleAddItemFab}
-                                    sx={(theme) => ({
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        px: 2.5,
-                                        py: 1.25,
-                                        borderRadius: 999, // Pill shape
-                                        // Primary colors for the filled EFAB style
-                                        bgcolor: theme.palette.primary.main, 
-                                        color: theme.palette.primary.contrastText, 
-                                        boxShadow: 4,
-                                        cursor: 'pointer',
-                                    })}
-                                >
-                                    <AddIcon fontSize="small" />
-                                    <Typography variant="body2" fontWeight={600}>
-                                        Add Item
-                                    </Typography>
-                                </Box>
-
-                                 {/* Action 2: Start Batch Wash (Only show if items exist) */}
-                                {items.length > 0 && (
+                                <Zoom in={open} style={{ transitionDelay: '50ms' }}>
                                     <Box
-                                        onClick={handleBatchWashFab}
+                                        onClick={handleAddItemFab}
                                         sx={(theme) => ({
                                             display: 'flex',
                                             alignItems: 'center',
@@ -1178,16 +1188,48 @@ function App() {
                                             py: 1.25,
                                             borderRadius: 999,
                                             bgcolor: theme.palette.primary.main, 
-                                            color: theme.palette.primary.contrastText,
+                                            color: theme.palette.primary.contrastText, 
                                             boxShadow: 4,
                                             cursor: 'pointer',
+                                            transition: theme.transitions.create(['transform', 'box-shadow'], {
+                                                easing: theme.transitions.easing.emphasized,
+                                                duration: theme.transitions.duration.short
+                                            }),
+                                            '&:hover': { transform: 'scale(1.05)', boxShadow: 6 }
                                         })}
                                     >
-                                        <CleaningServicesIcon fontSize="small" />
-                                        <Typography variant="body2" fontWeight={600}>
-                                            Batch Wash
-                                        </Typography>
+                                        <AddIcon fontSize="small" />
+                                        <Typography variant="body2" fontWeight={600}>Add Item</Typography>
                                     </Box>
+                                </Zoom>
+
+                                {/* Action 2: Start Batch Wash */}
+                                {items.length > 0 && (
+                                    <Zoom in={open} style={{ transitionDelay: '100ms' }}>
+                                        <Box
+                                            onClick={handleBatchWashFab}
+                                            sx={(theme) => ({
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                px: 2.5,
+                                                py: 1.25,
+                                                borderRadius: 999,
+                                                bgcolor: theme.palette.primary.main, 
+                                                color: theme.palette.primary.contrastText,
+                                                boxShadow: 4,
+                                                cursor: 'pointer',
+                                                transition: theme.transitions.create(['transform', 'box-shadow'], {
+                                                    easing: theme.transitions.easing.emphasized,
+                                                    duration: theme.transitions.duration.short
+                                                }),
+                                                '&:hover': { transform: 'scale(1.05)', boxShadow: 6 }
+                                            })}
+                                        >
+                                            <CleaningServicesIcon fontSize="small" />
+                                            <Typography variant="body2" fontWeight={600}>Batch Wash</Typography>
+                                        </Box>
+                                    </Zoom>
                                 )}
                             </Box>
                         )}
@@ -1213,46 +1255,51 @@ function App() {
                                 <CircularProgress color="primary" size={60} />
                             </Box>
                         ) : (
-                            <Box>
-                                {/* Conditional Render for JOBS view */}
-                                {view === 'jobs' ? (
-                                    items.length === 0 ? (
+                            <Fade in={!isLoading} key={view} timeout={400}>
+                                <Box>
+                                    {/* Conditional Render for JOBS view */}
+                                    {view === 'jobs' ? (
+                                        items.length === 0 ? (
+                                            <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
+                                        ) : (
+                                            items.map((job, index) => (
+                                                <Grow in={true} key={job.id} timeout={(index + 1) * 200}>
+                                                    <Box sx={{ mb: 2 }}>
+                                                        <WashJobCard 
+                                                            jobDetails={job} 
+                                                            itemsInJob={job.itemsInJob} 
+                                                            onMarkCollected={handleMarkCollected}
+                                                        />
+                                                    </Box>
+                                                </Grow>
+                                            ))
+                                        )
+                                    ) : items.length === 0 ? (
                                         <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                                     ) : (
-                                        items.map(job => (
-                                            <WashJobCard 
-                                                key={job.id} 
-                                                jobDetails={job} 
-                                                itemsInJob={job.itemsInJob} 
-                                                onMarkCollected={handleMarkCollected}
-                                            />
-                                        ))
-                                    )
-                                ) : items.length === 0 ? (
-                                    /* Standard Empty State for Catalog/Laundry/Damaged */
-                                    <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
-                                ) : (
-                                    /* Standard Item Grid (Catalog, Laundry, Damaged) */
-                                    <Grid container spacing={2}>
-                                        {items.map(item => (
-                                            <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
-                                                <ItemCard 
-                                                    item={item} 
-                                                    onUpdateStatus={handleStatusChange} 
-                                                    onViewDetails={handleOpenHistoryModal}
-                                                    onDeleteItem={handleDeleteItem}
-                                                    onOpenDamageEditor={handleOpenDamageEditor}
-                                                    
-                                                    // Batch Selection Props
-                                                    isSelectionMode={isBatchWashOpen}
-                                                    onToggleSelection={handleToggleItemSelection}
-                                                    isSelected={selectedItemIds.includes(item.id)}
-                                                />
-                                            </Grid>
-                                        ))}
-                                    </Grid>
-                                )}
-                            </Box>
+                                        <Grid container spacing={2}>
+                                            {items.map((item, index) => (
+                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
+                                                    <Grow in={true} timeout={(index + 1) * 150}>
+                                                        <Box>
+                                                            <ItemCard 
+                                                                item={item} 
+                                                                onUpdateStatus={handleStatusChange} 
+                                                                onViewDetails={handleOpenHistoryModal}
+                                                                onDeleteItem={handleDeleteItem}
+                                                                onOpenDamageEditor={handleOpenDamageEditor}
+                                                                isSelectionMode={isBatchWashOpen}
+                                                                onToggleSelection={handleToggleItemSelection}
+                                                                isSelected={selectedItemIds.includes(item.id)}
+                                                            />
+                                                        </Box>
+                                                    </Grow>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    )}
+                                </Box>
+                            </Fade>
                         )}
                     </Box>
                     
