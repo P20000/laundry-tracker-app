@@ -40,15 +40,17 @@ export const scanItemImage = async (req: Request, res: Response) => {
                 "name": "A concise, descriptive name (e.g., 'White Cotton T-Shirt')",
                 "category": "Must be one of: 'Formals', 'Casuals', or 'Activewear'",
                 "itemType": "Must be one of: 'Shirt', 'Pants', 'Dress', or 'Outerwear'",
-                "color": "The dominant color name (e.g., 'White', 'Navy Blue', 'Burgundy')",
+                "color": "The dominant color as a HEX CODE (e.g., '#FFFFFF', '#000080', '#800020')",
                 "size": "Best guess from context or tags, otherwise 'M'"
             }
         `;
 
         // 3. Generate content
+        console.log("AI Scan: Sending request to Gemini...");
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         const text = response.text();
+        console.log("AI Scan: Received response from Gemini:", text);
 
         // 4. Parse and return JSON
         const aiData = JSON.parse(text);
@@ -56,9 +58,20 @@ export const scanItemImage = async (req: Request, res: Response) => {
         return res.status(200).json(aiData);
 
     } catch (error: any) {
-        console.error("AI Scan Error:", error);
+        console.error("AI Scan Error Details:", {
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            status: error.status
+        });
+        
+        let errorMessage = "Failed to scan image with AI";
+        if (error.message?.includes("API_KEY_INVALID") || error.message?.includes("API key not found")) {
+            errorMessage = "Invalid Gemini API Key. Please check your environment variables.";
+        }
+
         return res.status(500).json({ 
-            error: "Failed to scan image with AI", 
+            error: errorMessage, 
             details: error.message || String(error) 
         });
     }

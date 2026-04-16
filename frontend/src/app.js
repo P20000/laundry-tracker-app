@@ -131,6 +131,10 @@ const getDesignTokens = (mode) => ({
 });
 
 // --- Helper Functions ---
+const isValidHex = (hex) => {
+    return /^#([0-9A-F]{3}){1,2}$/i.test(hex);
+};
+
 const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -828,8 +832,17 @@ function App() {
                 if (data.name) setNewItemName(data.name);
                 if (data.category) setNewItemCategory(data.category);
                 if (data.itemType) setNewItemType(data.itemType);
-                if (data.color) setNewItemColor(data.color);
                 if (data.size) setNewItemSize(data.size);
+
+                // Validation for Color (Browser color picker only accepts Hex)
+                if (data.color) {
+                    if (isValidHex(data.color)) {
+                        setNewItemColor(data.color);
+                    } else {
+                        console.warn("AI returned invalid color format:", data.color);
+                        // No-op or set a neutral color if necessary
+                    }
+                }
 
                 showNotification("✨ AI successfully analyzed your item!", "success");
             } else {
