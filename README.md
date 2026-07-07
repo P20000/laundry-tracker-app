@@ -1,7 +1,8 @@
 # Smart Wardrobe Tracker
 
 A secure, full-stack application for personal clothing inventory management, tracking wash cycles, and logging damaged items. Built with modern architectural principles for stability, performance, and ease of deployment.
-
+https://laundry-tracker-frontend.onrender.com
+<img width="1920" height="899" alt="image" src="https://github.com/user-attachments/assets/1b39873a-4ec8-40e7-8741-da89eac5d772" />
 
 
 ## Project Overview
