@@ -441,16 +441,24 @@ export const getActiveWashJobs = async (req: Request, res: Response) => {
         const washingItems = washingItemsResult.rows;
 
         // Group items correctly by their linked jobId
+        // NOTE: libsql returns integer columns as BigInt — must cast to Number before
+        // passing through JSON.stringify, otherwise BigInt fields are silently dropped.
         const jobGroups = jobDetails.map(job => {
             const itemsInThisJob = washingItems.filter(item => item.jobId === job.id);
             return {
-                ...job,
-                itemsInJob: itemsInThisJob.map(item => ({ 
-                    id: item.id, 
-                    name: item.name, 
-                    category: item.category, 
+                id: job.id,
+                userId: job.userId,
+                status: job.status,
+                durationHours: Number(job.durationHours),   // BigInt → Number
+                completionTime: job.completionTime,
+                createdAt: job.createdAt ?? null,
+                startTime: job.startTime ?? null,
+                itemsInJob: itemsInThisJob.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    category: item.category,
                     imageUrl: item.imageUrl
-                })) 
+                }))
             };
         });
         

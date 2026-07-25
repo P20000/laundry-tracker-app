@@ -37,7 +37,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     } else if (jobDetails.startTime) {
         startTime = new Date(jobDetails.startTime);
     } else if (jobDetails.durationHours) {
-        startTime = new Date(completionDate.getTime() - jobDetails.durationHours * 3600000);
+        // Cast to Number: libsql returns integers as BigInt which breaks arithmetic
+        startTime = new Date(completionDate.getTime() - Number(jobDetails.durationHours) * 3600000);
     } else {
         startTime = new Date(completionDate.getTime() - 3600000); // fallback: assume 1h
     }
