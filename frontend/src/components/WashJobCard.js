@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
+import { Box, Typography, Button, useTheme, CircularProgress, LinearProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
 import { keyframes } from '@mui/system';
@@ -57,6 +57,18 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     }
 
     let messageLine = isCompleted ? 'Ready' : `${completionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+    // Human-readable time remaining for the status bar
+    const msRemaining = completionDate.getTime() - now.getTime();
+    let timeRemaining = '';
+    if (!isCompleted && msRemaining > 0) {
+        const totalMins = Math.ceil(msRemaining / 60000);
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        if (h > 0 && m > 0) timeRemaining = `${h}h ${m}m left`;
+        else if (h > 0) timeRemaining = `${h}h left`;
+        else timeRemaining = `${m}m left`;
+    }
 
     return (
         <Paper 
@@ -201,19 +213,6 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                                 <Typography variant="caption" color="text.secondary">Empty</Typography>
                             </Box>
                         )}
-                        {/* Progress text overlay inside the door if running */}
-                        {!isCompleted && (
-                            <Typography 
-                                variant="caption" 
-                                sx={{ 
-                                    position: 'absolute', bottom: 4, width: '100%', textAlign: 'center', 
-                                    fontWeight: 'bold', color: 'primary.main', bgcolor: 'rgba(255,255,255,0.7)',
-                                    pointerEvents: 'none'
-                                }}
-                            >
-                                {Math.round(progress)}%
-                            </Typography>
-                        )}
                         {/* Reflection overlay for glass effect */}
                         <Box sx={{
                             position: 'absolute',
@@ -225,6 +224,44 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                     </Box>
                 </Box>
             </Box>
+
+            {/* Progress Status Bar — shown only while in progress */}
+            {!isCompleted && (
+                <Box sx={{ px: 3, pb: 2.5 }}>
+                    <Box sx={{
+                        bgcolor: 'background.default',
+                        borderRadius: 3,
+                        p: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }}>
+                        {/* Label row */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                                {timeRemaining}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: 0.5 }}>
+                                {Math.round(progress)}%
+                            </Typography>
+                        </Box>
+                        {/* Track */}
+                        <LinearProgress
+                            variant="determinate"
+                            value={progress}
+                            sx={{
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: 'divider',
+                                '& .MuiLinearProgress-bar': {
+                                    borderRadius: 3,
+                                    bgcolor: 'primary.main',
+                                    transition: 'transform 1s linear',
+                                }
+                            }}
+                        />
+                    </Box>
+                </Box>
+            )}
 
             {/* Collect Button */}
             {isCompleted && (
