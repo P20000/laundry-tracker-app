@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
+import { keyframes } from '@mui/system';
+
+const marquee = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
 
 export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
-    const [carouselIndex, setCarouselIndex] = useState(0);
     
     const jobItems = itemsInJob || [];
     const validItems = jobItems.filter(item => item && item.id);
     
-    // Carousel effect: change image every 0.5 seconds
-    useEffect(() => {
-        if (validItems.length <= 1) return;
-        const interval = setInterval(() => {
-            setCarouselIndex(prev => (prev + 1) % validItems.length);
-        }, 500);
-        return () => clearInterval(interval);
-    }, [validItems.length]);
+    // Create a duplicated array for seamless infinite looping
+    const marqueeItems = [...validItems, ...validItems];
 
     // Calculate the completion time status
     const startTimeStr = jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime;
@@ -147,18 +146,21 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                         {validItems.length > 0 ? (
                             <Box sx={{
                                 display: 'flex',
-                                width: '100%',
+                                width: `${marqueeItems.length * 100}%`,
                                 height: '100%',
-                                transition: 'transform 0.5s ease-in-out',
-                                transform: `translateX(-${carouselIndex * 100}%)`
+                                animation: `${marquee} ${validItems.length * 3}s linear infinite`,
+                                '&:hover': {
+                                    animationPlayState: 'paused'
+                                }
                             }}>
-                                {validItems.map((item, idx) => (
-                                    <Box key={idx} sx={{ 
-                                        minWidth: '100%', 
+                                {marqueeItems.map((item, idx) => (
+                                    <Box key={`${item.id}-${idx}`} sx={{ 
+                                        width: `${100 / marqueeItems.length}%`, 
                                         height: '100%', 
                                         display: 'flex', 
                                         justifyContent: 'center', 
-                                        alignItems: 'center' 
+                                        alignItems: 'center',
+                                        flexShrink: 0
                                     }}>
                                         {item.imageUrl ? (
                                             <Box
