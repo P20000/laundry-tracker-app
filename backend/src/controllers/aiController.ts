@@ -59,17 +59,12 @@ export const scanItemImage = async (req: Request, res: Response) => {
         let text = response.choices[0]?.message?.content || "{}";
         console.log("AI Scan: Received response from NIM:", text);
 
-        // Strip markdown blocks if present (some models return ```json ... ```)
-        text = text.trim();
-        if (text.startsWith("\`\`\`json")) {
-            text = text.substring(7);
-        } else if (text.startsWith("\`\`\`")) {
-            text = text.substring(3);
+        // Extract JSON object by finding the first '{' and the last '}'
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+            text = text.substring(start, end + 1);
         }
-        if (text.endsWith("\`\`\`")) {
-            text = text.substring(0, text.length - 3);
-        }
-        text = text.trim();
 
         // 3. Parse and return JSON
         const aiData = JSON.parse(text);
