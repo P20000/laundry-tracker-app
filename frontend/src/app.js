@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
     CircularProgress, Fade, Grow, Zoom, // Transition helpers
@@ -619,11 +620,12 @@ const AuthCard = ({ setLoggedIn }) => {
 
 
 // --- Main Component ---
+const queryClient = new QueryClient();
 
-function App() {
+function MainApp() {
     const [view, setView] = useState('catalog');
-    const [items, setItems] = useState([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
+    const queryClientHook = useQueryClient();
 
     // Snackbar State
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -637,7 +639,7 @@ function App() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     
     // Form State 
-    const [isLoading, setIsLoading] = useState(false);
+
     const [newItemName, setNewItemName] = useState('');
     const [newItemCategory, setNewItemCategory] = useState('Casuals');
     const [newItemType, setNewItemType] = useState('Shirt');
@@ -707,30 +709,13 @@ function App() {
         }
     }, []);
 
-    // 2. Fetch data only if logged in
-    useEffect(() => {
-        if (isLoggedIn) {
-            // NEW TRIGGER: Check for completed jobs first if accessing a relevant view
-            if (view === 'laundry' || view === 'jobs') {
-                checkAndFetch();
-            } else {
-                fetchItems();
-            }
-        } else {
-            setItems([]); 
-        }
-    }, [isLoggedIn, view]);
-
-    // --- API Interaction ---
-
-
-    const fetchItems = async () => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        
-        if (!token) return;
-
-        try {
-            setIsLoading(true);
+    // 2. React Query for Data Fetching
+    const { data: items = [], isLoading, refetch: fetchItems } = useQuery({
+        queryKey: ['items', view],
+        queryFn: async () => {
+            const token = localStorage.getItem(AUTH_TOKEN_KEY);
+            if (!token) throw new Error("No token");
+            
             let endpoint = '/items';
             if (view === 'laundry') endpoint = '/laundry';
             if (view === 'damaged') endpoint = '/damaged';
@@ -742,26 +727,31 @@ function App() {
             
             if (res.status === 401) {
                 handleLogout();
-                return;
+                throw new Error("Unauthorized");
             }
 
             const data = await res.json();
-            setItems(data.map(item => ({
+            return data.map(item => ({
                 ...item,
                 lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
                 createdAt: new Date(item.createdAt),
-            })));
-        }  catch (err) { 
-                showNotification("Failed to fetch items:", err); 
-            } finally {
-        setIsLoading(false); // <--- STOP LOADING
-    }
-    }; 
+            }));
+        },
+        enabled: isLoggedIn,
+        staleTime: 5000, // Cache data for 5 seconds to prevent immediate refetching
+    });
+
+    // 3. NEW TRIGGER: Check for completed jobs first if accessing a relevant view
+    useEffect(() => {
+        if (isLoggedIn && (view === 'laundry' || view === 'jobs')) {
+            checkAndFetch();
+        }
+    }, [isLoggedIn, view]);
 
     const handleLogout = () => {
         localStorage.removeItem(AUTH_TOKEN_KEY);
         setIsLoggedIn(false);
-        setItems([]);
+        queryClientHook.clear();
         setView('catalog'); 
     };
 
@@ -1619,4 +1609,11 @@ function App() {
     );
 }
 
-export default App;
+// Export wrapper to provide QueryClient Context
+export default function App() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <MainApp />
+        </QueryClientProvider>
+    );
+}

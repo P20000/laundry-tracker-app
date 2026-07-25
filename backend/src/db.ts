@@ -10,11 +10,8 @@ if (!url) {
     throw new Error("Database URL is not defined");
 }
 
-// 1. Force HTTPS Protocol
-// The HTTP client requires 'https://' or 'http://', NOT 'libsql://'
-if (url.startsWith("libsql://")) {
-    url = url.replace("libsql://", "https://");
-}
+// 1. Use the URL protocol exactly as provided in the environment variables. 
+// Using libsql:// or wss:// will allow persistent WebSocket connections, dramatically reducing latency.
 
 console.log(`🔌 Connecting to Turso...`);
 

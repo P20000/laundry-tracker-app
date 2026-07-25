@@ -172,21 +172,19 @@ export const markAsWashed = async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
 
     try {
-        // 1. Log the wash event (Ensure item belongs to user)
-        await client.execute({
-            sql: `INSERT INTO wash_events (clothingItemId, washDate, createdAt) 
-                  SELECT ?, datetime('now'), datetime('now') 
-                  WHERE EXISTS (SELECT 1 FROM clothing_items WHERE id = ? AND userId = ?)`,
-            args: [id, id, userId]
-        });
-
-        // 2. Update item status (Ensure item belongs to user)
-        const sql = `
-            UPDATE clothing_items 
-            SET currentStatus = 'CLEAN', lastWashed = datetime('now')
-            WHERE id = ? AND userId = ?
-        `;
-        await client.execute({ sql: sql, args: [id, userId] });
+        // Execute both queries in a single network batch
+        await client.batch([
+            {
+                sql: `INSERT INTO wash_events (clothingItemId, washDate, createdAt) 
+                      SELECT ?, datetime('now'), datetime('now') 
+                      WHERE EXISTS (SELECT 1 FROM clothing_items WHERE id = ? AND userId = ?)`,
+                args: [id, id, userId]
+            },
+            {
+                sql: `UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now') WHERE id = ? AND userId = ?`,
+                args: [id, userId]
+            }
+        ], "write");
         
         return res.status(200).json({ message: "Item marked as washed." });
     } catch (error: unknown) {
@@ -329,23 +327,23 @@ export const createWashJob = async (req: Request, res: Response) => {
         const startTime = new Date();
         const completionTime = new Date(startTime.getTime() + durationHours * 3600000); // 3600000ms per hour
         
-        // 1. Create the Wash Job entry
-        await client.execute({
-            sql: "INSERT INTO wash_jobs (id, userId, durationHours, completionTime) VALUES (?, ?, ?, ?)",
-            args: [jobId, userId, durationHours, completionTime.toISOString()]
-        });
-
-        // 2. Update status of all selected items to WASHING and link the jobId
+        // Use client.batch for atomicity and network latency reduction
         const itemUpdateSql = `
             UPDATE clothing_items 
             SET currentStatus = 'WASHING', jobId = ? 
             WHERE id IN (${itemIds.map(() => '?').join(', ')}) AND userId = ?
         `;
-        
-        await client.execute({ 
-            sql: itemUpdateSql, 
-            args: [jobId, ...itemIds, userId] // Job ID + Item IDs + User ID
-        });
+
+        await client.batch([
+            {
+                sql: "INSERT INTO wash_jobs (id, userId, durationHours, completionTime) VALUES (?, ?, ?, ?)",
+                args: [jobId, userId, durationHours, completionTime.toISOString()]
+            },
+            { 
+                sql: itemUpdateSql, 
+                args: [jobId, ...itemIds, userId] // Job ID + Item IDs + User ID
+            }
+        ], "write");
 
         // 3. Optional: Store item list in a separate table if required later. (Skipped for MVP simplicity)
 
@@ -376,20 +374,19 @@ export const checkWashJobs = async (req: Request, res: Response) => {
             return res.status(200).json({ message: "No jobs completed yet." });
         }
 
-        // 2. For each completed job, update the status of the associated items to CLEAN/READY
-        for (const jobId of completedJobIds) {
-            await client.execute({
-                sql: "UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now'), jobId = NULL WHERE userId = ? AND jobId = ?",
-                args: [userId, jobId]
-            });
-        }
+        // Execute both table updates in a single batch query
+        const placeholders = completedJobIds.map(() => '?').join(', ');
 
-        // 3. Mark the jobs as COMPLETED
-        const jobUpdateSql = `UPDATE wash_jobs SET status = 'COMPLETED' WHERE id IN (${completedJobIds.map(() => '?').join(', ')})`;
-        await client.execute({
-            sql: jobUpdateSql,
-            args: completedJobIds
-        });
+        await client.batch([
+            {
+                sql: `UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now'), jobId = NULL WHERE userId = ? AND jobId IN (${placeholders})`,
+                args: [userId, ...completedJobIds]
+            },
+            {
+                sql: `UPDATE wash_jobs SET status = 'COMPLETED' WHERE id IN (${placeholders})`,
+                args: completedJobIds
+            }
+        ], "write");
 
         return res.status(200).json({ message: `${completedJobIds.length} wash jobs finished and items marked CLEAN.` });
 
