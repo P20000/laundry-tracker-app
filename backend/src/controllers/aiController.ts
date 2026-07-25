@@ -29,14 +29,35 @@ export const scanItemImage = async (req: Request, res: Response) => {
         const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
         const prompt = `
-            Analyze this clothing item image. Extract physical details and return them strictly in the following JSON format:
+            You are an image analysis API that extracts only the required clothing attributes.
+
+            Analyze the provided clothing image and return ONLY a valid JSON object.
+
+            Rules:
+            - Output ONLY the JSON object.
+            - Do NOT include markdown, code fences, explanations, comments, notes, or any additional text.
+            - Do NOT include keys other than those specified.
+            - Keep every string concise (1–5 words maximum unless otherwise specified).
+            - Do NOT invent information that is not visually observable.
+            - If uncertain, use the specified default values.
+            - The JSON must exactly match this schema:
+
             {
-                "name": "A concise, descriptive name (e.g., 'White Cotton T-Shirt')",
-                "category": "Must be one of: 'Formals', 'Casuals', or 'Activewear'",
-                "itemType": "Must be one of: 'Shirt', 'Pants', 'Dress', or 'Outerwear'",
-                "color": "The dominant color as a HEX CODE (e.g., '#FFFFFF', '#000080', '#800020')",
-                "size": "Best guess from context or tags, otherwise 'M'"
+              "name": "Concise descriptive name (max 5 words, e.g. 'White Cotton T-Shirt')",
+              "category": "One of: Formals, Casuals, Activewear",
+              "itemType": "One of: Shirt, Pants, Dress, Outerwear",
+              "color": "Dominant color as a HEX code (#RRGGBB)",
+              "size": "Best visual estimate (XS, S, M, L, XL, XXL). If unknown, return 'M'."
             }
+
+            Additional constraints:
+            - "name" must not exceed 5 words.
+            - "category" must be exactly one of the allowed values.
+            - "itemType" must be exactly one of the allowed values.
+            - "color" must be a valid 7-character hexadecimal color (#RRGGBB).
+            - "size" must be one of: XS, S, M, L, XL, XXL.
+            - Never output null, empty strings, arrays, nested objects, or additional fields.
+            - If multiple garments are visible, analyze only the most prominent clothing item.
         `;
 
         // 2. Generate content
