@@ -1,16 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Chip, Button, useTheme, LinearProgress, Paper, Grow } from '@mui/material';
+import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
-import TimerIcon from '@mui/icons-material/Timer';
+import { keyframes } from '@mui/system';
 
-// This component displays a visual summary of a single wash job batch.
+const vibrate = keyframes`
+  0% { transform: translate(0) }
+  20% { transform: translate(-1px, 1px) }
+  40% { transform: translate(-1px, -1px) }
+  60% { transform: translate(1px, 1px) }
+  80% { transform: translate(1px, -1px) }
+  100% { transform: translate(0) }
+`;
+
 export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const theme = useTheme();
-    const jobItems = itemsInJob || [];
+    const [expanded, setExpanded] = useState(false);
+    const [carouselIndex, setCarouselIndex] = useState(0);
     
+    const jobItems = itemsInJob || [];
+    const validItems = jobItems.filter(item => item && item.id);
+    
+    // Carousel effect: change image every 0.5 seconds
+    useEffect(() => {
+        if (validItems.length <= 1) return;
+        const interval = setInterval(() => {
+            setCarouselIndex(prev => (prev + 1) % validItems.length);
+        }, 500);
+        return () => clearInterval(interval);
+    }, [validItems.length]);
+
     // Calculate the completion time status
-    const startTime = new Date(jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime); // Fallback if startTime missing
+    const startTime = new Date(jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime);
     const completionDate = new Date(jobDetails.completionTime);
     const now = new Date();
     
@@ -21,145 +42,205 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const elapsed = now.getTime() - startTime.getTime();
     const progress = isCompleted ? 100 : Math.min(Math.max((elapsed / totalDuration) * 100, 5), 95);
 
-    const jobPreviewImageUrl = jobItems.length > 0 ? jobItems[0].imageUrl : '';
-    
-    // Status Display
-    let statusLabel = isCompleted ? 'WASHED' : 'WASHING';
-    let statusColor = isCompleted ? 'success' : 'primary';
-    let messageLine = isCompleted ? 'Ready to collect' : `Estimated completion: ${completionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    let messageLine = isCompleted ? 'Ready' : `${completionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
     return (
         <Paper 
             elevation={0}
+            onClick={() => setExpanded(!expanded)}
             sx={{
-                mb: 3,
-                p: 3,
-                borderRadius: 6, // M3 Large Rounded
+                mb: 0,
+                borderRadius: 4, 
                 bgcolor: 'background.paper',
                 border: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 3,
-                transition: theme.transitions.create(['transform', 'box-shadow', 'border-color'], {
-                    easing: theme.transitions.easing.emphasized,
-                    duration: theme.transitions.duration.medium
-                }),
+                borderColor: isCompleted ? 'success.main' : 'divider',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                animation: !isCompleted ? `${vibrate} 1s infinite linear` : 'none',
+                transition: theme.transitions.create(['transform', 'box-shadow', 'border-color']),
                 '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4],
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[6],
                     borderColor: 'primary.main',
-                }
+                },
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative'
             }}
         >
-            {/* 1. Item Image Stack (Visual Representation) */}
-            <Box sx={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
-                {jobItems.slice(0, 3).map((item, index) => (
-                    <Box
-                        key={item.id}
-                        sx={{
-                            position: 'absolute',
-                            width: 60,
-                            height: 60,
-                            borderRadius: 3, // M3 Small Rounded
-                            bgcolor: 'surfaceVariant.main',
-                            backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : 'none',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            border: '2px solid',
-                            borderColor: 'background.paper',
-                            left: index * 10,
-                            top: index * 10,
-                            zIndex: 3 - index,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: 2,
-                            transition: 'all 0.3s cubic-bezier(0.2, 0.0, 0.0, 1.0)'
-                        }}
-                    >
-                        {!item.imageUrl && <CheckroomIcon sx={{ fontSize: 30, opacity: 0.5 }} />}
-                    </Box>
-                ))}
+            {/* Top Control Panel */}
+            <Box sx={{ 
+                bgcolor: 'surfaceVariant.main', 
+                p: 1.5, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                borderBottom: '2px solid',
+                borderColor: 'background.default'
+            }}>
+                <Box sx={{ 
+                    bgcolor: 'background.paper', 
+                    px: 2, 
+                    py: 0.5, 
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    fontFamily: 'monospace',
+                    color: isCompleted ? 'success.main' : 'text.primary',
+                    fontWeight: 'bold',
+                    letterSpacing: 1
+                }}>
+                    {messageLine}
+                </Box>
+                <Box sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    boxShadow: 2
+                }}>
+                    {validItems.length}
+                </Box>
             </Box>
 
-            {/* 2. Job Info and Progress */}
-            <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 200 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="titleLarge" color="text.primary" sx={{ fontWeight: 600 }}>
-                        Wash Job #{jobDetails.id.slice(0, 4)}
-                    </Typography>
-                    <Chip 
-                        label={statusLabel} 
-                        color={statusColor} 
-                        size="small" 
-                        sx={{ fontWeight: 'bold', borderRadius: 1.5 }} 
+            {/* Machine Body & Door */}
+            <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                <Box sx={{ position: 'relative', width: 140, height: 140, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {/* The Progress Ring (Dotted border replaced by actual progress) */}
+                    <CircularProgress 
+                        variant="determinate" 
+                        value={100} 
+                        size={140} 
+                        thickness={2} 
+                        sx={{ color: 'divider', position: 'absolute' }} 
                     />
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {jobItems.length} items • Completed on {completionDate.toLocaleDateString()}
-                </Typography>
-
-                <Box sx={{ mt: 2, mb: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <TimerIcon sx={{ fontSize: 14 }} /> {messageLine}
-                        </Typography>
-                        <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold' }}>
-                            {Math.round(progress)}%
-                        </Typography>
-                    </Box>
-                    <LinearProgress 
+                    <CircularProgress 
                         variant="determinate" 
                         value={progress} 
+                        size={140} 
+                        thickness={4} 
                         sx={{ 
-                            height: 8, 
-                            borderRadius: 4,
-                            bgcolor: 'surfaceVariant.main',
-                            '& .MuiLinearProgress-bar': {
-                                borderRadius: 4,
-                                transition: theme.transitions.create('transform', {
-                                    easing: theme.transitions.easing.emphasized,
-                                    duration: theme.transitions.duration.long
-                                })
-                            }
+                            color: isCompleted ? 'success.main' : 'primary.main', 
+                            position: 'absolute',
+                            strokeLinecap: 'round',
+                            transition: 'color 0.5s'
                         }} 
                     />
+                    
+                    {/* The Glass Door */}
+                    <Box sx={{
+                        width: 110,
+                        height: 110,
+                        borderRadius: '50%',
+                        bgcolor: 'background.default',
+                        border: '4px solid',
+                        borderColor: 'divider',
+                        boxShadow: 'inset 0 4px 10px rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        zIndex: 1
+                    }}>
+                        {validItems.length > 0 ? (
+                            validItems[carouselIndex]?.imageUrl ? (
+                                <Box
+                                    component="img"
+                                    src={validItems[carouselIndex].imageUrl}
+                                    sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        opacity: isCompleted ? 1 : 0.8,
+                                        transition: 'opacity 0.2s'
+                                    }}
+                                />
+                            ) : (
+                                <CheckroomIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
+                            )
+                        ) : (
+                            <Typography variant="caption" color="text.secondary">Empty</Typography>
+                        )}
+                        {/* Reflection overlay for glass effect */}
+                        <Box sx={{
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)',
+                            borderRadius: '50%',
+                            pointerEvents: 'none'
+                        }} />
+                    </Box>
                 </Box>
             </Box>
 
-            {/* 3. Action Area */}
-            <Box sx={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                {isCompleted ? (
-                    <Grow in={true} timeout={500}>
+            {/* Collect Button */}
+            {isCompleted && (
+                <Grow in={true}>
+                    <Box sx={{ p: 2, pt: 0 }}>
                         <Button
                             variant="contained"
                             color="success"
                             fullWidth
                             startIcon={<CalendarTodayIcon />}
-                            onClick={() => onMarkCollected(jobDetails.id)}
-                            sx={{ 
-                                borderRadius: 3, 
-                                py: 1.25,
-                                transition: theme.transitions.create(['transform', 'box-shadow'], {
-                                    easing: theme.transitions.easing.emphasized,
-                                    duration: theme.transitions.duration.short
-                                }),
-                                boxShadow: theme.shadows[2],
-                                '&:hover': { transform: 'scale(1.02)', boxShadow: theme.shadows[4] }
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onMarkCollected(jobDetails.id);
                             }}
+                            sx={{ borderRadius: 3, fontWeight: 'bold' }}
                         >
                             Collect
                         </Button>
-                    </Grow>
-                ) : (
-                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary', transition: 'opacity 0.5s' }}>
-                        In Progress...
+                    </Box>
+                </Grow>
+            )}
+
+            {/* Expandable Items List */}
+            <Collapse in={expanded} timeout="auto" unmountOnExit>
+                <Box sx={{ 
+                    p: 2, 
+                    borderTop: '1px solid', 
+                    borderColor: 'divider',
+                    bgcolor: 'background.default'
+                }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 'bold', color: 'text.secondary' }}>
+                        Clothes Inside
                     </Typography>
-                )}
-            </Box>
+                    <Grid container spacing={1.5}>
+                        {validItems.map(item => (
+                            <Grid item xs={6} key={item.id}>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.5, 
+                                    bgcolor: 'background.paper', 
+                                    p: 1, 
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider'
+                                }}>
+                                    <Avatar 
+                                        variant="rounded" 
+                                        src={item.imageUrl} 
+                                        sx={{ width: 40, height: 40, bgcolor: 'surfaceVariant.main' }}
+                                    >
+                                        {!item.imageUrl && <CheckroomIcon fontSize="small" />}
+                                    </Avatar>
+                                    <Typography variant="caption" noWrap sx={{ fontWeight: 500, flexGrow: 1 }}>
+                                        {item.name || 'Unnamed Item'}
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            </Collapse>
         </Paper>
     );
 };

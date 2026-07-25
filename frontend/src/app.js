@@ -232,20 +232,17 @@ const SkeletonItemCard = () => (
 
 const SkeletonWashJobCard = () => (
     <Box sx={{ 
-        bgcolor: 'background.paper', p: 3, borderRadius: 4, 
-        border: '1px solid', borderColor: 'divider', mb: 2 
+        bgcolor: 'background.paper', borderRadius: 4, 
+        border: '1px solid', borderColor: 'divider', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column'
     }}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-            <Box>
-                <Skeleton variant="text" animation="wave" width={120} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
-                <Skeleton variant="text" animation="wave" width={180} height={20} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
-            </Box>
-            <Skeleton variant="rounded" animation="wave" width={80} height={28} sx={{ borderRadius: 4, bgcolor: 'primary.main', opacity: 0.1 }} />
+        <Box sx={{ bgcolor: 'surfaceVariant.main', p: 1.5, display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid', borderColor: 'background.default' }}>
+            <Skeleton variant="rounded" animation="wave" width={60} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+            <Skeleton variant="circular" animation="wave" width={32} height={32} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
         </Box>
-        <Box display="flex" gap={1} mb={2}>
-            {[1, 2, 3].map(i => <Skeleton key={i} variant="circular" animation="wave" width={40} height={40} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />)}
+        <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Skeleton variant="circular" animation="wave" width={140} height={140} sx={{ bgcolor: 'primary.main', opacity: 0.05 }} />
         </Box>
-        <Skeleton variant="rounded" animation="wave" width="100%" height={36} sx={{ borderRadius: 20, bgcolor: 'primary.main', opacity: 0.1 }} />
     </Box>
 );
 
@@ -1367,11 +1364,13 @@ function MainApp() {
                             <Fade in={isLoading} timeout={400}>
                                 <Box>
                                     {view === 'jobs' ? (
-                                        <Box>
+                                        <Grid container spacing={3}>
                                             {Array.from(new Array(parseInt(localStorage.getItem(`cachedCount_${view}`)) || 3)).map((_, idx) => (
-                                                <SkeletonWashJobCard key={idx} />
+                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={idx}>
+                                                    <SkeletonWashJobCard />
+                                                </Grid>
                                             ))}
-                                        </Box>
+                                        </Grid>
                                     ) : (
                                         <Grid container spacing={2}>
                                             {Array.from(new Array(parseInt(localStorage.getItem(`cachedCount_${view}`)) || 4)).map((_, idx) => (
@@ -1391,17 +1390,21 @@ function MainApp() {
                                         items.length === 0 ? (
                                             <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                                         ) : (
-                                            items.map((job, index) => (
-                                                <Grow in={true} key={job.id} timeout={(index + 1) * 200}>
-                                                    <Box sx={{ mb: 2 }}>
-                                                        <WashJobCard 
-                                                            jobDetails={job} 
-                                                            itemsInJob={job.itemsInJob} 
-                                                            onMarkCollected={handleMarkCollected}
-                                                        />
-                                                    </Box>
-                                                </Grow>
-                                            ))
+                                            <Grid container spacing={3}>
+                                                {items.map((job, index) => (
+                                                    <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={job.id}>
+                                                        <Grow in={true} timeout={(index + 1) * 200}>
+                                                            <Box>
+                                                                <WashJobCard 
+                                                                    jobDetails={job} 
+                                                                    itemsInJob={job.itemsInJob} 
+                                                                    onMarkCollected={handleMarkCollected}
+                                                                />
+                                                            </Box>
+                                                        </Grow>
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
                                         )
                                     ) : items.length === 0 ? (
                                         <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
