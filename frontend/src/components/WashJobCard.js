@@ -146,17 +146,17 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                         {validItems.length > 0 ? (
                             <Box sx={{
                                 display: 'flex',
-                                width: `${marqueeItems.length * 100}%`,
+                                width: 'max-content',
                                 height: '100%',
-                                animation: `${marquee} ${validItems.length * 3}s linear infinite`,
+                                animation: `${marquee} ${validItems.length * 1.5}s linear infinite`,
                                 '&:hover': {
                                     animationPlayState: 'paused'
                                 }
                             }}>
                                 {marqueeItems.map((item, idx) => (
                                     <Box key={`${item.id}-${idx}`} sx={{ 
-                                        width: `${100 / marqueeItems.length}%`, 
-                                        height: '100%', 
+                                        width: '110px', 
+                                        height: '110px', 
                                         display: 'flex', 
                                         justifyContent: 'center', 
                                         alignItems: 'center',
