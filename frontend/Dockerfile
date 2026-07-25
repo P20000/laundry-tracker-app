@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json ./
 COPY package-lock.json ./
 # 2. Install dependencies (This layer is cached heavily)
-RUN npm ci
+RUN npm install
 
 # --- STAGE 2: Builder (Production Build) ---
 FROM node:20-slim AS builder
