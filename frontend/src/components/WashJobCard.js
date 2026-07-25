@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
@@ -12,7 +12,15 @@ const marquee = keyframes`
 export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
-    
+    // Live-ticking clock so the progress ring updates every second
+    const [now, setNow] = useState(() => new Date());
+    const intervalRef = useRef(null);
+
+    useEffect(() => {
+        intervalRef.current = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(intervalRef.current);
+    }, []);
+
     const jobItems = itemsInJob || [];
     const validItems = jobItems.filter(item => item && item.id);
     
@@ -21,9 +29,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
 
     // Calculate the completion time status
     const completionDate = jobDetails.completionTime ? new Date(jobDetails.completionTime) : new Date();
-    const now = new Date();
-    
-    // Try to get start time from the DB, otherwise calculate it from duration
+
+    // Derive start time: prefer explicit DB fields, then back-calculate from durationHours
     let startTime;
     if (jobDetails.createdAt) {
         startTime = new Date(jobDetails.createdAt);
@@ -32,7 +39,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     } else if (jobDetails.durationHours) {
         startTime = new Date(completionDate.getTime() - jobDetails.durationHours * 3600000);
     } else {
-        startTime = completionDate; // Fallback if nothing is available
+        startTime = new Date(completionDate.getTime() - 3600000); // fallback: assume 1h
     }
 
     const isCompleted = completionDate <= now || jobDetails.status === 'COMPLETED';
@@ -134,8 +141,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                         sx={{ 
                             color: isCompleted ? 'success.main' : 'primary.main', 
                             position: 'absolute',
-                            strokeLinecap: 'round',
-                            transition: 'color 0.5s'
+                            transition: 'color 0.5s',
+                            '& circle': { strokeLinecap: 'round' }
                         }} 
                     />
                     
