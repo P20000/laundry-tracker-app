@@ -20,11 +20,21 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const marqueeItems = [...validItems, ...validItems];
 
     // Calculate the completion time status
-    const startTimeStr = jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime;
-    const startTime = startTimeStr ? new Date(startTimeStr) : new Date();
     const completionDate = jobDetails.completionTime ? new Date(jobDetails.completionTime) : new Date();
     const now = new Date();
     
+    // Try to get start time from the DB, otherwise calculate it from duration
+    let startTime;
+    if (jobDetails.createdAt) {
+        startTime = new Date(jobDetails.createdAt);
+    } else if (jobDetails.startTime) {
+        startTime = new Date(jobDetails.startTime);
+    } else if (jobDetails.durationHours) {
+        startTime = new Date(completionDate.getTime() - jobDetails.durationHours * 3600000);
+    } else {
+        startTime = completionDate; // Fallback if nothing is available
+    }
+
     const isCompleted = completionDate <= now || jobDetails.status === 'COMPLETED';
     
     // Calculate progress percentage, avoiding NaN
