@@ -1,37 +1,22 @@
-# --- STAGE 1: Dependency Cache Layer ---
-FROM node:20-slim AS deps
-WORKDIR /app
-# 1. Copy ONLY package files
-COPY package.json ./
-COPY package-lock.json ./
-# 2. Install dependencies (This layer is cached heavily)
-RUN npm install
-
-# --- STAGE 2: Builder (Production Build) ---
-FROM node:20-slim AS builder
+# --- STAGE 1: Builder ---
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# 3. Copy installed dependencies from the cached layer (FAST)
-COPY --from=deps /app/node_modules ./node_modules
-# 4. Copy package files (needed for react-scripts to run)
-COPY package.json ./
-COPY package-lock.json ./
+COPY package.json package-lock.json ./
+# Use BuildKit cache for faster npm installs
+RUN --mount=type=cache,target=/root/.npm npm install
 
-# 5. Copy SOURCE CODE (This is the layer that changes frequently and invalidates cache)
 COPY src ./src
 COPY public ./public
 
-# 6. Run the build (Outputs to /app/build)
 RUN npm run build
 
-# --- STAGE 3: Final (Nginx Runner) ---
-FROM nginx:stable-alpine AS final
+# --- STAGE 2: Final (Nginx Runner) ---
+FROM nginx:alpine-slim AS final
 
-# Set default config
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy compiled assets from the builder stage (FAST)
 COPY --from=builder /app/build /usr/share/nginx/html
 
 EXPOSE 80
