@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
-    CircularProgress, Fade, Grow, Zoom, // Transition helpers
+    CircularProgress, Fade, Grow, Zoom, Skeleton // Transition helpers
 } from '@mui/material';
 
 // --- Separately Imported Icons (All are mandatory) ---
@@ -203,6 +203,51 @@ const EmptyState = ({ view, onAddClick }) => {
         </Grow>
     );
 };
+
+// --- Ghost Loading States (Skeletons) ---
+const SkeletonItemCard = () => (
+    <Box sx={(theme) => ({
+        bgcolor: 'background.paper', 
+        border: '1px solid', borderColor: 'divider', 
+        borderRadius: 6, overflow: 'hidden' 
+    })}>
+        <Skeleton variant="rectangular" animation="wave" height={160} sx={{ bgcolor: 'primary.main', opacity: 0.05 }} />
+        <Box sx={{ p: 2 }}>
+            <Box display="flex" justifyContent="space-between" mb={2} mt={1}>
+                <Skeleton variant="text" animation="wave" width="60%" height={28} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                <Skeleton variant="rounded" animation="wave" width={60} height={24} sx={{ borderRadius: 4, bgcolor: 'primary.main', opacity: 0.1 }} />
+            </Box>
+            <Box display="flex" gap={1} mb={2}>
+                <Skeleton variant="rounded" animation="wave" width={50} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                <Skeleton variant="rounded" animation="wave" width={60} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+            </Box>
+            <Box sx={{ mt: 'auto', display: 'flex', gap: 1, pt: 1 }}>
+                <Skeleton variant="rounded" animation="wave" height={32} sx={{ flexGrow: 1, borderRadius: 20, bgcolor: 'primary.main', opacity: 0.1 }} />
+                <Skeleton variant="circular" animation="wave" width={32} height={32} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                <Skeleton variant="circular" animation="wave" width={32} height={32} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+            </Box>
+        </Box>
+    </Box>
+);
+
+const SkeletonWashJobCard = () => (
+    <Box sx={{ 
+        bgcolor: 'background.paper', p: 3, borderRadius: 4, 
+        border: '1px solid', borderColor: 'divider', mb: 2 
+    }}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+            <Box>
+                <Skeleton variant="text" animation="wave" width={120} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                <Skeleton variant="text" animation="wave" width={180} height={20} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+            </Box>
+            <Skeleton variant="rounded" animation="wave" width={80} height={28} sx={{ borderRadius: 4, bgcolor: 'primary.main', opacity: 0.1 }} />
+        </Box>
+        <Box display="flex" gap={1} mb={2}>
+            {[1, 2, 3].map(i => <Skeleton key={i} variant="circular" animation="wave" width={40} height={40} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />)}
+        </Box>
+        <Skeleton variant="rounded" animation="wave" width="100%" height={36} sx={{ borderRadius: 20, bgcolor: 'primary.main', opacity: 0.1 }} />
+    </Box>
+);
 
 const ItemCard = ({ item, onUpdateStatus, onViewDetails, onDeleteItem, onOpenDamageEditor, isSelectionMode, onToggleSelection, isSelected }) => {
     // --- DYNAMIC STATUS LOGIC ---
@@ -731,6 +776,10 @@ function MainApp() {
             }
 
             const data = await res.json();
+            
+            // Cache the item count for dynamic skeletons
+            localStorage.setItem(`cachedCount_${view}`, data.length);
+
             return data.map(item => ({
                 ...item,
                 lastWashed: item.lastWashed ? new Date(item.lastWashed) : null,
@@ -1307,9 +1356,25 @@ function MainApp() {
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
                         {isLoading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-                                <CircularProgress color="primary" size={60} />
-                            </Box>
+                            <Fade in={isLoading} timeout={400}>
+                                <Box>
+                                    {view === 'jobs' ? (
+                                        <Box>
+                                            {Array.from(new Array(parseInt(localStorage.getItem(`cachedCount_${view}`)) || 3)).map((_, idx) => (
+                                                <SkeletonWashJobCard key={idx} />
+                                            ))}
+                                        </Box>
+                                    ) : (
+                                        <Grid container spacing={2}>
+                                            {Array.from(new Array(parseInt(localStorage.getItem(`cachedCount_${view}`)) || 4)).map((_, idx) => (
+                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={idx}>
+                                                    <SkeletonItemCard />
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    )}
+                                </Box>
+                            </Fade>
                         ) : (
                             <Fade in={!isLoading} key={view} timeout={400}>
                                 <Box>

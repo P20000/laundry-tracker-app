@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
     Box, Grid, Paper, Typography, Table, TableBody, TableCell, 
-    TableContainer, TableHead, TableRow, Chip, Card, CardContent 
+    TableContainer, TableHead, TableRow, Chip, Card, CardContent,
+    Skeleton, Fade
 } from '@mui/material';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -26,6 +27,26 @@ const StatCard = ({ title, value, icon, color }) => (
     </Card>
 );
 
+const SkeletonDashboard = () => (
+    <Box p={3}>
+        <Skeleton variant="text" animation="wave" width={250} height={48} sx={{ mb: 4, opacity: 0.1 }} />
+        <Grid container spacing={3} mb={4}>
+            {[1, 2, 3].map(i => (
+                <Grid item xs={12} sm={4} key={i}>
+                    <Skeleton variant="rounded" animation="wave" height={140} sx={{ borderRadius: 4, bgcolor: 'primary.main', opacity: 0.1 }} />
+                </Grid>
+            ))}
+        </Grid>
+        <Grid container spacing={3}>
+            {[1, 2, 3].map(i => (
+                <Grid item xs={12} md={6} key={i}>
+                    <Skeleton variant="rounded" animation="wave" height={400} sx={{ borderRadius: 4, bgcolor: 'primary.main', opacity: 0.1 }} />
+                </Grid>
+            ))}
+        </Grid>
+    </Box>
+);
+
 export const Dashboard = ({ apiUrl, token }) => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -47,7 +68,15 @@ export const Dashboard = ({ apiUrl, token }) => {
         fetchStats();
     }, [apiUrl, token]);
 
-    if (loading) return <Box p={4}>Loading Analytics...</Box>;
+    if (loading) {
+        return (
+            <Fade in={loading} timeout={400}>
+                <Box>
+                    <SkeletonDashboard />
+                </Box>
+            </Fade>
+        );
+    }
     if (!stats) return <Box p={4}>Failed to load dashboard.</Box>;
 
     // Prepare chart data

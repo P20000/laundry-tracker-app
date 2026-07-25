@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, CircularProgress, Chip, Divider } from '@mui/material';
+import { Box, Typography, CircularProgress, Chip, Divider, Skeleton, Fade } from '@mui/material';
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
 
 const processHistory = (history) => {
@@ -19,6 +19,28 @@ const processHistory = (history) => {
         };
     });
 };
+
+const SkeletonTimeline = () => (
+    <Box sx={{ p: 2, maxWidth: 500, margin: '0 auto' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 4 }}>
+            <Divider sx={{ flexGrow: 1 }} />
+            <Skeleton variant="rounded" animation="wave" width={80} height={24} sx={{ mx: 1, borderRadius: 16, bgcolor: 'primary.main', opacity: 0.1 }} />
+            <Divider sx={{ flexGrow: 1 }} />
+        </Box>
+        {[1, 2, 3].map(i => (
+            <Box key={i} sx={{ mb: 3, position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 0.5 }}>
+                    <Skeleton variant="circular" animation="wave" width={24} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1, zIndex: 2 }} />
+                    {i < 3 && <Box sx={{ width: '2px', height: 40, bgcolor: 'divider', flexGrow: 1, mt: '-1px' }} />}
+                </Box>
+                <Box sx={{ pb: 0, width: '100%' }}>
+                    <Skeleton variant="text" animation="wave" width={100} height={24} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                    <Skeleton variant="text" animation="wave" width={140} height={20} sx={{ bgcolor: 'primary.main', opacity: 0.1 }} />
+                </Box>
+            </Box>
+        ))}
+    </Box>
+);
 
 export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
     const [history, setHistory] = useState(null);
@@ -50,7 +72,13 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
 
     const processedData = useMemo(() => processHistory(history || []), [history]);
     
-    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+    if (loading) {
+        return (
+            <Fade in={loading} timeout={400}>
+                <Box><SkeletonTimeline /></Box>
+            </Fade>
+        );
+    }
     if (error) return <Typography color="error" sx={{ p: 2 }}>Error loading history: {error}</Typography>;
     
     if (processedData.length === 0) {
