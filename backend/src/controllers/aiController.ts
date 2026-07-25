@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-import { GoogleGenerativeAI, Part } from "@google/generative-ai";
+import OpenAI from 'openai';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Initialize OpenAI client for NVIDIA NIM
+const openai = new OpenAI({
+  apiKey: process.env.NIM_API_KEY || "",
+  baseURL: "https://integrate.api.nvidia.com/v1",
+});
 
 export const scanItemImage = async (req: Request, res: Response) => {
     try {
@@ -12,27 +15,15 @@ export const scanItemImage = async (req: Request, res: Response) => {
             return res.status(400).json({ error: "No image provided" });
         }
 
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server." });
+        if (!process.env.NIM_API_KEY) {
+            return res.status(500).json({ error: "NIM_API_KEY is not configured on the server." });
         }
 
-        // 1. Prepare the image for Gemini
+        // 1. Prepare the image
         // We assume the frontend sends a base64 string with potential data:image/xxxPrefix
         const base64Data = imageUrl.split(",")[1] || imageUrl;
         const mimeType = imageUrl.split(";")[0].split(":")[1] || "image/jpeg";
-
-        const imagePart: Part = {
-            inlineData: {
-                data: base64Data,
-                mimeType,
-            },
-        };
-
-        // 2. Setup the model
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            generationConfig: { responseMimeType: "application/json" }
-        });
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
         const prompt = `
             Analyze this clothing item image. Extract physical details and return them strictly in the following JSON format:
@@ -45,14 +36,39 @@ export const scanItemImage = async (req: Request, res: Response) => {
             }
         `;
 
-        // 3. Generate content
-        console.log("AI Scan: Sending request to Gemini...");
-        const result = await model.generateContent([prompt, imagePart]);
-        const response = await result.response;
-        const text = response.text();
-        console.log("AI Scan: Received response from Gemini:", text);
+        // 2. Generate content
+        console.log("AI Scan: Sending request to NVIDIA NIM...");
+        const response = await openai.chat.completions.create({
+            model: "meta/llama-3.2-90b-vision-instruct",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: prompt },
+                        { type: "image_url", image_url: { url: dataUrl } }
+                    ]
+                }
+            ],
+            max_tokens: 1024,
+            temperature: 0.1,
+        });
 
-        // 4. Parse and return JSON
+        let text = response.choices[0]?.message?.content || "{}";
+        console.log("AI Scan: Received response from NIM:", text);
+
+        // Strip markdown blocks if present (some models return ```json ... ```)
+        text = text.trim();
+        if (text.startsWith("\`\`\`json")) {
+            text = text.substring(7);
+        } else if (text.startsWith("\`\`\`")) {
+            text = text.substring(3);
+        }
+        if (text.endsWith("\`\`\`")) {
+            text = text.substring(0, text.length - 3);
+        }
+        text = text.trim();
+
+        // 3. Parse and return JSON
         const aiData = JSON.parse(text);
         
         return res.status(200).json(aiData);
@@ -66,8 +82,8 @@ export const scanItemImage = async (req: Request, res: Response) => {
         });
         
         let errorMessage = "Failed to scan image with AI";
-        if (error.message?.includes("API_KEY_INVALID") || error.message?.includes("API key not found")) {
-            errorMessage = "Invalid Gemini API Key. Please check your environment variables.";
+        if (error.message?.includes("API key") || error.status === 401 || error.status === 403) {
+            errorMessage = "Invalid NIM API Key. Please check your environment variables.";
         }
 
         return res.status(500).json({ 
