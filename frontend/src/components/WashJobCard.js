@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Button, useTheme, CircularProgress, LinearProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
+import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
 import { keyframes } from '@mui/system';
@@ -236,7 +236,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                         borderColor: 'divider',
                     }}>
                         {/* Label row */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                                 {timeRemaining}
                             </Typography>
@@ -244,21 +244,6 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                                 {Math.round(progress)}%
                             </Typography>
                         </Box>
-                        {/* Track */}
-                        <LinearProgress
-                            variant="determinate"
-                            value={progress}
-                            sx={{
-                                height: 6,
-                                borderRadius: 3,
-                                bgcolor: 'divider',
-                                '& .MuiLinearProgress-bar': {
-                                    borderRadius: 3,
-                                    bgcolor: 'primary.main',
-                                    transition: 'transform 1s linear',
-                                }
-                            }}
-                        />
                     </Box>
                 </Box>
             )}
