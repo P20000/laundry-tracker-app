@@ -106,20 +106,20 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
             </Box>
 
             {/* Machine Body & Door */}
-            <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-                <Box sx={{ position: 'relative', width: 140, height: 140, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                <Box sx={{ position: 'relative', width: 220, height: 220, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {/* The Progress Ring (Dotted border replaced by actual progress) */}
                     <CircularProgress 
                         variant="determinate" 
                         value={100} 
-                        size={140} 
+                        size={220} 
                         thickness={2} 
                         sx={{ color: 'divider', position: 'absolute' }} 
                     />
                     <CircularProgress 
                         variant="determinate" 
                         value={progress} 
-                        size={140} 
+                        size={220} 
                         thickness={4} 
                         sx={{ 
                             color: isCompleted ? 'success.main' : 'primary.main', 
@@ -131,8 +131,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                     
                     {/* The Glass Door */}
                     <Box sx={{
-                        width: 110,
-                        height: 110,
+                        width: 180,
+                        height: 180,
                         borderRadius: '50%',
                         bgcolor: 'background.default',
                         border: '4px solid',
@@ -155,8 +155,8 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                             }}>
                                 {marqueeItems.map((item, idx) => (
                                     <Box key={`${item.id}-${idx}`} sx={{ 
-                                        width: '110px', 
-                                        height: '110px', 
+                                        width: '180px', 
+                                        height: '180px', 
                                         display: 'flex', 
                                         justifyContent: 'center', 
                                         alignItems: 'center',
@@ -174,7 +174,7 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                                                 }}
                                             />
                                         ) : (
-                                            <CheckroomIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
+                                            <CheckroomIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
                                         )}
                                     </Box>
                                 ))}
