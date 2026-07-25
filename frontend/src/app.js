@@ -682,6 +682,8 @@ function MainApp() {
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Used for history view
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [pendingAdd, setPendingAdd] = useState(false); // For Ghost Loading Add
+    const [pendingDeleteId, setPendingDeleteId] = useState(null); // For Ghost Loading Delete
     
     // Form State 
 
@@ -843,13 +845,16 @@ function MainApp() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
-                fetchItems(); 
                 setSaveSuccess(true);
                 setTimeout(() => {
                     // Reset and Close
                     setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
                     setIsSaving(false);
                     setSaveSuccess(false);
+                    
+                    // Show ghost card instantly and fetch
+                    setPendingAdd(true);
+                    fetchItems().then(() => setPendingAdd(false));
                 }, 600);
             } else {
                 setIsSaving(false);
@@ -918,13 +923,14 @@ function MainApp() {
         }
 
         try {
+            setPendingDeleteId(id); // Show Ghost Card for deletion
             const res = await fetch(`${API_PROTECTED_URL}/items/${id}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders(token),
             });
 
             if (res.ok) {
-                fetchItems(); // Refresh the list
+                await fetchItems(); // Refresh the list, ghost card disappears when new items arrive
             } else if (res.status === 401) {
                 handleLogout();
             } else {
@@ -932,6 +938,8 @@ function MainApp() {
             }
         } catch (err) {
             showNotification("Network error deleting item:", err);
+        } finally {
+            setPendingDeleteId(null);
         }
     };
 
@@ -1399,20 +1407,31 @@ function MainApp() {
                                         <EmptyState view={view} onAddClick={() => setIsAddItemModalOpen(true)} />
                                     ) : (
                                         <Grid container spacing={2}>
+                                            {pendingAdd && view === 'catalog' && (
+                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={3}>
+                                                    <Fade in={true} timeout={400}>
+                                                        <Box><SkeletonItemCard /></Box>
+                                                    </Fade>
+                                                </Grid>
+                                            )}
                                             {items.map((item, index) => (
                                                 <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={item.id}>
                                                     <Grow in={true} timeout={(index + 1) * 150}>
                                                         <Box>
-                                                            <ItemCard 
-                                                                item={item} 
-                                                                onUpdateStatus={handleStatusChange} 
-                                                                onViewDetails={handleOpenHistoryModal}
-                                                                onDeleteItem={handleDeleteItem}
-                                                                onOpenDamageEditor={handleOpenDamageEditor}
-                                                                isSelectionMode={isBatchWashOpen}
-                                                                onToggleSelection={handleToggleItemSelection}
-                                                                isSelected={selectedItemIds.includes(item.id)}
-                                                            />
+                                                            {pendingDeleteId === item.id ? (
+                                                                <SkeletonItemCard />
+                                                            ) : (
+                                                                <ItemCard 
+                                                                    item={item} 
+                                                                    onUpdateStatus={handleStatusChange} 
+                                                                    onViewDetails={handleOpenHistoryModal}
+                                                                    onDeleteItem={handleDeleteItem}
+                                                                    onOpenDamageEditor={handleOpenDamageEditor}
+                                                                    isSelectionMode={isBatchWashOpen}
+                                                                    onToggleSelection={handleToggleItemSelection}
+                                                                    isSelected={selectedItemIds.includes(item.id)}
+                                                                />
+                                                            )}
                                                         </Box>
                                                     </Grow>
                                                 </Grid>
