@@ -119,4 +119,11 @@ app.listen(PORT, async () => {
     } catch (e: any) {
         // Silence errors here too
     }
+
+    try {
+        await client.execute("ALTER TABLE wash_jobs ADD COLUMN startTime TEXT");
+        console.log("✅ Added startTime column to wash_jobs table.");
+    } catch (e: any) {
+        // Column already exists — silence
+    }
 });

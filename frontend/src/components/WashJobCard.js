@@ -30,22 +30,21 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     // Calculate the completion time status
     const completionDate = jobDetails.completionTime ? new Date(jobDetails.completionTime) : new Date();
 
-    // Derive start time: prefer explicit DB fields, then back-calculate from durationHours
+    // Use startTime directly from the DB (set when job is created).
+    // Fall back to durationHours calculation for any jobs created before this fix.
     let startTime;
-    if (jobDetails.createdAt) {
-        startTime = new Date(jobDetails.createdAt);
-    } else if (jobDetails.startTime) {
+    if (jobDetails.startTime) {
         startTime = new Date(jobDetails.startTime);
     } else if (jobDetails.durationHours) {
-        // Cast to Number: libsql returns integers as BigInt which breaks arithmetic
-        startTime = new Date(completionDate.getTime() - Number(jobDetails.durationHours) * 3600000);
+        const durationMs = Number(jobDetails.durationHours) * 3600 * 1000;
+        startTime = new Date(completionDate.getTime() - durationMs);
     } else {
-        startTime = new Date(completionDate.getTime() - 3600000); // fallback: assume 1h
+        startTime = new Date(completionDate.getTime() - 3600000); // last-resort: assume 1h
     }
 
     const isCompleted = completionDate <= now || jobDetails.status === 'COMPLETED';
-    
-    // Calculate progress percentage, avoiding NaN
+
+    // Calculate progress percentage
     let progress = 0;
     if (isCompleted) {
         progress = 100;

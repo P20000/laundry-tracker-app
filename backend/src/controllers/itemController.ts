@@ -336,8 +336,8 @@ export const createWashJob = async (req: Request, res: Response) => {
 
         await client.batch([
             {
-                sql: "INSERT INTO wash_jobs (id, userId, durationHours, completionTime) VALUES (?, ?, ?, ?)",
-                args: [jobId, userId, durationHours, completionTime.toISOString()]
+                sql: "INSERT INTO wash_jobs (id, userId, durationHours, startTime, completionTime) VALUES (?, ?, ?, ?, ?)",
+                args: [jobId, userId, durationHours, startTime.toISOString(), completionTime.toISOString()]
             },
             { 
                 sql: itemUpdateSql, 
@@ -446,18 +446,17 @@ export const getActiveWashJobs = async (req: Request, res: Response) => {
         const jobGroups = jobDetails.map(job => {
             const itemsInThisJob = washingItems.filter(item => item.jobId === job.id);
             return {
-                id: job.id,
-                userId: job.userId,
-                status: job.status,
+                id: String(job.id),
+                userId: String(job.userId),
+                status: String(job.status ?? 'IN_PROGRESS'),
                 durationHours: Number(job.durationHours),   // BigInt → Number
-                completionTime: job.completionTime,
-                createdAt: job.createdAt ?? null,
-                startTime: job.startTime ?? null,
+                startTime: job.startTime ? String(job.startTime) : null,
+                completionTime: job.completionTime ? String(job.completionTime) : null,
                 itemsInJob: itemsInThisJob.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    category: item.category,
-                    imageUrl: item.imageUrl
+                    id: String(item.id),
+                    name: item.name ? String(item.name) : null,
+                    category: item.category ? String(item.category) : null,
+                    imageUrl: item.imageUrl ? String(item.imageUrl) : null
                 }))
             };
         });
