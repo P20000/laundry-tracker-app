@@ -2,16 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, useTheme, CircularProgress, Paper, Grow, Collapse, Grid, Avatar } from '@mui/material';
 import CheckroomIcon from '@mui/icons-material/Checkroom'; 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; 
-import { keyframes } from '@mui/system';
-
-const vibrate = keyframes`
-  0% { transform: translate(0) }
-  20% { transform: translate(-1px, 1px) }
-  40% { transform: translate(-1px, -1px) }
-  60% { transform: translate(1px, 1px) }
-  80% { transform: translate(1px, -1px) }
-  100% { transform: translate(0) }
-`;
 
 export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     const theme = useTheme();
@@ -31,16 +21,24 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
     }, [validItems.length]);
 
     // Calculate the completion time status
-    const startTime = new Date(jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime);
-    const completionDate = new Date(jobDetails.completionTime);
+    const startTimeStr = jobDetails.createdAt || jobDetails.startTime || jobDetails.completionTime;
+    const startTime = startTimeStr ? new Date(startTimeStr) : new Date();
+    const completionDate = jobDetails.completionTime ? new Date(jobDetails.completionTime) : new Date();
     const now = new Date();
     
     const isCompleted = completionDate <= now || jobDetails.status === 'COMPLETED';
     
-    // Calculate progress percentage
-    const totalDuration = completionDate.getTime() - startTime.getTime();
-    const elapsed = now.getTime() - startTime.getTime();
-    const progress = isCompleted ? 100 : Math.min(Math.max((elapsed / totalDuration) * 100, 5), 95);
+    // Calculate progress percentage, avoiding NaN
+    let progress = 0;
+    if (isCompleted) {
+        progress = 100;
+    } else {
+        const totalDuration = completionDate.getTime() - startTime.getTime();
+        const elapsed = now.getTime() - startTime.getTime();
+        if (totalDuration > 0) {
+            progress = Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
+        }
+    }
 
     let messageLine = isCompleted ? 'Ready' : `${completionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
@@ -56,7 +54,6 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                 borderColor: isCompleted ? 'success.main' : 'divider',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                animation: !isCompleted ? `${vibrate} 1s infinite linear` : 'none',
                 transition: theme.transitions.create(['transform', 'box-shadow', 'border-color']),
                 '&:hover': {
                     transform: 'translateY(-4px)',
@@ -143,30 +140,60 @@ export const WashJobCard = ({ itemsInJob, jobDetails, onMarkCollected }) => {
                         borderColor: 'divider',
                         boxShadow: 'inset 0 4px 10px rgba(0,0,0,0.1)',
                         display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
                         overflow: 'hidden',
                         position: 'relative',
                         zIndex: 1
                     }}>
                         {validItems.length > 0 ? (
-                            validItems[carouselIndex]?.imageUrl ? (
-                                <Box
-                                    component="img"
-                                    src={validItems[carouselIndex].imageUrl}
-                                    sx={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        opacity: isCompleted ? 1 : 0.8,
-                                        transition: 'opacity 0.2s'
-                                    }}
-                                />
-                            ) : (
-                                <CheckroomIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
-                            )
+                            <Box sx={{
+                                display: 'flex',
+                                width: '100%',
+                                height: '100%',
+                                transition: 'transform 0.5s ease-in-out',
+                                transform: `translateX(-${carouselIndex * 100}%)`
+                            }}>
+                                {validItems.map((item, idx) => (
+                                    <Box key={idx} sx={{ 
+                                        minWidth: '100%', 
+                                        height: '100%', 
+                                        display: 'flex', 
+                                        justifyContent: 'center', 
+                                        alignItems: 'center' 
+                                    }}>
+                                        {item.imageUrl ? (
+                                            <Box
+                                                component="img"
+                                                src={item.imageUrl}
+                                                sx={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    opacity: isCompleted ? 1 : 0.8,
+                                                }}
+                                            />
+                                        ) : (
+                                            <CheckroomIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
+                                        )}
+                                    </Box>
+                                ))}
+                            </Box>
                         ) : (
-                            <Typography variant="caption" color="text.secondary">Empty</Typography>
+                            <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">Empty</Typography>
+                            </Box>
+                        )}
+                        {/* Progress text overlay inside the door if running */}
+                        {!isCompleted && (
+                            <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                    position: 'absolute', bottom: 4, width: '100%', textAlign: 'center', 
+                                    fontWeight: 'bold', color: 'primary.main', bgcolor: 'rgba(255,255,255,0.7)',
+                                    pointerEvents: 'none'
+                                }}
+                            >
+                                {Math.round(progress)}%
+                            </Typography>
                         )}
                         {/* Reflection overlay for glass effect */}
                         <Box sx={{
