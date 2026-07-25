@@ -2,6 +2,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Accept optional API base URL override (used for local docker-compose testing)
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+
 COPY package.json package-lock.json ./
 # Use BuildKit cache for faster npm installs
 RUN --mount=type=cache,target=/root/.npm npm install

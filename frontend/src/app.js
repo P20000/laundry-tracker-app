@@ -60,8 +60,8 @@ const CustomLogo = (props) => (
 
 
 // --- Configuration ---
-// Ensure your backend is running on this port
-const API_BASE_URL = 'https://laundry-tracker-backend.onrender.com'; 
+// In production: points to Render. Locally: override via REACT_APP_API_BASE_URL build arg.
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://laundry-tracker-backend.onrender.com';
 const API_PROTECTED_URL = `${API_BASE_URL}/api/v1`;
 const AUTH_TOKEN_KEY = 'auth_token';
 

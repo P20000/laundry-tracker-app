@@ -72,3 +72,12 @@ VITE specific environment files
 
 frontend/.env.development
 frontend/.env.production
+
+-----------------------------------------------------------
+
+LOCAL DEVELOPMENT (docker-compose local testing)
+
+-----------------------------------------------------------
+
+docker-compose.local.yml
+dev.sh
