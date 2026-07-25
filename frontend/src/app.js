@@ -13,6 +13,7 @@ import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
 import WarningIcon from '@mui/icons-material/Warning'; 
 import ArchiveIcon from '@mui/icons-material/Archive'; 
 import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -632,6 +633,8 @@ function App() {
     // NEW STATES: For Batch Creation Workflow
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false); // Used for single item add
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false); // Used for history view
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     
     // Form State 
     const [isLoading, setIsLoading] = useState(false);
@@ -794,6 +797,7 @@ function App() {
             damageLevel: 1, // ADDED
         };
         try {
+            setIsSaving(true);
             const res = await fetch(`${API_PROTECTED_URL}/items`, {
                 method: 'POST',
                 headers: getAuthHeaders(token),
@@ -801,10 +805,17 @@ function App() {
             });
             if (res.ok) {
                 fetchItems(); 
-                // Reset and Close
-                setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
+                setSaveSuccess(true);
+                setTimeout(() => {
+                    // Reset and Close
+                    setNewItemName(''); setNewItemImagePreview(null); setNewItemImageBlob(null); setIsAddItemModalOpen(false);
+                    setIsSaving(false);
+                    setSaveSuccess(false);
+                }, 600);
+            } else {
+                setIsSaving(false);
             }
-        } catch (err) { showNotification("Network error adding item:", err); }
+        } catch (err) { setIsSaving(false); showNotification("Network error adding item:", err); }
     };
 
     // NEW HANDLER: Calls the Gemini API to analyze the image
@@ -1504,7 +1515,24 @@ function App() {
                 {!selectedItem && (
                     <DialogActions sx={{ p: 3 }}>
                         <Button onClick={() => { setIsAddItemModalOpen(false); setSelectedItem(null); }} color="primary">Cancel</Button>
-                        <Button onClick={handleAddItem} variant="contained" color="primary" disableElevation>Save Item</Button>
+                        <Button 
+                            onClick={handleAddItem} 
+                            variant="contained" 
+                            disableElevation
+                            disabled={isSaving || saveSuccess}
+                            sx={{ 
+                                width: 120, // fixed width to prevent layout shift
+                                transition: 'all 0.3s ease',
+                                bgcolor: saveSuccess ? 'success.main' : 'primary.main',
+                                '&:hover': { bgcolor: saveSuccess ? 'success.dark' : 'primary.dark' },
+                                '&.Mui-disabled': {
+                                    bgcolor: saveSuccess ? 'success.main' : 'action.disabledBackground',
+                                    color: saveSuccess ? '#fff' : 'action.disabled'
+                                }
+                            }}
+                        >
+                            {saveSuccess ? <CheckIcon /> : isSaving ? <CircularProgress size={24} color="inherit" /> : "Save Item"}
+                        </Button>
                     </DialogActions>
                 )}
             </Dialog>
