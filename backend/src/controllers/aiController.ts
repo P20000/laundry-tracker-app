@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client for NVIDIA NIM
-const openai = new OpenAI({
-  apiKey: process.env.NIM_API_KEY || "",
-  baseURL: "https://integrate.api.nvidia.com/v1",
-});
+let openai: OpenAI | null = null;
 
 export const scanItemImage = async (req: Request, res: Response) => {
     try {
@@ -17,6 +13,13 @@ export const scanItemImage = async (req: Request, res: Response) => {
 
         if (!process.env.NIM_API_KEY) {
             return res.status(500).json({ error: "NIM_API_KEY is not configured on the server." });
+        }
+
+        if (!openai) {
+            openai = new OpenAI({
+              apiKey: process.env.NIM_API_KEY,
+              baseURL: "https://integrate.api.nvidia.com/v1",
+            });
         }
 
         // 1. Prepare the image
