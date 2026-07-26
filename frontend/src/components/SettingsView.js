@@ -118,6 +118,7 @@ export const SettingsView = ({ apiUrl, token, onLogout }) => {
     const handleSendOtp = async () => {
         setSendingOtp(true);
         setOtpMsg('');
+        setOtpCode('');
         try {
             const res = await fetch(`${apiUrl}/user/send-otp`, {
                 method: 'POST',
@@ -126,12 +127,7 @@ export const SettingsView = ({ apiUrl, token, onLogout }) => {
             const data = await res.json();
             if (res.ok) {
                 setOtpSeverity('success');
-                if (data.otp) {
-                    setOtpCode(data.otp);
-                    setOtpMsg(`OTP code generated! (Code: ${data.otp})`);
-                } else {
-                    setOtpMsg(`Verification OTP code sent to ${userEmail}!`);
-                }
+                setOtpMsg(`Verification OTP code sent to ${userEmail}! Please check your email inbox.`);
             } else {
                 setOtpSeverity('error');
                 setOtpMsg(data.error || 'Failed to send OTP code.');
