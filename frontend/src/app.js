@@ -1615,21 +1615,35 @@ function MainApp() {
             </Dialog>
             
             {/* History Modal */}
-            <Dialog open={isHistoryModalOpen} onClose={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} fullWidth maxWidth="md">
-                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-                    History: {selectedItem?.name}
-                    <IconButton onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} size="small"><CloseIcon /></IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ pt: 0 }}>
-                    <Box sx={{ minHeight: 300 }}>
-                        {selectedItem && (
-                            <WashHistoryTimeline 
-                                itemId={selectedItem.id} 
-                                apiUrl={API_PROTECTED_URL} 
-                                token={localStorage.getItem(AUTH_TOKEN_KEY)} 
-                            />
-                        )}
+            <Dialog
+                open={isHistoryModalOpen}
+                onClose={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{ sx: { maxHeight: '90vh' } }}
+            >
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', pb: 0.5 }}>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>{selectedItem?.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {selectedItem?.category} · {selectedItem?.size} · Last washed:{' '}
+                            {selectedItem?.lastWashed
+                                ? new Date(selectedItem.lastWashed).toLocaleDateString()
+                                : 'Never'}
+                        </Typography>
                     </Box>
+                    <IconButton onClick={() => { setIsHistoryModalOpen(false); setSelectedItem(null); }} size="small" sx={{ mt: 0.5 }}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 1, overflowY: 'auto' }}>
+                    {selectedItem && (
+                        <WashHistoryTimeline
+                            itemId={selectedItem.id}
+                            apiUrl={API_PROTECTED_URL}
+                            token={localStorage.getItem(AUTH_TOKEN_KEY)}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 
