@@ -1,18 +1,19 @@
 import nodemailer from 'nodemailer';
 
-const MAILTRAP_DEFAULT_TOKEN = 'b521816ebfa9a5bccdc9152cded48a44';
-
 const getTransporter = () => {
     const host = process.env.SMTP_HOST || 'live.smtp.mailtrap.io';
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
     const user = process.env.SMTP_USER || 'api';
-    const pass = process.env.SMTP_PASS || process.env.MAILTRAP_TOKEN || MAILTRAP_DEFAULT_TOKEN;
+    const pass = process.env.SMTP_PASS || process.env.MAILTRAP_TOKEN || 'b521816ebfa9a5bccdc9152cded48a44';
 
     return nodemailer.createTransport({
         host,
         port,
         name: 'laundrytracker.app',
         secure: port === 465,
+        connectionTimeout: 4000, // Fast 4-second timeout to prevent API hanging
+        greetingTimeout: 4000,
+        socketTimeout: 5000,
         auth: { user, pass }
     });
 };
