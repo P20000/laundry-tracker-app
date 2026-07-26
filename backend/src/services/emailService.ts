@@ -10,6 +10,8 @@ interface IMailtrapSendOptions {
     text: string;
     html?: string;
     category?: string;
+    fromName?: string;
+    replyTo?: string;
 }
 
 export interface IEmailResult {
@@ -23,13 +25,16 @@ export interface IEmailResult {
  * falling back to Mailtrap HTTPS API.
  */
 const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> => {
+    const senderName = options.fromName || process.env.FROM_NAME || 'Smart Laundry Tracker';
+    const portNum = Number(process.env.SMTP_PORT) || 465;
+
     // 1. Try Nodemailer SMTP if configured in environment
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         try {
             const transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
-                port: Number(process.env.SMTP_PORT) || 587,
-                secure: Number(process.env.SMTP_PORT) === 465,
+                port: portNum,
+                secure: portNum === 465,
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS
@@ -37,8 +42,9 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
             });
 
             const info = await transporter.sendMail({
-                from: `"${process.env.FROM_NAME || 'Smart Laundry Tracker'}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+                from: `"${senderName}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
                 to: options.to,
+                replyTo: options.replyTo || options.to,
                 subject: options.subject,
                 text: options.text,
                 html: options.html || options.text
