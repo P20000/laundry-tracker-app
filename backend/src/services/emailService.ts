@@ -15,8 +15,21 @@ const getTransporter = () => {
         host,
         port,
         secure: port === 465,
+        connectionTimeout: 5000, // 5-second fast connection timeout
+        greetingTimeout: 5000,   // 5-second greeting timeout
+        socketTimeout: 7000,     // 7-second socket timeout
         auth: { user, pass }
     });
+};
+
+/**
+ * Helper to race a Promise against a maximum timeout (7 seconds max)
+ */
+const sendMailWithTimeout = async (transporter: nodemailer.Transporter, mailOptions: nodemailer.SendMailOptions): Promise<any> => {
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP Email send request timed out after 7 seconds.')), 7000)
+    );
+    return Promise.race([transporter.sendMail(mailOptions), timeoutPromise]);
 };
 
 export const sendOtpEmail = async (
@@ -47,7 +60,7 @@ export const sendOtpEmail = async (
             </div>
         `;
 
-        const info = await transporter.sendMail({
+        const info: any = await sendMailWithTimeout(transporter, {
             from: fromEmail,
             to: recipientEmail,
             subject,
@@ -92,7 +105,7 @@ export const sendWashReminderEmail = async (
             </div>
         `;
 
-        const info = await transporter.sendMail({
+        const info: any = await sendMailWithTimeout(transporter, {
             from: fromEmail,
             to: recipientEmail,
             subject,
@@ -168,7 +181,7 @@ export const sendSmartWashDigestEmail = async (
             </div>
         `;
 
-        const info = await transporter.sendMail({
+        const info: any = await sendMailWithTimeout(transporter, {
             from: fromEmail,
             to: recipientEmail,
             subject,
