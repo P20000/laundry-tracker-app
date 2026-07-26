@@ -374,14 +374,30 @@ export const checkWashJobs = async (req: Request, res: Response) => {
             return res.status(200).json({ message: "No jobs completed yet." });
         }
 
-        // Execute both table updates in a single batch query
+        // 2. Find all items belonging to completed jobs so we can record wash history
         const placeholders = completedJobIds.map(() => '?').join(', ');
+        const affectedItemsQuery = await client.execute({
+            sql: `SELECT id FROM clothing_items WHERE userId = ? AND jobId IN (${placeholders})`,
+            args: [userId, ...completedJobIds]
+        });
+        const affectedItemIds = affectedItemsQuery.rows.map(row => row.id as string);
+
+        // 3. Build batch: insert wash_events for each item + update statuses
+        const washEventInserts = affectedItemIds.map(itemId => ({
+            sql: `INSERT INTO wash_events (clothingItemId, washDate, createdAt)
+                  VALUES (?, datetime('now'), datetime('now'))`,
+            args: [itemId]
+        }));
 
         await client.batch([
+            // Insert wash_events for every affected item
+            ...washEventInserts,
+            // Mark items CLEAN
             {
                 sql: `UPDATE clothing_items SET currentStatus = 'CLEAN', lastWashed = datetime('now'), jobId = NULL WHERE userId = ? AND jobId IN (${placeholders})`,
                 args: [userId, ...completedJobIds]
             },
+            // Mark jobs COMPLETED
             {
                 sql: `UPDATE wash_jobs SET status = 'COMPLETED' WHERE id IN (${placeholders})`,
                 args: completedJobIds
