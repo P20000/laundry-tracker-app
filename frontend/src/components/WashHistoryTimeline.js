@@ -9,8 +9,6 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
-import EmailIcon from '@mui/icons-material/Email';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS & PALETTE
@@ -128,10 +126,7 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
     // Month Navigation State (Default to current month)
     const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
-    // Email Notification State
-    const [emailSending, setEmailSending] = useState(false);
-    const [emailSuccessMsg, setEmailSuccessMsg] = useState('');
-    const [emailErrorMsg, setEmailErrorMsg] = useState('');
+
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -176,41 +171,7 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
         setCurrentViewDate(new Date());
     };
 
-    // Send Email Reminder Handler
-    const handleSendEmailReminder = async () => {
-        if (!itemId || !token) return;
-        setEmailSending(true);
-        setEmailSuccessMsg('');
-        setEmailErrorMsg('');
-        try {
-            const scheduledDateStr = stats?.predictedDate 
-                ? `${MONTH_NAMES_FULL[stats.predictedDate.getMonth()]} ${stats.predictedDate.getDate()}, ${stats.predictedDate.getFullYear()}`
-                : new Date().toLocaleDateString();
 
-            const res = await fetch(`${apiUrl}/items/${itemId}/reminder`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    scheduledDate: scheduledDateStr,
-                    reason: 'Next Predicted Wash Day'
-                })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                setEmailSuccessMsg(data.message || 'Wash reminder email sent!');
-            } else {
-                setEmailErrorMsg(data.error || 'Failed to send email reminder.');
-            }
-        } catch (err) {
-            setEmailErrorMsg('Network error sending email reminder.');
-        } finally {
-            setEmailSending(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -258,18 +219,6 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
     return (
         <Fade in timeout={300}>
             <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto', p: 1 }}>
-
-                {/* ── ALERTS / NOTIFICATIONS ── */}
-                {emailSuccessMsg && (
-                    <Alert severity="success" onClose={() => setEmailSuccessMsg('')} sx={{ mb: 1.5, py: 0, fontSize: '0.75rem' }}>
-                        {emailSuccessMsg}
-                    </Alert>
-                )}
-                {emailErrorMsg && (
-                    <Alert severity="error" onClose={() => setEmailErrorMsg('')} sx={{ mb: 1.5, py: 0, fontSize: '0.75rem' }}>
-                        {emailErrorMsg}
-                    </Alert>
-                )}
 
                 {/* ── 1. COMPACT STATS ROW (MUI3 Style) ── */}
                 {stats ? (
@@ -355,7 +304,7 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
                     </Box>
                 ) : null}
 
-                {/* ── 2. COMPACT LEGEND & EMAIL REMINDER BAR ── */}
+                {/* ── 2. COMPACT LEGEND BAR ── */}
                 <Box sx={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     flexWrap: 'wrap', gap: 1, mb: 1.5, px: 0.5
@@ -387,19 +336,6 @@ export const WashHistoryTimeline = ({ itemId, apiUrl, token }) => {
                             </Typography>
                         </Box>
                     </Box>
-
-                    {/* Send Email Reminder Button */}
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleSendEmailReminder}
-                        disabled={emailSending}
-                        startIcon={emailSending ? <CircularProgress size={12} color="inherit" /> : <EmailIcon sx={{ fontSize: 14 }} />}
-                        sx={{ fontSize: '0.65rem', py: 0.25, px: 1, borderRadius: 3, textTransform: 'none', height: 24 }}
-                    >
-                        {emailSending ? 'Sending...' : 'Email Reminder'}
-                    </Button>
                 </Box>
 
                 {/* ── 3. INTERACTIVE MONTH SWITCHER HEADER ── */}
