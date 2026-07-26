@@ -7,27 +7,27 @@ const GMAIL_PASS = process.env.SMTP_PASS || 'kbutomcczpehiohl';
 
 const getTransporter = () => {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const user = GMAIL_USER;
     const pass = GMAIL_PASS;
 
     return nodemailer.createTransport({
         host,
         port,
-        secure: port === 465,
-        connectionTimeout: 5000, // 5-second fast connection timeout
-        greetingTimeout: 5000,   // 5-second greeting timeout
-        socketTimeout: 7000,     // 7-second socket timeout
+        secure: port === 465 || process.env.SMTP_SECURE === 'true', // Port 465 direct SSL/TLS for instant delivery
+        connectionTimeout: 6000,
+        greetingTimeout: 6000,
+        socketTimeout: 8000,
         auth: { user, pass }
     });
 };
 
 /**
- * Helper to race a Promise against a maximum timeout (7 seconds max)
+ * Helper to race a Promise against a maximum timeout (8 seconds max)
  */
 const sendMailWithTimeout = async (transporter: nodemailer.Transporter, mailOptions: nodemailer.SendMailOptions): Promise<any> => {
     const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP Email send request timed out after 7 seconds.')), 7000)
+        setTimeout(() => reject(new Error('SMTP Email send request timed out after 8 seconds.')), 8000)
     );
     return Promise.race([transporter.sendMail(mailOptions), timeoutPromise]);
 };
