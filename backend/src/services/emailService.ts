@@ -29,7 +29,7 @@ export interface IEmailResult {
  */
 const sendEmail = async (options: IMailSendOptions): Promise<IEmailResult> => {
     const senderName = options.fromName || process.env.FROM_NAME || 'Smart Laundry Tracker';
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromEmail = process.env.FROM_EMAIL || 'pranavdwivedi45645@gmail.com';
 
     // 1. Primary: Resend SDK (REST API over Port 443)
     const resendApiKey = process.env.RESEND_API_KEY;
