@@ -32,6 +32,7 @@ import { protect } from './middleware/authMiddleware';
 // --- NEW IMPORT FOR ADMIN DASHBOARD ---
 import { getSystemStats } from './controllers/adminController'; 
 import { scanItemImage } from './controllers/aiController'; 
+import { initEmailScheduler } from './services/schedulerService'; 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -165,4 +166,12 @@ app.listen(PORT, async () => {
         await client.execute("ALTER TABLE users ADD COLUMN email_otp_expires TEXT");
         console.log("✅ Added email_otp_expires column to users table.");
     } catch (e: any) {}
+
+    try {
+        await client.execute("ALTER TABLE users ADD COLUMN last_digest_sent_at TEXT");
+        console.log("✅ Added last_digest_sent_at column to users table.");
+    } catch (e: any) {}
+
+    // Initialize automated smart wash digest email scheduler
+    initEmailScheduler();
 });
