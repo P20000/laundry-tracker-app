@@ -3,7 +3,7 @@ import { client } from '../db'; // Import the raw LibSQL client
 import { IClothingItem, INewItemPayload } from '../../../shared/types'; 
 // import { logEvent } from './adminController'; // Optional: Uncomment if admin controller exists
 import { randomUUID } from 'crypto';
-import { sendWashReminderEmail, sendSmartWashDigestEmail, IDigestItem } from '../services/emailService';
+import { sendWashReminderEmail, sendSmartWashDigestEmail, sendOtpEmail, IDigestItem } from '../services/emailService';
 
 // --- Constants ---
 const MAX_CLEAN_DAYS = 15; // Days before an item is considered overdue for washing
@@ -615,7 +615,7 @@ export const getUserSettings = async (req: Request, res: Response) => {
 
     try {
         const userQuery = await client.execute({
-            sql: `SELECT id, email, email_notifications_enabled FROM users WHERE id = ?`,
+            sql: `SELECT id, email, email_notifications_enabled, is_email_verified FROM users WHERE id = ?`,
             args: [userId]
         });
 
@@ -627,7 +627,8 @@ export const getUserSettings = async (req: Request, res: Response) => {
         return res.status(200).json({
             id: String(user.id),
             email: String(user.email),
-            emailNotificationsEnabled: user.email_notifications_enabled !== 0
+            emailNotificationsEnabled: user.email_notifications_enabled !== 0,
+            isEmailVerified: Number(user.is_email_verified || 0) === 1
         });
     } catch (error: unknown) {
         console.error('Error fetching user settings:', error);
@@ -737,5 +738,107 @@ export const sendSmartWashDigest = async (req: Request, res: Response) => {
     } catch (error: unknown) {
         console.error('Error sending smart wash digest:', error);
         return res.status(500).json({ error: 'Failed to send smart wash digest.', details: getErrorMessage(error) });
+    }
+};
+
+/**
+ * Generate 6-digit OTP code, save in DB with 10-min expiry, and dispatch OTP email
+ */
+export const sendOtp = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        const userQuery = await client.execute({
+            sql: `SELECT email FROM users WHERE id = ?`,
+            args: [userId]
+        });
+
+        if (userQuery.rows.length === 0 || !userQuery.rows[0].email) {
+            return res.status(404).json({ error: 'User email not found.' });
+        }
+
+        const recipientEmail = String(userQuery.rows[0].email);
+
+        // Generate 6-digit numeric OTP code
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+        // Log OTP in server console for easy testing/debugging
+        console.log(`🔑 [OTP DEBUG] Verification Code for ${recipientEmail}: ${otpCode}`);
+
+        await client.execute({
+            sql: `UPDATE users SET email_otp_code = ?, email_otp_expires = ? WHERE id = ?`,
+            args: [otpCode, expiresAt, userId]
+        });
+
+        const emailSent = await sendOtpEmail(recipientEmail, otpCode);
+
+        return res.status(200).json({
+            message: `Verification OTP code sent to ${recipientEmail}.`,
+            email: recipientEmail,
+            emailSent
+        });
+    } catch (error: unknown) {
+        console.error('Error in sendOtp:', error);
+        return res.status(500).json({ error: 'Failed to send verification OTP.', details: getErrorMessage(error) });
+    }
+};
+
+/**
+ * Verify 6-digit OTP code against database record
+ */
+export const verifyOtp = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    const { otp } = req.body || {};
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+    if (!otp || typeof otp !== 'string') {
+        return res.status(400).json({ error: 'Please enter a 6-digit OTP verification code.' });
+    }
+
+    try {
+        const userQuery = await client.execute({
+            sql: `SELECT email_otp_code, email_otp_expires FROM users WHERE id = ?`,
+            args: [userId]
+        });
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        const user = userQuery.rows[0];
+        const storedOtp = user.email_otp_code ? String(user.email_otp_code).trim() : null;
+        const expiresStr = user.email_otp_expires ? String(user.email_otp_expires) : null;
+
+        if (!storedOtp || !expiresStr) {
+            return res.status(400).json({ error: 'No active OTP requested. Click "Send OTP" to receive a new code.' });
+        }
+
+        const now = new Date();
+        const expiresAt = new Date(expiresStr);
+
+        if (now > expiresAt) {
+            return res.status(400).json({ error: 'OTP code has expired. Please request a new verification code.' });
+        }
+
+        if (otp.trim() !== storedOtp) {
+            return res.status(400).json({ error: 'Invalid OTP code. Please check your email and try again.' });
+        }
+
+        // OTP Valid! Mark email verified in DB & clear OTP fields
+        await client.execute({
+            sql: `UPDATE users SET is_email_verified = 1, email_otp_code = NULL, email_otp_expires = NULL WHERE id = ?`,
+            args: [userId]
+        });
+
+        return res.status(200).json({
+            message: 'Email address verified successfully!',
+            isEmailVerified: true
+        });
+
+    } catch (error: unknown) {
+        console.error('Error in verifyOtp:', error);
+        return res.status(500).json({ error: 'Failed to verify OTP.', details: getErrorMessage(error) });
     }
 };

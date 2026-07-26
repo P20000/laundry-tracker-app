@@ -21,7 +21,9 @@ import {
     sendWashReminder,
     getUserSettings,
     updateUserSettings,
-    sendSmartWashDigest
+    sendSmartWashDigest,
+    sendOtp,
+    verifyOtp
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -79,6 +81,8 @@ protectedRouter.get('/admin/dashboard', getSystemStats);
 protectedRouter.get('/user/settings', getUserSettings);
 protectedRouter.patch('/user/settings', updateUserSettings);
 protectedRouter.post('/user/send-wash-digest', sendSmartWashDigest);
+protectedRouter.post('/user/send-otp', sendOtp);
+protectedRouter.post('/user/verify-otp', verifyOtp);
 
 // --- ITEM ROUTES ---
 protectedRouter.post('/items', createItem);
@@ -146,4 +150,19 @@ app.listen(PORT, async () => {
     } catch (e: any) {
         // Column already exists — silence
     }
+
+    try {
+        await client.execute("ALTER TABLE users ADD COLUMN is_email_verified INTEGER DEFAULT 0");
+        console.log("✅ Added is_email_verified column to users table.");
+    } catch (e: any) {}
+
+    try {
+        await client.execute("ALTER TABLE users ADD COLUMN email_otp_code TEXT");
+        console.log("✅ Added email_otp_code column to users table.");
+    } catch (e: any) {}
+
+    try {
+        await client.execute("ALTER TABLE users ADD COLUMN email_otp_expires TEXT");
+        console.log("✅ Added email_otp_expires column to users table.");
+    } catch (e: any) {}
 });

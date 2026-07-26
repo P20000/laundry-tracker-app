@@ -20,12 +20,55 @@ const getTransporter = () => {
             console.log('📧 [Email Service - Simulated Send]:', {
                 to: options.to,
                 subject: options.subject,
-                itemCount: options.itemCount,
                 text: options.text
             });
             return { messageId: `simulated-${Date.now()}` };
         }
     };
+};
+
+export const sendOtpEmail = async (
+    recipientEmail: string,
+    otpCode: string
+): Promise<boolean> => {
+    try {
+        const transporter = getTransporter();
+        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <no-reply@laundrytracker.app>';
+
+        const subject = `🔒 ${otpCode} is your Laundry Tracker Verification Code`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #6750A4; margin: 0;">🧺 Smart Laundry Tracker</h2>
+                    <p style="color: #666; font-size: 14px; margin-top: 4px;">Email Account Verification</p>
+                </div>
+                <div style="background-color: #f3edf7; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #49454f;">Your 6-Digit Verification Code is:</p>
+                    <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #6750A4; margin: 8px 0;">
+                        ${otpCode}
+                    </div>
+                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #777;">Code expires in 10 minutes</p>
+                </div>
+                <p style="font-size: 13px; color: #555;">Please enter this code in your Laundry Tracker settings page to verify your email address.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="font-size: 11px; color: #999; text-align: center;">If you did not request this code, please ignore this email.</p>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: fromEmail,
+            to: recipientEmail,
+            subject,
+            text: `Your Laundry Tracker OTP verification code is ${otpCode}. It expires in 10 minutes.`,
+            html
+        });
+
+        console.log(`✅ OTP email sent to ${recipientEmail}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to send OTP email:', error);
+        return false;
+    }
 };
 
 export const sendWashReminderEmail = async (
