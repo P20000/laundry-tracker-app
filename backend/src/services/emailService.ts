@@ -1,30 +1,20 @@
 import nodemailer from 'nodemailer';
 
+const MAILTRAP_DEFAULT_TOKEN = 'b521816ebfa9a5bccdc9152cded48a44';
+
 const getTransporter = () => {
-    const host = process.env.SMTP_HOST;
+    const host = process.env.SMTP_HOST || 'live.smtp.mailtrap.io';
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const user = process.env.SMTP_USER || 'api';
+    const pass = process.env.SMTP_PASS || process.env.MAILTRAP_TOKEN || MAILTRAP_DEFAULT_TOKEN;
 
-    if (host && user && pass) {
-        return nodemailer.createTransport({
-            host,
-            port,
-            secure: port === 465,
-            auth: { user, pass }
-        });
-    }
-
-    return {
-        sendMail: async (options: any) => {
-            console.log('📧 [Email Service - Simulated Send]:', {
-                to: options.to,
-                subject: options.subject,
-                text: options.text
-            });
-            return { messageId: `simulated-${Date.now()}` };
-        }
-    };
+    return nodemailer.createTransport({
+        host,
+        port,
+        name: 'laundrytracker.app',
+        secure: port === 465,
+        auth: { user, pass }
+    });
 };
 
 export const sendOtpEmail = async (
@@ -33,7 +23,7 @@ export const sendOtpEmail = async (
 ): Promise<boolean> => {
     try {
         const transporter = getTransporter();
-        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <no-reply@laundrytracker.app>';
+        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <hello@demomailtrap.com>';
 
         const subject = `🔒 ${otpCode} is your Laundry Tracker Verification Code`;
         const html = `
@@ -63,10 +53,10 @@ export const sendOtpEmail = async (
             html
         });
 
-        console.log(`✅ OTP email sent to ${recipientEmail}`);
+        console.log(`✅ OTP email successfully dispatched via Mailtrap to ${recipientEmail}`);
         return true;
-    } catch (error) {
-        console.error('❌ Failed to send OTP email:', error);
+    } catch (error: any) {
+        console.error('❌ Failed to send OTP email via Mailtrap:', error?.message || error);
         return false;
     }
 };
@@ -79,7 +69,7 @@ export const sendWashReminderEmail = async (
 ): Promise<boolean> => {
     try {
         const transporter = getTransporter();
-        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <no-reply@laundrytracker.app>';
+        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <hello@demomailtrap.com>';
 
         const subject = `🧺 Wash Reminder: ${itemName} is due for a wash!`;
         const html = `
@@ -110,8 +100,8 @@ export const sendWashReminderEmail = async (
 
         console.log(`✅ Wash reminder email sent to ${recipientEmail} for item ${itemName}`);
         return true;
-    } catch (error) {
-        console.error('❌ Failed to send wash reminder email:', error);
+    } catch (error: any) {
+        console.error('❌ Failed to send wash reminder email:', error?.message || error);
         return false;
     }
 };
@@ -133,7 +123,7 @@ export const sendSmartWashDigestEmail = async (
 ): Promise<boolean> => {
     try {
         const transporter = getTransporter();
-        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <no-reply@laundrytracker.app>';
+        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <hello@demomailtrap.com>';
 
         const itemIdsParam = items.map(i => i.id).join(',');
         const deepLinkUrl = `${appBaseUrl}/?action=batch-wash&items=${encodeURIComponent(itemIdsParam)}`;
@@ -186,8 +176,8 @@ export const sendSmartWashDigestEmail = async (
 
         console.log(`✅ Smart Wash Digest email sent to ${recipientEmail} with ${items.length} items.`);
         return true;
-    } catch (error) {
-        console.error('❌ Failed to send Smart Wash Digest email:', error);
+    } catch (error: any) {
+        console.error('❌ Failed to send Smart Wash Digest email:', error?.message || error);
         return false;
     }
 };
