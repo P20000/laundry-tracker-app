@@ -590,15 +590,15 @@ export const sendWashReminder = async (req: Request, res: Response) => {
         const recipientEmail = String(userResult.rows[0].email);
         const dueDateStr = scheduledDate || new Date().toLocaleDateString();
 
-        const success = await sendWashReminderEmail(recipientEmail, itemName, dueDateStr, reason || 'Scheduled Wash Day');
+        const result = await sendWashReminderEmail(recipientEmail, itemName, dueDateStr, reason || 'Scheduled Wash Day');
 
-        if (success) {
+        if (result.success) {
             return res.status(200).json({
                 message: `Wash reminder email sent to ${recipientEmail} for ${itemName}.`,
                 email: recipientEmail
             });
         } else {
-            return res.status(500).json({ error: 'Failed to send reminder email.' });
+            return res.status(400).json({ error: result.message || 'Failed to send wash reminder email.' });
         }
     } catch (error: unknown) {
         console.error('Error sending wash reminder:', error);
@@ -724,16 +724,16 @@ export const sendSmartWashDigest = async (req: Request, res: Response) => {
         }
 
         const appBaseUrl = process.env.APP_BASE_URL || 'https://laundry-tracker-frontend.onrender.com';
-        const success = await sendSmartWashDigestEmail(recipientEmail, finalItems, appBaseUrl);
+        const result = await sendSmartWashDigestEmail(recipientEmail, finalItems, appBaseUrl);
 
-        if (success) {
+        if (result.success) {
             return res.status(200).json({
                 message: `Smart Wash Digest email sent to ${recipientEmail} with ${finalItems.length} item(s).`,
                 email: recipientEmail,
                 itemCount: finalItems.length
             });
         } else {
-            return res.status(500).json({ error: 'Failed to send Smart Wash Digest email.' });
+            return res.status(400).json({ error: result.message || 'Failed to send Smart Wash Digest email.' });
         }
     } catch (error: unknown) {
         console.error('Error sending smart wash digest:', error);

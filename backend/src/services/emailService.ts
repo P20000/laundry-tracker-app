@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -18,9 +19,43 @@ export interface IEmailResult {
 }
 
 /**
- * Sends emails via Mailtrap HTTPS API over Port 443 (never blocked by Render)
+ * Sends emails via SMTP if configured (SMTP_HOST/USER/PASS), 
+ * falling back to Mailtrap HTTPS API.
  */
-const sendViaMailtrapHttps = async (options: IMailtrapSendOptions): Promise<IEmailResult> => {
+const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> => {
+    // 1. Try Nodemailer SMTP if configured in environment
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: Number(process.env.SMTP_PORT) || 587,
+                secure: Number(process.env.SMTP_PORT) === 465,
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS
+                }
+            });
+
+            const info = await transporter.sendMail({
+                from: `"${process.env.FROM_NAME || 'Smart Laundry Tracker'}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+                to: options.to,
+                subject: options.subject,
+                text: options.text,
+                html: options.html || options.text
+            });
+
+            console.log(`✅ SMTP Email delivered to ${options.to}! Message ID:`, info.messageId);
+            return {
+                success: true,
+                message: `Email successfully delivered to ${options.to}!`,
+                messageIds: [info.messageId]
+            };
+        } catch (smtpErr: any) {
+            console.error(`❌ SMTP transport failed, trying Mailtrap API:`, smtpErr?.message || smtpErr);
+        }
+    }
+
+    // 2. Fallback: Mailtrap HTTPS API over Port 443
     const apiToken = process.env.MAILTRAP_TOKEN || process.env.SMTP_PASS || MAILTRAP_DEFAULT_TOKEN;
     const fromEmail = process.env.FROM_EMAIL || 'hello@demomailtrap.co';
     const fromName = process.env.FROM_NAME || 'Smart Laundry Tracker';
@@ -36,7 +71,7 @@ const sendViaMailtrapHttps = async (options: IMailtrapSendOptions): Promise<IEma
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6-second safety timeout
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         const response = await fetch('https://send.api.mailtrap.io/api/send', {
             method: 'POST',
@@ -59,7 +94,7 @@ const sendViaMailtrapHttps = async (options: IMailtrapSendOptions): Promise<IEma
                 messageIds: data.message_ids
             };
         } else {
-            const errDetail = data?.errors ? data.errors.join(', ') : 'Delivery rejected by provider';
+            const errDetail = data?.errors ? data.errors.join(', ') : 'Delivery rejected by email provider.';
             console.log(`ℹ️ Mailtrap HTTPS API info for ${options.to}:`, errDetail);
             return {
                 success: false,
@@ -78,7 +113,7 @@ const sendViaMailtrapHttps = async (options: IMailtrapSendOptions): Promise<IEma
 export const sendOtpEmail = async (
     recipientEmail: string,
     otpCode: string
-): Promise<boolean> => {
+): Promise<IEmailResult> => {
     const subject = `🔒 ${otpCode} is your Laundry Tracker Verification Code`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
@@ -99,15 +134,13 @@ export const sendOtpEmail = async (
         </div>
     `;
 
-    const result = await sendViaMailtrapHttps({
+    return await sendEmail({
         to: recipientEmail,
         subject,
         text: `Your Laundry Tracker OTP verification code is ${otpCode}. It expires in 10 minutes.`,
         html,
         category: 'OTP Verification'
     });
-
-    return result.success;
 };
 
 export const sendWashReminderEmail = async (
@@ -115,7 +148,7 @@ export const sendWashReminderEmail = async (
     itemName: string,
     dueDateStr: string,
     reason: string = 'Scheduled Wash Reminder'
-): Promise<boolean> => {
+): Promise<IEmailResult> => {
     const subject = `🧺 Wash Reminder: ${itemName} is due for a wash!`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fafafa;">
@@ -135,16 +168,13 @@ export const sendWashReminderEmail = async (
         </div>
     `;
 
-    const result = await sendViaMailtrapHttps({
+    return await sendEmail({
         to: recipientEmail,
         subject,
         text: `Wash Reminder for ${itemName}: Due on ${dueDateStr}.`,
         html,
         category: 'Wash Reminder'
     });
-
-    // Return true even if demo mode restricted external recipient so UI doesn't throw 500 error
-    return true;
 };
 
 export interface IDigestItem {
@@ -161,7 +191,7 @@ export const sendSmartWashDigestEmail = async (
     recipientEmail: string,
     items: IDigestItem[],
     appBaseUrl: string = 'https://laundry-tracker-frontend.onrender.com'
-): Promise<boolean> => {
+): Promise<IEmailResult> => {
     const itemIdsParam = items.map(i => i.id).join(',');
     const deepLinkUrl = `${appBaseUrl}/?action=batch-wash&items=${encodeURIComponent(itemIdsParam)}`;
 
@@ -203,14 +233,11 @@ export const sendSmartWashDigestEmail = async (
         </div>
     `;
 
-    const result = await sendViaMailtrapHttps({
+    return await sendEmail({
         to: recipientEmail,
         subject,
         text: `Smart Wash Digest: ${items.length} items ready for wash. Start batch wash: ${deepLinkUrl}`,
         html,
         category: 'Smart Wash Digest'
     });
-
-    // Return true so endpoint responds HTTP 200 with clean message instead of throwing 500 error
-    return true;
 };
