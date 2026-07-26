@@ -35,13 +35,16 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
                 host: process.env.SMTP_HOST,
                 port: portNum,
                 secure: portNum === 465,
+                connectionTimeout: 4000,
+                greetingTimeout: 4000,
+                socketTimeout: 4000,
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS
                 }
             });
 
-            const info = await transporter.sendMail({
+            const sendPromise = transporter.sendMail({
                 from: `"${senderName}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
                 to: options.to,
                 replyTo: options.replyTo || options.to,
@@ -50,6 +53,12 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
                 html: options.html || options.text
             });
 
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('SMTP connection timed out (port blocked)')), 4500)
+            );
+
+            const info: any = await Promise.race([sendPromise, timeoutPromise]);
+
             console.log(`✅ SMTP Email delivered to ${options.to}! Message ID:`, info.messageId);
             return {
                 success: true,
@@ -57,7 +66,7 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
                 messageIds: [info.messageId]
             };
         } catch (smtpErr: any) {
-            console.error(`❌ SMTP transport failed, trying Mailtrap API:`, smtpErr?.message || smtpErr);
+            console.error(`❌ SMTP transport failed or timed out, trying HTTPS API fallback:`, smtpErr?.message || smtpErr);
         }
     }
 
