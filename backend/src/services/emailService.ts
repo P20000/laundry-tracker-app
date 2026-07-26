@@ -35,14 +35,15 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
                 host: process.env.SMTP_HOST,
                 port: portNum,
                 secure: portNum === 465,
-                connectionTimeout: 4000,
-                greetingTimeout: 4000,
-                socketTimeout: 4000,
+                family: 4, // Force IPv4 DNS lookup to prevent ENETUNREACH on Docker/Render containers
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS
                 }
-            });
+            } as any);
 
             const sendPromise = transporter.sendMail({
                 from: `"${senderName}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
@@ -54,7 +55,7 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
             });
 
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('SMTP connection timed out (port blocked)')), 4500)
+                setTimeout(() => reject(new Error('SMTP connection timed out')), 10500)
             );
 
             const info: any = await Promise.race([sendPromise, timeoutPromise]);
@@ -71,7 +72,7 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
     }
 
     // 2. Fallback: Mailtrap HTTPS API over Port 443
-    const apiToken = process.env.MAILTRAP_TOKEN || process.env.SMTP_PASS || MAILTRAP_DEFAULT_TOKEN;
+    const apiToken = process.env.MAILTRAP_TOKEN || MAILTRAP_DEFAULT_TOKEN;
     const fromEmail = process.env.FROM_EMAIL || 'hello@demomailtrap.co';
     const fromName = process.env.FROM_NAME || 'Smart Laundry Tracker';
 
