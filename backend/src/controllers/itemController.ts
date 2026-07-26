@@ -484,3 +484,53 @@ export const getActiveWashJobs = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to fetch active wash jobs.' });
     }
 };
+
+/**
+ * ONE-TIME BACKFILL: Creates wash_events for items that have lastWashed
+ * set (e.g. via batch jobs) but have no corresponding wash_events record.
+ * Safe to run multiple times — the NOT EXISTS check prevents duplicates.
+ * Route will be removed after running once.
+ */
+export const backfillWashEvents = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Find all items that have lastWashed but zero wash_events records
+        const orphanedItems = await client.execute({
+            sql: `SELECT id, lastWashed FROM clothing_items
+                  WHERE userId = ?
+                    AND lastWashed IS NOT NULL
+                    AND NOT EXISTS (
+                        SELECT 1 FROM wash_events
+                        WHERE wash_events.clothingItemId = clothing_items.id
+                    )`,
+            args: [userId]
+        });
+
+        if (orphanedItems.rows.length === 0) {
+            return res.status(200).json({
+                message: 'Nothing to backfill — all items already have history.',
+                backfilled: 0
+            });
+        }
+
+        // Insert one wash_event per orphaned item using its lastWashed timestamp
+        const inserts = orphanedItems.rows.map(row => ({
+            sql: `INSERT INTO wash_events (clothingItemId, washDate, createdAt)
+                  VALUES (?, ?, ?)`,
+            args: [row.id, row.lastWashed, row.lastWashed]
+        }));
+
+        await client.batch(inserts, 'write');
+
+        return res.status(200).json({
+            message: `Backfilled wash_events for ${orphanedItems.rows.length} item(s).`,
+            backfilled: orphanedItems.rows.length,
+            items: orphanedItems.rows.map(r => r.id)
+        });
+    } catch (error: unknown) {
+        console.error('Backfill error:', error);
+        return res.status(500).json({ error: 'Backfill failed.', details: getErrorMessage(error) });
+    }
+};

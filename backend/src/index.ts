@@ -16,7 +16,8 @@ import {
     createWashJob,
     checkWashJobs,
     collectWashJob,
-    getActiveWashJobs 
+    getActiveWashJobs,
+    backfillWashEvents   // ONE-TIME migration — remove after use
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -91,6 +92,8 @@ protectedRouter.post('/wash-jobs/check', checkWashJobs);
 protectedRouter.patch('/wash-jobs/:id/collect', collectWashJob);
 // New Route: AI Smart Cataloging
 protectedRouter.post('/ai/scan-image', scanItemImage);
+// ONE-TIME migration route — remove after running once
+protectedRouter.post('/admin/backfill-wash-events', backfillWashEvents);
 // Mount all protected routes under /api/v1
 app.use('/api/v1', protectedRouter);
 
