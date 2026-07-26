@@ -17,7 +17,8 @@ import {
     checkWashJobs,
     collectWashJob,
     getActiveWashJobs,
-    backfillWashEvents   // ONE-TIME migration — remove after use
+    backfillWashEvents,   // ONE-TIME migration — remove after use
+    sendWashReminder
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -80,6 +81,7 @@ protectedRouter.delete('/items/:id', deleteItem);
 protectedRouter.get('/items/:id/history', getItemHistory);
 // Actions
 protectedRouter.post('/items/:id/wash', markAsWashed); 
+protectedRouter.post('/items/:id/reminder', sendWashReminder);
 protectedRouter.patch('/items/:id/status', updateItemStatus); 
 protectedRouter.patch('/items/:id/details', updateItemDetails);
 

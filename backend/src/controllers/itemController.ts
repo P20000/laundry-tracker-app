@@ -3,6 +3,7 @@ import { client } from '../db'; // Import the raw LibSQL client
 import { IClothingItem, INewItemPayload } from '../../../shared/types'; 
 // import { logEvent } from './adminController'; // Optional: Uncomment if admin controller exists
 import { randomUUID } from 'crypto';
+import { sendWashReminderEmail } from '../services/emailService';
 
 // --- Constants ---
 const MAX_CLEAN_DAYS = 15; // Days before an item is considered overdue for washing
@@ -552,5 +553,55 @@ export const backfillWashEvents = async (req: Request, res: Response) => {
     } catch (error: unknown) {
         console.error('Backfill error:', error);
         return res.status(500).json({ error: 'Backfill failed.', details: getErrorMessage(error) });
+    }
+};
+
+/**
+ * Send an email reminder to the user for a specific clothing item's wash day
+ */
+export const sendWashReminder = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId;
+    const { scheduledDate, reason } = req.body || {};
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Fetch item details & user email
+        const itemResult = await client.execute({
+            sql: `SELECT name FROM clothing_items WHERE id = ? AND userId = ?`,
+            args: [id, userId]
+        });
+
+        if (itemResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Item not found.' });
+        }
+
+        const userResult = await client.execute({
+            sql: `SELECT email FROM users WHERE id = ?`,
+            args: [userId]
+        });
+
+        if (userResult.rows.length === 0 || !userResult.rows[0].email) {
+            return res.status(404).json({ error: 'User email not found.' });
+        }
+
+        const itemName = String(itemResult.rows[0].name);
+        const recipientEmail = String(userResult.rows[0].email);
+        const dueDateStr = scheduledDate || new Date().toLocaleDateString();
+
+        const success = await sendWashReminderEmail(recipientEmail, itemName, dueDateStr, reason || 'Scheduled Wash Day');
+
+        if (success) {
+            return res.status(200).json({
+                message: `Wash reminder email sent to ${recipientEmail} for ${itemName}.`,
+                email: recipientEmail
+            });
+        } else {
+            return res.status(500).json({ error: 'Failed to send reminder email.' });
+        }
+    } catch (error: unknown) {
+        console.error('Error sending wash reminder:', error);
+        return res.status(500).json({ error: 'Failed to send wash reminder email.', details: getErrorMessage(error) });
     }
 };
