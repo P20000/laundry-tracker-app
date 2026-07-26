@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 
-// Configure Transporter from Environment Variables (Fallback to test/ethereal if missing)
 const getTransporter = () => {
     const host = process.env.SMTP_HOST;
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -16,14 +15,13 @@ const getTransporter = () => {
         });
     }
 
-    // Fallback: Console/Simulated transporter for development & testing
     return {
         sendMail: async (options: any) => {
             console.log('📧 [Email Service - Simulated Send]:', {
                 to: options.to,
                 subject: options.subject,
-                text: options.text,
-                html: options.html
+                itemCount: options.itemCount,
+                text: options.text
             });
             return { messageId: `simulated-${Date.now()}` };
         }
@@ -71,6 +69,82 @@ export const sendWashReminderEmail = async (
         return true;
     } catch (error) {
         console.error('❌ Failed to send wash reminder email:', error);
+        return false;
+    }
+};
+
+export interface IDigestItem {
+    id: string;
+    name: string;
+    category: string;
+    size: string;
+    color: string;
+    imageUrl?: string;
+    currentStatus: string;
+}
+
+export const sendSmartWashDigestEmail = async (
+    recipientEmail: string,
+    items: IDigestItem[],
+    appBaseUrl: string = 'https://laundry-tracker-frontend.onrender.com'
+): Promise<boolean> => {
+    try {
+        const transporter = getTransporter();
+        const fromEmail = process.env.FROM_EMAIL || '"Laundry Tracker" <no-reply@laundrytracker.app>';
+
+        const itemIdsParam = items.map(i => i.id).join(',');
+        const deepLinkUrl = `${appBaseUrl}/?action=batch-wash&items=${encodeURIComponent(itemIdsParam)}`;
+
+        const subject = `🧺 Smart Wash Alert: ${items.length} item${items.length > 1 ? 's' : ''} ready for batch wash!`;
+
+        const itemsHtml = items.map(item => `
+            <div style="display: inline-block; width: 45%; min-width: 200px; margin: 10px 2.5%; vertical-align: top; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                ${item.imageUrl 
+                    ? `<img src="${item.imageUrl}" alt="${item.name}" style="width: 100%; height: 140px; object-fit: cover;" />`
+                    : `<div style="width: 100%; height: 140px; background-color: ${item.color || '#6750A4'}20; display: flex; align-items: center; justify-content: center; font-size: 32px; color: ${item.color || '#6750A4'}; text-align: center; line-height: 140px;">👕</div>`
+                }
+                <div style="padding: 12px;">
+                    <h3 style="margin: 0 0 6px 0; font-size: 15px; color: #1c1b1f;">${item.name}</h3>
+                    <span style="display: inline-block; background-color: #e7e0ec; color: #49454f; font-size: 11px; padding: 2px 8px; border-radius: 12px; margin-right: 4px;">${item.category}</span>
+                    <span style="display: inline-block; background-color: #e7e0ec; color: #49454f; font-size: 11px; padding: 2px 8px; border-radius: 12px;">Size ${item.size}</span>
+                </div>
+            </div>
+        `).join('');
+
+        const html = `
+            <div style="font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #fcfcfc;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h1 style="color: #6750A4; margin: 0; font-size: 24px;">🧺 Smart Laundry Digest</h1>
+                    <p style="color: #625b71; margin: 6px 0 0 0; font-size: 14px;">Your wardrobe scanner identified ${items.length} item${items.length > 1 ? 's' : ''} ready for washing</p>
+                </div>
+
+                <div style="margin: 20px 0; text-align: center;">
+                    ${itemsHtml}
+                </div>
+
+                <div style="text-align: center; margin: 32px 0 20px 0;">
+                    <a href="${deepLinkUrl}" target="_blank" style="background-color: #6750A4; color: #ffffff; padding: 14px 28px; border-radius: 24px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(103,80,164,0.3);">
+                        ⚡️ Start Recommended Batch Wash (${items.length} Items)
+                    </a>
+                </div>
+                <p style="text-align: center; font-size: 12px; color: #777;">Clicking the button will open Smart Laundry Tracker and pre-select these items for immediate wash job creation.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                <p style="font-size: 11px; color: #999; text-align: center;">You received this because email notifications are enabled for your account. Manage your preferences in Settings.</p>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: fromEmail,
+            to: recipientEmail,
+            subject,
+            text: `Smart Wash Digest: ${items.length} items ready for wash. Start batch wash: ${deepLinkUrl}`,
+            html
+        });
+
+        console.log(`✅ Smart Wash Digest email sent to ${recipientEmail} with ${items.length} items.`);
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to send Smart Wash Digest email:', error);
         return false;
     }
 };

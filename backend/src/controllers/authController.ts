@@ -25,7 +25,7 @@ const generateToken = (id: string) => {
 };
 
 export const registerUser = async (req: Request, res: Response) => {
-    const { email, password } = req.body as IUserCredentials;
+    const { email, password, emailNotificationsEnabled } = req.body as (IUserCredentials & { emailNotificationsEnabled?: boolean });
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Please provide email and password.' });
@@ -46,16 +46,19 @@ export const registerUser = async (req: Request, res: Response) => {
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // 3. Generate ID explicitly (FIX for null ID)
+        // 3. Generate ID explicitly
         const newUserId = randomUUID();
 
-        // 4. Insert with explicit ID
+        // 4. Determine email setting (default: 1 enabled)
+        const notifyEnabled = emailNotificationsEnabled === false ? 0 : 1;
+
+        // 5. Insert with explicit ID and email notification preference
         await client.execute({
-            sql: "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)",
-            args: [newUserId, email, passwordHash]
+            sql: "INSERT INTO users (id, email, password_hash, email_notifications_enabled) VALUES (?, ?, ?, ?)",
+            args: [newUserId, email, passwordHash, notifyEnabled]
         });
         
-        // 5. Generate token using the known ID
+        // 6. Generate token using the known ID
         const token = generateToken(newUserId);
 
         return res.status(201).json({ message: 'User registered successfully.', token });

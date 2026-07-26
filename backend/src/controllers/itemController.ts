@@ -3,7 +3,7 @@ import { client } from '../db'; // Import the raw LibSQL client
 import { IClothingItem, INewItemPayload } from '../../../shared/types'; 
 // import { logEvent } from './adminController'; // Optional: Uncomment if admin controller exists
 import { randomUUID } from 'crypto';
-import { sendWashReminderEmail } from '../services/emailService';
+import { sendWashReminderEmail, sendSmartWashDigestEmail, IDigestItem } from '../services/emailService';
 
 // --- Constants ---
 const MAX_CLEAN_DAYS = 15; // Days before an item is considered overdue for washing
@@ -603,5 +603,139 @@ export const sendWashReminder = async (req: Request, res: Response) => {
     } catch (error: unknown) {
         console.error('Error sending wash reminder:', error);
         return res.status(500).json({ error: 'Failed to send wash reminder email.', details: getErrorMessage(error) });
+    }
+};
+
+/**
+ * Fetch User Settings & Profile details
+ */
+export const getUserSettings = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        const userQuery = await client.execute({
+            sql: `SELECT id, email, email_notifications_enabled FROM users WHERE id = ?`,
+            args: [userId]
+        });
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        const user = userQuery.rows[0];
+        return res.status(200).json({
+            id: String(user.id),
+            email: String(user.email),
+            emailNotificationsEnabled: user.email_notifications_enabled !== 0
+        });
+    } catch (error: unknown) {
+        console.error('Error fetching user settings:', error);
+        return res.status(500).json({ error: 'Failed to fetch user settings.' });
+    }
+};
+
+/**
+ * Update User Settings (Toggle Email Notifications)
+ */
+export const updateUserSettings = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    const { emailNotificationsEnabled } = req.body || {};
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+    if (typeof emailNotificationsEnabled !== 'boolean') {
+        return res.status(400).json({ error: 'emailNotificationsEnabled boolean is required.' });
+    }
+
+    try {
+        const notifyVal = emailNotificationsEnabled ? 1 : 0;
+        await client.execute({
+            sql: `UPDATE users SET email_notifications_enabled = ? WHERE id = ?`,
+            args: [notifyVal, userId]
+        });
+
+        return res.status(200).json({
+            message: 'User settings updated successfully.',
+            emailNotificationsEnabled
+        });
+    } catch (error: unknown) {
+        console.error('Error updating user settings:', error);
+        return res.status(500).json({ error: 'Failed to update user settings.' });
+    }
+};
+
+/**
+ * Send Smart Wash Digest email containing images & item details for clothes ready/overdue for wash
+ */
+export const sendSmartWashDigest = async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated.' });
+
+    try {
+        // Fetch user email & notification preference
+        const userQuery = await client.execute({
+            sql: `SELECT email, email_notifications_enabled FROM users WHERE id = ?`,
+            args: [userId]
+        });
+
+        if (userQuery.rows.length === 0 || !userQuery.rows[0].email) {
+            return res.status(404).json({ error: 'User email not found.' });
+        }
+
+        const user = userQuery.rows[0];
+        const recipientEmail = String(user.email);
+        const notifyEnabled = user.email_notifications_enabled !== 0;
+
+        if (!notifyEnabled) {
+            return res.status(400).json({
+                error: 'Email notifications are disabled for your account. Enable them in Settings to receive digests.'
+            });
+        }
+
+        // Query catalogue items that are due or ready for wash
+        const itemsQuery = await client.execute({
+            sql: `SELECT id, name, category, size, color, imageUrl, currentStatus, lastWashed
+                  FROM clothing_items
+                  WHERE userId = ?
+                    AND currentStatus IN ('READY_FOR_WASH', 'OVERDUE', 'CLEAN')
+                  ORDER BY createdAt DESC`,
+            args: [userId]
+        });
+
+        const mappedItems = mapResultToItems(itemsQuery.rows);
+        const candidateItems = mappedItems.filter(item =>
+            item.currentStatus === 'READY_FOR_WASH' || item.currentStatus === 'OVERDUE'
+        );
+
+        // Fallback: If no items strictly READY_FOR_WASH or OVERDUE, pick up to 4 oldest items
+        const finalItems: IDigestItem[] = (candidateItems.length > 0 ? candidateItems : mappedItems.slice(0, 4)).map(item => ({
+            id: String(item.id),
+            name: String(item.name),
+            category: String(item.category || 'Casuals'),
+            size: String(item.size || 'M'),
+            color: String(item.color || '#6750A4'),
+            imageUrl: item.imageUrl ? String(item.imageUrl) : undefined,
+            currentStatus: String(item.currentStatus)
+        }));
+
+        if (finalItems.length === 0) {
+            return res.status(200).json({ message: 'No items in catalogue to send digest for.' });
+        }
+
+        const appBaseUrl = process.env.APP_BASE_URL || 'https://laundry-tracker-frontend.onrender.com';
+        const success = await sendSmartWashDigestEmail(recipientEmail, finalItems, appBaseUrl);
+
+        if (success) {
+            return res.status(200).json({
+                message: `Smart Wash Digest email sent to ${recipientEmail} with ${finalItems.length} item(s).`,
+                email: recipientEmail,
+                itemCount: finalItems.length
+            });
+        } else {
+            return res.status(500).json({ error: 'Failed to send Smart Wash Digest email.' });
+        }
+    } catch (error: unknown) {
+        console.error('Error sending smart wash digest:', error);
+        return res.status(500).json({ error: 'Failed to send smart wash digest.', details: getErrorMessage(error) });
     }
 };

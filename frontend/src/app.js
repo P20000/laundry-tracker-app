@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
     ThemeProvider, createTheme, CssBaseline, Box, Container, Typography, Grid, Button, Fab, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme, IconButton,
-    CircularProgress, Fade, Grow, Zoom, Skeleton // Transition helpers
+    CircularProgress, Fade, Grow, Zoom, Skeleton, FormControlLabel
 } from '@mui/material';
 
 // --- Separately Imported Icons (All are mandatory) ---
@@ -27,12 +27,14 @@ import DryCleaningIcon from '@mui/icons-material/DryCleaning'; // For Wash Jobs 
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // For batch action icon
 import AssessmentIcon from '@mui/icons-material/Assessment'; 
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'; 
+import SettingsIcon from '@mui/icons-material/Settings';
 import Checkbox from '@mui/material/Checkbox';
 
 // --- Project Components ---
 import { WashHistoryTimeline } from './components/WashHistoryTimeline';
 import { Dashboard } from './components/Dashboard';
-import { WashJobCard } from './components/WashJobCard'; // <--- CRITICAL FIX
+import { WashJobCard } from './components/WashJobCard';
+import { SettingsView } from './components/SettingsView';
 // --- New SVG Logo Component ---
 const CustomLogo = (props) => (
     <svg 
@@ -531,6 +533,7 @@ const BatchJobCreationDialog = ({ isOpen, handleClose, selectedItems, duration, 
 const AuthCard = ({ setLoggedIn }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [emailNotify, setEmailNotify] = useState(true);
     const [isSignup, setIsSignup] = useState(false);
     const [message, setMessage] = useState('');
 
@@ -539,12 +542,15 @@ const AuthCard = ({ setLoggedIn }) => {
         setMessage('');
 
         const endpoint = isSignup ? '/signup' : '/login';
+        const payload = isSignup 
+            ? { email, password, emailNotificationsEnabled: emailNotify }
+            : { email, password };
         
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify(payload),
             });
             
             const data = await response.json();
@@ -632,6 +638,25 @@ const AuthCard = ({ setLoggedIn }) => {
                         variant="filled"
                         size="small"
                     />
+
+                    {isSignup && (
+                        <FormControlLabel
+                            control={
+                                <Checkbox 
+                                    checked={emailNotify} 
+                                    onChange={(e) => setEmailNotify(e.target.checked)} 
+                                    color="primary" 
+                                    size="small"
+                                />
+                            }
+                            label={
+                                <Typography variant="caption" color="text.secondary">
+                                    Send me email reminders when my clothes are due for a wash
+                                </Typography>
+                            }
+                            sx={{ mt: 1, mb: 1, alignSelf: 'flex-start' }}
+                        />
+                    )}
 
                     <Button
                         type="submit"
@@ -795,6 +820,30 @@ function MainApp() {
             checkAndFetch();
         }
     }, [isLoggedIn, view]);
+
+    // 4. DEEP-LINK HANDLER: Detects ?action=batch-wash&items=id1,id2 from Email Links
+    useEffect(() => {
+        if (!isLoggedIn || !items || items.length === 0) return;
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get('action');
+        const itemIdsStr = params.get('items');
+
+        if (action === 'batch-wash' && itemIdsStr) {
+            const rawIds = itemIdsStr.split(',').map(id => id.trim());
+            const availableItems = items.filter(item =>
+                rawIds.includes(item.id) && item.currentStatus !== 'DAMAGED' && item.currentStatus !== 'WASHING'
+            );
+
+            if (availableItems.length > 0) {
+                const validIds = availableItems.map(item => item.id);
+                setSelectedItemIds(validIds);
+                setIsBatchJobCreationOpen(true);
+                showNotification(`⚡ Loaded ${validIds.length} recommended item(s) from your email for Batch Wash!`, 'success');
+                // Clean URL query parameters smoothly without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    }, [isLoggedIn, items]);
 
     const handleLogout = () => {
         localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -1182,6 +1231,7 @@ function MainApp() {
         { name: 'Damaged', icon: <WarningIcon sx={{ fontSize: 28 }} />, view: 'damaged' },
         { name: 'Jobs', icon: <DryCleaningIcon sx={{ fontSize: 28 }} />, view: 'jobs' },
         { name: 'Admin', icon: <AssessmentIcon sx={{ fontSize: 28 }} />, view: 'admin' },
+        { name: 'Settings', icon: <SettingsIcon sx={{ fontSize: 28 }} />, view: 'settings' },
     ];
 
     const currentPageTitle = navItems.find(n => n.view === view)?.name || 'Wardrobe';
@@ -1230,18 +1280,6 @@ function MainApp() {
                                 );
                             })}
                         </Box>
-                        
-                        {/* Logout Button on Desktop */}
-                         <Button 
-                            onClick={handleLogout} 
-                            color="error" 
-                            variant="text"
-                            sx={{ mt: 'auto', minWidth: 56, color: 'error.main' }}
-                            title="Logout"
-                        >
-                            <CloseIcon />
-                        </Button>
-
                     </Box>
                 )}
 
@@ -1253,23 +1291,13 @@ function MainApp() {
                         <Typography variant="displayMedium" color="text.primary">
                             {currentPageTitle}
                         </Typography>
-                        <Box display="flex" alignItems="center" gap={1}>
-                             {/* Mobile Logout Button */}
-                             {isMobile && (
-                                <IconButton onClick={handleLogout} color="error" title="Logout">
-                                    <CloseIcon />
-                                </IconButton>
-                            )}
-                        </Box>
                     </Box>
-                    
+
                     <Box sx={(theme) => ({ 
-                        // Fixed positioning relative to the entire screen/viewport
                         position: 'fixed', 
-                        bottom: isMobile ? theme.spacing(14) : theme.spacing(4), // Raised on mobile for nav bar
-                        right: theme.spacing(4), // 32px from right
+                        bottom: isMobile ? theme.spacing(14) : theme.spacing(4), 
+                        right: theme.spacing(4), 
                         zIndex: 1000, 
-                        // Show only when NOT in the dedicated batch selection mode (to prevent conflict)
                         display: isBatchWashOpen ? 'none' : 'block' 
                     })}>
                         
@@ -1360,7 +1388,13 @@ function MainApp() {
 
                     {/* Scrollable Grid Area */}
                     <Box sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, overflowY: 'auto' }}>
-                        {isLoading ? (
+                        {view === 'settings' ? (
+                            <SettingsView
+                                apiUrl={API_PROTECTED_URL}
+                                token={localStorage.getItem(AUTH_TOKEN_KEY)}
+                                onLogout={handleLogout}
+                            />
+                        ) : isLoading ? (
                             <Fade in={isLoading} timeout={400}>
                                 <Box>
                                     {view === 'jobs' ? (

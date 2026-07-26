@@ -18,7 +18,10 @@ import {
     collectWashJob,
     getActiveWashJobs,
     backfillWashEvents,   // ONE-TIME migration — remove after use
-    sendWashReminder
+    sendWashReminder,
+    getUserSettings,
+    updateUserSettings,
+    sendSmartWashDigest
 } from './controllers/itemController';
 
 import { registerUser, loginUser } from './controllers/authController'; 
@@ -71,6 +74,11 @@ protectedRouter.use(protect);
 // --- ADMIN ROUTES ---
 // This endpoint returns the stats/logs for the dashboard
 protectedRouter.get('/admin/dashboard', getSystemStats); 
+
+// --- USER SETTINGS & NOTIFICATIONS ROUTES ---
+protectedRouter.get('/user/settings', getUserSettings);
+protectedRouter.patch('/user/settings', updateUserSettings);
+protectedRouter.post('/user/send-wash-digest', sendSmartWashDigest);
 
 // --- ITEM ROUTES ---
 protectedRouter.post('/items', createItem);
@@ -128,6 +136,13 @@ app.listen(PORT, async () => {
     try {
         await client.execute("ALTER TABLE wash_jobs ADD COLUMN startTime TEXT");
         console.log("✅ Added startTime column to wash_jobs table.");
+    } catch (e: any) {
+        // Column already exists — silence
+    }
+
+    try {
+        await client.execute("ALTER TABLE users ADD COLUMN email_notifications_enabled INTEGER DEFAULT 1");
+        console.log("✅ Added email_notifications_enabled column to users table.");
     } catch (e: any) {
         // Column already exists — silence
     }
