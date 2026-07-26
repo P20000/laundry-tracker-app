@@ -229,7 +229,27 @@ export const getItemHistory = async (req: Request, res: Response) => {
         `;
         const result = await client.execute({ sql, args: [id, userId] });
 
-        // Since the rows are simple, we return them directly
+        // ── SELF-HEAL: if no wash_events exist but lastWashed is set, the item
+        // was washed via a batch job before history recording was implemented.
+        // Auto-insert a synthetic record so the calendar is never empty.
+        if (result.rows.length === 0) {
+            const itemResult = await client.execute({
+                sql: `SELECT lastWashed FROM clothing_items WHERE id = ? AND userId = ? AND lastWashed IS NOT NULL`,
+                args: [id, userId]
+            });
+
+            if (itemResult.rows.length > 0) {
+                const lastWashed = itemResult.rows[0].lastWashed;
+                // Insert a synthetic wash_event using the stored lastWashed timestamp
+                await client.execute({
+                    sql: `INSERT INTO wash_events (clothingItemId, washDate, createdAt) VALUES (?, ?, ?)`,
+                    args: [id, lastWashed, lastWashed]
+                });
+                // Return the newly created record
+                return res.status(200).json([{ washDate: lastWashed, notes: null }]);
+            }
+        }
+
         return res.status(200).json(result.rows);
 
     } catch (error: unknown) {
