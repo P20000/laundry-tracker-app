@@ -772,8 +772,12 @@ export const sendOtp = async (req: Request, res: Response) => {
             args: [otpCode, expiresAt, userId]
         });
 
-        // Fire email dispatch asynchronously in background
-        sendOtpEmail(recipientEmail, otpCode).catch(err => console.error('Background OTP email error:', err));
+        // Await email dispatch synchronously so host runtime does not freeze background promise
+        const emailSent = await sendOtpEmail(recipientEmail, otpCode);
+
+        if (!emailSent) {
+            return res.status(500).json({ error: 'Failed to deliver OTP email via SMTP. Please try again.' });
+        }
 
         return res.status(200).json({
             message: `Verification OTP code sent to ${recipientEmail}. Please check your email inbox.`,
