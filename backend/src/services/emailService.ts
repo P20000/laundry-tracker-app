@@ -2,9 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const MAILTRAP_DEFAULT_TOKEN = 'b521816ebfa9a5bccdc9152cded48a44';
-
-interface IMailtrapSendOptions {
+interface IMailSendOptions {
     to: string;
     subject: string;
     text: string;
@@ -21,15 +19,116 @@ export interface IEmailResult {
 }
 
 /**
- * Sends emails via SMTP if configured (SMTP_HOST/USER/PASS), 
- * falling back to Mailtrap HTTPS API.
+ * Sends real emails using configured provider:
+ * 1. Resend HTTPS API (if RESEND_API_KEY set) - Recommended for Render (Port 443)
+ * 2. SendGrid HTTPS API (if SENDGRID_API_KEY set) - Recommended for Render (Port 443)
+ * 3. Mailtrap HTTPS API (if MAILTRAP_TOKEN set)
+ * 4. Nodemailer SMTP (if SMTP_HOST, SMTP_USER, SMTP_PASS set)
  */
-const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> => {
+const sendEmail = async (options: IMailSendOptions): Promise<IEmailResult> => {
     const senderName = options.fromName || process.env.FROM_NAME || 'Smart Laundry Tracker';
-    const portNum = Number(process.env.SMTP_PORT) || 465;
+    const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER;
 
-    // 1. Try Nodemailer SMTP if configured in environment
+    // 1. Resend HTTPS API (Port 443 - Works 100% on Render)
+    if (process.env.RESEND_API_KEY) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    from: `"${senderName}" <${fromEmail || 'onboarding@resend.dev'}>`,
+                    to: [options.to],
+                    subject: options.subject,
+                    text: options.text,
+                    html: options.html || options.text,
+                    reply_to: options.replyTo || options.to
+                })
+            });
+            const data: any = await res.json();
+            if (res.ok && data.id) {
+                console.log(`✅ Resend Email delivered to ${options.to}! ID:`, data.id);
+                return { success: true, message: `Email delivered to ${options.to}!`, messageIds: [data.id] };
+            } else {
+                const errMsg = data?.message || data?.error || 'Resend delivery failed';
+                console.error(`❌ Resend API error:`, errMsg);
+                return { success: false, message: `Resend Error: ${errMsg}` };
+            }
+        } catch (err: any) {
+            console.error(`❌ Resend API fetch error:`, err?.message || err);
+        }
+    }
+
+    // 2. SendGrid HTTPS API (Port 443 - Works 100% on Render)
+    if (process.env.SENDGRID_API_KEY) {
+        try {
+            const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    personalizations: [{ to: [{ email: options.to }] }],
+                    from: { email: fromEmail || 'no-reply@laundrytracker.app', name: senderName },
+                    subject: options.subject,
+                    content: [
+                        { type: 'text/plain', value: options.text },
+                        { type: 'text/html', value: options.html || options.text }
+                    ]
+                })
+            });
+            if (res.ok || res.status === 202) {
+                console.log(`✅ SendGrid Email delivered to ${options.to}!`);
+                return { success: true, message: `Email delivered to ${options.to}!` };
+            } else {
+                const data: any = await res.json();
+                const errMsg = data?.errors?.[0]?.message || 'SendGrid delivery failed';
+                console.error(`❌ SendGrid API error:`, errMsg);
+                return { success: false, message: `SendGrid Error: ${errMsg}` };
+            }
+        } catch (err: any) {
+            console.error(`❌ SendGrid API fetch error:`, err?.message || err);
+        }
+    }
+
+    // 3. Mailtrap HTTPS API (Port 443 - if user provided MAILTRAP_TOKEN)
+    if (process.env.MAILTRAP_TOKEN) {
+        try {
+            const res = await fetch('https://send.api.mailtrap.io/api/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.MAILTRAP_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    from: { email: fromEmail || 'hello@demomailtrap.co', name: senderName },
+                    to: [{ email: options.to }],
+                    subject: options.subject,
+                    text: options.text,
+                    html: options.html || options.text,
+                    category: options.category || 'Laundry Tracker Notification'
+                })
+            });
+            const data: any = await res.json();
+            if (res.ok && data.success) {
+                console.log(`✅ Mailtrap HTTPS Email delivered to ${options.to}! Message IDs:`, data.message_ids);
+                return { success: true, message: `Email delivered to ${options.to}!`, messageIds: data.message_ids };
+            } else {
+                const errDetail = data?.errors ? data.errors.join(', ') : 'Mailtrap rejected email delivery';
+                console.log(`ℹ️ Mailtrap API error for ${options.to}:`, errDetail);
+                return { success: false, message: `Mailtrap Error: ${errDetail}` };
+            }
+        } catch (err: any) {
+            console.error(`❌ Mailtrap API fetch error:`, err?.message || err);
+        }
+    }
+
+    // 4. Nodemailer SMTP (Direct TCP socket port 465/587)
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const portNum = Number(process.env.SMTP_PORT) || 465;
         try {
             const transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
@@ -46,7 +145,7 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
             } as any);
 
             const sendPromise = transporter.sendMail({
-                from: `"${senderName}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+                from: `"${senderName}" <${fromEmail || process.env.SMTP_USER}>`,
                 to: options.to,
                 replyTo: options.replyTo || options.to,
                 subject: options.subject,
@@ -55,7 +154,7 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
             });
 
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('SMTP connection timed out')), 10500)
+                setTimeout(() => reject(new Error('SMTP connection timed out (Render blocks outbound TCP SMTP ports 25/465/587)')), 10500)
             );
 
             const info: any = await Promise.race([sendPromise, timeoutPromise]);
@@ -67,63 +166,19 @@ const sendEmail = async (options: IMailtrapSendOptions): Promise<IEmailResult> =
                 messageIds: [info.messageId]
             };
         } catch (smtpErr: any) {
-            console.error(`❌ SMTP transport failed or timed out, trying HTTPS API fallback:`, smtpErr?.message || smtpErr);
-        }
-    }
-
-    // 2. Fallback: Mailtrap HTTPS API over Port 443
-    const apiToken = process.env.MAILTRAP_TOKEN || MAILTRAP_DEFAULT_TOKEN;
-    const fromEmail = process.env.FROM_EMAIL || 'hello@demomailtrap.co';
-    const fromName = process.env.FROM_NAME || 'Smart Laundry Tracker';
-
-    const bodyData = {
-        from: { email: fromEmail, name: fromName },
-        to: [{ email: options.to }],
-        subject: options.subject,
-        text: options.text,
-        html: options.html || options.text,
-        category: options.category || 'Laundry Tracker Notification'
-    };
-
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-        const response = await fetch('https://send.api.mailtrap.io/api/send', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(bodyData),
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        const data: any = await response.json();
-
-        if (response.ok && data.success) {
-            console.log(`✅ Mailtrap HTTPS Email delivered to ${options.to}! Message IDs:`, data.message_ids);
-            return {
-                success: true,
-                message: `Email successfully delivered to ${options.to}!`,
-                messageIds: data.message_ids
-            };
-        } else {
-            const errDetail = data?.errors ? data.errors.join(', ') : 'Delivery rejected by email provider.';
-            console.log(`ℹ️ Mailtrap HTTPS API info for ${options.to}:`, errDetail);
+            const errMsg = smtpErr?.message || smtpErr;
+            console.error(`❌ SMTP transport failed:`, errMsg);
             return {
                 success: false,
-                message: errDetail
+                message: `SMTP Error: ${errMsg}. Note: Render blocks direct SMTP ports. Setting RESEND_API_KEY in Render environment uses HTTP Port 443 which is unblocked.`
             };
         }
-    } catch (err: any) {
-        console.error(`❌ Mailtrap HTTPS fetch error for ${options.to}:`, err?.message || err);
-        return {
-            success: false,
-            message: err?.message || 'Network error sending email.'
-        };
     }
+
+    return {
+        success: false,
+        message: 'No active email provider configured. Please set RESEND_API_KEY or SMTP credentials in your Render environment.'
+    };
 };
 
 export const sendOtpEmail = async (
